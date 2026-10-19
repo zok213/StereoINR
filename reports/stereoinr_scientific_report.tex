@@ -16,6 +16,19 @@
 \usepackage{multirow}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, backgrounds, fit}
+\usepackage{dblfloatfix}
+
+% Float parameters to prevent double-column floats from bunching up and jumping to the end
+\setcounter{topnumber}{5}
+\setcounter{bottomnumber}{5}
+\setcounter{totalnumber}{10}
+\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.80}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\dblfloatpagefraction}{0.80}
 
 \hypersetup{
     colorlinks=true,
@@ -101,7 +114,7 @@ In this paper, we document an exhaustive engineering and scientific investigatio
 
 To rigorously contextualize why StereoINR was selected and developed, Table~\ref{tab:taxonomy_comparison} provides a comprehensive taxonomy of super-resolution paradigms across model modalities, scale capabilities, and geometric constraints.
 
-\begin{table*}[t]
+\begin{table*}[!t]
 \caption{Comprehensive Taxonomy and Comparison of Super-Resolution Paradigms. StereoINR is the first method to unify continuous arbitrary scaling ($\times 1.0$ to $\times 30.0+$) with 1D epipolar parallax constraints and parameter-efficient transfer learning.}
 \label{tab:taxonomy_comparison}
 \centering
@@ -161,41 +174,43 @@ We selected StereoINR as our focal benchmark because it is the \textbf{first uni
 % ==============================================================================
 \section{StereoINR Architectural Mechanics}
 
-% TIKZ VECTOR ARCHITECTURE DIAGRAM (Compiles without external image files!)
-\begin{figure*}[t]
+% TIKZ VECTOR ARCHITECTURE DIAGRAM (Scaled to fit page width perfectly!)
+\begin{figure*}[!t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-    node distance=1.2cm and 1.5cm,
-    box/.style={rectangle, draw=blue!70, fill=blue!8, thick, rounded corners=3pt, align=center, inner sep=6pt, font=\small},
-    backbone/.style={rectangle, draw=purple!80, fill=purple!8, thick, rounded corners=3pt, align=center, inner sep=6pt, font=\small},
-    adapter/.style={rectangle, draw=orange!80, fill=orange!10, thick, rounded corners=3pt, align=center, inner sep=6pt, font=\small},
-    inr/.style={rectangle, draw=teal!80, fill=teal!8, thick, rounded corners=3pt, align=center, inner sep=6pt, font=\small},
+    node distance=0.8cm and 1.0cm,
+    box/.style={rectangle, draw=blue!75!black, fill=blue!6, thick, rounded corners=4pt, align=center, inner sep=6pt, font=\small},
+    backbone/.style={rectangle, draw=purple!85!black, fill=purple!7, thick, rounded corners=4pt, align=center, inner sep=6pt, font=\small},
+    adapter/.style={rectangle, draw=orange!90!black, fill=orange!10, thick, rounded corners=4pt, align=center, inner sep=5pt, font=\small},
+    inr/.style={rectangle, draw=teal!85!black, fill=teal!8, thick, rounded corners=4pt, align=center, inner sep=6pt, font=\small},
     arrow/.style={-{Stealth[scale=1.1]}, thick, draw=gray!80}
 ]
 
 % Nodes
-\node[box] (input) {\textbf{Dual Stereo Input}\\$I_L, I_R \in \mathbb{R}^{B \times 3 \times H \times W}$};
-\node[box, right=1.2cm of input] (shallow) {\textbf{Shallow Conv}\\$3\times 3 \text{ Conv} \to 180\text{ch}$};
-\node[backbone, right=1.2cm of shallow] (rhag) {\textbf{Frozen HAT Backbone}\\12 RHAG Stages\\(41.23M Parameters)};
-\node[adapter, above=0.8cm of rhag] (scale_ad) {\textbf{Scale Adapters}\\Conditioning Tokens};
-\node[adapter, below=0.8cm of rhag] (stereo_ad) {\textbf{Stereo Adapters}\\1D Parallax Attention};
-\node[inr, right=1.5cm of rhag] (dgasu) {\textbf{DGASU \& INR Decoder}\\Cell Footprint $c_q$\\Fourier Pos. Enc. $\gamma(x_q)$};
-\node[box, right=1.2cm of dgasu] (output) {\textbf{Continuous Output}\\$I_{\text{SR}}^L, I_{\text{SR}}^R \in \mathbb{R}^{H_{\text{out}} \times W_{\text{out}} \times 3}$};
+\node[box] (input) {\textbf{Dual Stereo Input}\\[2pt]\scriptsize $I_L, I_R \in \mathbb{R}^{B \times 3 \times H \times W}$};
+\node[box, right=0.8cm of input] (shallow) {\textbf{Shallow Conv}\\[2pt]\scriptsize $3\times 3 \text{ Conv} \to 180\text{ch}$};
+\node[backbone, right=0.9cm of shallow] (rhag) {\textbf{Frozen HAT Backbone}\\[2pt]\scriptsize 12 RHAG Stages (Frozen)\\\scriptsize 41.23M Parameters};
+\node[adapter, above=0.65cm of rhag] (scale_ad) {\textbf{Scale Adapters}\\[1pt]\scriptsize Conditioning Tokens};
+\node[adapter, below=0.65cm of rhag] (stereo_ad) {\textbf{Stereo Adapters}\\[1pt]\scriptsize 1D Parallax Attention};
+\node[inr, right=1.2cm of rhag] (dgasu) {\textbf{DGASU \& INR Decoder}\\[2pt]\scriptsize Cell Footprint $c_q \in \mathbb{R}^2$\\\scriptsize Pos. Enc. $\gamma(x_q) \in \mathbb{R}^{162}$};
+\node[box, right=0.8cm of dgasu] (output) {\textbf{Continuous Output}\\[2pt]\scriptsize $I_{\text{SR}}^L, I_{\text{SR}}^R \in \mathbb{R}^{H_{\text{out}} \times W_{\text{out}} \times 3}$};
 
 % Connections
 \draw[arrow] (input) -- (shallow);
 \draw[arrow] (shallow) -- (rhag);
-\draw[arrow, dashed, draw=orange!90] (scale_ad) -- (rhag);
-\draw[arrow, dashed, draw=orange!90] (stereo_ad) -- (rhag);
-\draw[arrow] (rhag) -- node[above, font=\footnotesize] {Latent $F_L, F_R$} (dgasu);
+\draw[arrow, dashed, draw=orange!90, thick] (scale_ad) -- (rhag);
+\draw[arrow, dashed, draw=orange!90, thick] (stereo_ad) -- (rhag);
+\draw[arrow] (rhag) -- node[above=2pt, font=\scriptsize, align=center] {Latents\\$F_L, F_R$} (dgasu);
 \draw[arrow] (dgasu) -- (output);
 
 % Background grouping
 \begin{scope}[on background layer]
-    \node[draw=purple!40, fill=purple!2, dashed, rounded corners=6pt, fit=(rhag) (scale_ad) (stereo_ad), label=above:{\footnotesize \textbf{PEFT Hybrid Attention Transformer (HAT)}}] {};
+    \node[draw=purple!50, fill=purple!2, dashed, rounded corners=6pt, fit=(rhag) (scale_ad) (stereo_ad), label=above:{\footnotesize \textbf{PEFT Hybrid Attention Transformer (HAT)}}] {};
 \end{scope}
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{System architecture of StereoINR. The single-image HAT backbone is frozen (41.23M parameters) while lightweight Scale and Stereo Adapters (2.03M parameters) align cross-view representations along epipolar scanlines before continuous coordinate decoding in DGASU.}
 \label{fig:tikz_architecture}
 \end{figure*}
@@ -256,7 +271,7 @@ where $\lambda_{\text{edge}} = 0.1$ penalizes blurred edge transitions.
 % ==============================================================================
 \section{Layer-Wise Feature Map Analysis}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \IfFileExists{StereoINR_Feature_Maps_All_Stages.png}{%
     \includegraphics[width=0.98\linewidth]{StereoINR_Feature_Maps_All_Stages.png}%
@@ -302,7 +317,7 @@ In the final attention group, the Stereo Adapter actively exchanges information 
 % ==============================================================================
 \section{Experimental Evaluation}
 
-\begin{figure*}[t]
+\begin{figure*}[!b]
 \centering
 \IfFileExists{StereoINR_Comparison_Composite.png}{%
     \includegraphics[width=0.95\linewidth]{StereoINR_Comparison_Composite.png}%
@@ -349,7 +364,7 @@ $\times 30.0$ & 16.76 / 0.7129 & 19.14 / 0.7166 & 19.14 / 0.7125 & \textbf{19.46
 \subsection{Table 2: In-Scale Benchmark Comparison}
 Table~\ref{tab:table2_results} reports in-scale comparisons ($\times 2.0, \times 4.0$) across four standard benchmarks: KITTI 2012, Middlebury, Flickr1024, and KITTI 2015.
 
-\begin{table*}[t]
+\begin{table*}[!t]
 \caption{In-Scale Quantitative Comparison (PSNR [dB] / SSIM) on Standard SSR Benchmarks at $\times 2.0$ and $\times 4.0$.}
 \label{tab:table2_results}
 \centering
