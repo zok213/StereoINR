@@ -8,9 +8,10 @@ import torch.nn as nn
 from torchvision import models
 
 
-from collections import namedtuple
-import cupy
-from string import Template
+try:
+    import cupy
+except ImportError:
+    cupy = None
 
 from einops import rearrange
 from einops.layers.torch import Rearrange
@@ -336,7 +337,7 @@ class SRNO(nn.Module):
     def query_rgb(self, feat, inp, coord, cell):      
         grid = 0
 
-        pos_lr = make_coord(feat.shape[-2:], flatten=False).cuda() \
+        pos_lr = make_coord(feat.shape[-2:], flatten=False).to(feat.device) \
             .permute(2, 0, 1) \
             .unsqueeze(0).expand(feat.shape[0], 2, *feat.shape[-2:])
 

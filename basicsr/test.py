@@ -1,7 +1,11 @@
+import sys
+from os import path as osp
+root_path = osp.abspath(osp.join(osp.dirname(__file__), osp.pardir))
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
+
 import logging
 import torch
-from os import path as osp
-
 from basicsr.data import build_dataloader, build_dataset
 from basicsr.models import build_model
 from basicsr.utils import get_env_info, get_root_logger, get_time_str, make_exp_dirs

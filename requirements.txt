@@ -11,3 +11,6 @@ tqdm
 yapf
 einops
 lpips
+matplotlib
+gdown
+torchvision

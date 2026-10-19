@@ -1,9 +1,9 @@
-import os
-
 import torch.nn.functional as F
-import lpips
+try:
+    import lpips
+except ImportError:
+    lpips = None
 import cv2
-import torch
 import numpy as np
 
 

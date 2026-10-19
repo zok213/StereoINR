@@ -1076,12 +1076,14 @@ class StereoINR(nn.Module):
         return {'relative_position_bias_table'}
 
     def pos_enc(self, coord):
-        coords_pos_enc = coord
+        coord_f32 = coord.float()
+        coords_pos_enc = coord_f32
         for i in range(40):
-            sin = torch.sin((2 ** i) * np.pi * coord / 10)
-            cos = torch.cos((2 ** i) * np.pi * coord / 10)
+            freq = (2.0 ** i) * np.pi / 10.0
+            sin = torch.sin(freq * coord_f32)
+            cos = torch.cos(freq * coord_f32)
             coords_pos_enc = torch.cat((coords_pos_enc, sin, cos), axis=-1)
-        return coords_pos_enc
+        return coords_pos_enc.type_as(coord)
     
     def forward_features(self, x, scale):
         # (b t) c h w
@@ -1208,7 +1210,7 @@ class DGASU_v5(nn.Module):
     def query_rgb(self, coord, cell):      
         feat_l, feat_r = self.feat_l, self.feat_r
 
-        pos_lr = make_coord(feat_l.shape[-2:]).cuda() \
+        pos_lr = make_coord(feat_l.shape[-2:]).to(feat_l.device) \
             .permute(2, 0, 1) \
             .unsqueeze(0).expand(feat_l.shape[0], 2, *feat_l.shape[-2:])
 
@@ -1312,7 +1314,7 @@ class DGASU_v6(nn.Module):
     def query_rgb(self, coord, cell):      
         feat_l, feat_r = self.feat_l, self.feat_r
 
-        pos_lr = make_coord(feat_l.shape[-2:]).cuda() \
+        pos_lr = make_coord(feat_l.shape[-2:]).to(feat_l.device) \
             .permute(2, 0, 1) \
             .unsqueeze(0).expand(feat_l.shape[0], 2, *feat_l.shape[-2:])
 
