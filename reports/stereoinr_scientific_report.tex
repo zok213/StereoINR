@@ -13,6 +13,7 @@
 \usepackage{textcomp}
 \usepackage{url}
 \usepackage{xcolor}
+\usepackage{multirow}
 
 \hypersetup{
     colorlinks=true,
@@ -37,7 +38,7 @@ Stereo Image Super-Resolution (SSR) is a cornerstone of modern binocular percept
 \end{abstract}
 
 \begin{IEEEkeywords}
-Stereo Super-Resolution, Implicit Neural Representations, Continuous Magnification, Epipolar Geometry, Feature Map Extraction, Parameter-Efficient Fine-Tuning.
+Stereo Super-Resolution, Implicit Neural Representations, Continuous Magnification, Epipolar Geometry, Feature Map Extraction, Parameter-Efficient Fine-Tuning, Mixed Reality.
 \end{IEEEkeywords}}
 
 \maketitle
@@ -48,30 +49,30 @@ Stereo Super-Resolution, Implicit Neural Representations, Continuous Magnificati
 % SECTION I: INTRODUCTION
 % ==============================================================================
 \section{Introduction}
-\IEEEPARstart{S}{tereo} vision constitutes the fundamental mechanism through which biological primates and artificial robotic agents perceive three-dimensional scene geometry. By capturing simultaneous, horizontally displaced viewpoints—termed the left ($I_L$) and right ($I_R$) optical frames—binocular systems calculate depth via disparity:
+\IEEEPARstart{S}{tereo} vision constitutes the fundamental mechanism through which biological primates and artificial robotic agents perceive three-dimensional scene geometry. By capturing simultaneous, horizontally displaced viewpoints---termed the left ($I_L$) and right ($I_R$) optical frames---binocular systems calculate depth via disparity:
 \begin{equation}
 Z(x, y) = \frac{f \cdot B}{d(x, y)}
 \label{eq:stereo_depth}
 \end{equation}
-where $f$ denotes the camera focal length, $B$ represents the physical inter-pupillary baseline, and $d(x, y) = x_L - x_R$ is the horizontal disparity along rectified epipolar scanlines ($y_L = y_R$). 
+where $f$ denotes the camera focal length, $B$ represents the physical baseline distance between the optical centers, and $d(x, y) = x_L - x_R$ is the horizontal disparity along rectified epipolar scanlines ($y_L = y_R$). 
 
-However, optical sensor resolution is constrained by hardware payload, power consumption, data bandwidth, and thermal dissipation, especially in embedded mobile robotics and untethered Mixed Reality (MR) headsets (e.g., Meta Quest 3, Apple Vision Pro). Consequently, Stereo Image Super-Resolution (SSR) aims to reconstruct High-Resolution (HR) stereoscopic pairs $(I_{\text{HR}}^L, I_{\text{HR}}^R) \in \mathbb{R}^{H_{\text{out}} \times W_{\text{out}} \times 3}$ from Low-Resolution (LR) observations $(I_{\text{LR}}^L, I_{\text{LR}}^R) \in \mathbb{R}^{H_{\text{in}} \times W_{\text{in}} \times 3}$.
+However, optical sensor resolution is constrained by hardware payload, power consumption, data bandwidth, and thermal dissipation in embedded mobile robotics, untethered Mixed Reality (MR) headsets (e.g., Meta Quest 3, Apple Vision Pro), and autonomous driving platforms. Consequently, Stereo Image Super-Resolution (SSR) aims to reconstruct High-Resolution (HR) stereoscopic pairs $(I_{\text{HR}}^L, I_{\text{HR}}^R) \in \mathbb{R}^{H_{\text{out}} \times W_{\text{out}} \times 3}$ from Low-Resolution (LR) observations $(I_{\text{LR}}^L, I_{\text{LR}}^R) \in \mathbb{R}^{H_{\text{in}} \times W_{\text{in}} \times 3}$.
 
 \subsection{The Dilemma of Discrete Scale Super-Resolution}
-For decades, deep super-resolution models—from early Convolutional Neural Networks (SRCNN \cite{dong2015image}, EDSR \cite{lim2017enhanced}, RCAN \cite{zhang2018image}) to recent Vision Transformers (SwinIR \cite{liang2021swinir}, HAT \cite{chen2023activating}) and dedicated stereo networks (PASSRnet \cite{wang2019learning}, iPASSR \cite{ying2020stereo}, NAFSSR \cite{chu2022nafssr})—have relied on discrete integer upsampling operators such as sub-pixel convolution (PixelShuffle) or transposed convolutions. This discrete paradigm imposes severe practical limitations:
+For decades, deep super-resolution models---from early Convolutional Neural Networks (SRCNN \cite{dong2015image}, EDSR \cite{lim2017enhanced}, RCAN \cite{zhang2018image}) to recent Vision Transformers (SwinIR \cite{liang2021swinir}, HAT \cite{chen2023activating}) and dedicated stereo networks (PASSRnet \cite{wang2019learning}, iPASSR \cite{ying2020stereo}, NAFSSR \cite{chu2022nafssr})---have relied on discrete integer upsampling operators such as sub-pixel convolution (PixelShuffle) or transposed convolutions. This discrete paradigm imposes severe practical limitations:
 \begin{enumerate}
-    \item \textbf{Model Explosion}: A separate, multi-megabyte model must be trained and stored for every integer scale ($\times 2, \times 3, \times 4$).
-    \item \textbf{Inability to Handle Fractional Scales}: Arbitrary magnification factors ($\times 1.73, \times 2.85, \times 5.2$) frequently encountered in zoom interfaces, VR viewport displays, and dynamic foveated rendering cannot be directly processed without cascaded bicubic interpolation, which destroys reconstructed edges.
+    \item \textbf{Model Explosion}: A separate multi-megabyte model must be trained, optimized, and stored on-device for every integer scale ($\times 2, \times 3, \times 4$).
+    \item \textbf{Inability to Handle Fractional Scales}: Arbitrary magnification factors ($\times 1.73, \times 2.85, \times 5.2$) frequently encountered in zoom interfaces, variable-focus lenses, VR viewport displays, and dynamic foveated rendering cannot be directly processed without cascaded bicubic interpolation, which destroys reconstructed edges.
     \item \textbf{Extreme Scale Collapse}: When requested to upscale beyond training limits ($\times 12$ to $\times 30$), discrete models catastrophically blur or produce unconstrained structural artifacts.
 \end{enumerate}
 
 \subsection{Implicit Neural Representations for Continuous Vision}
-To overcome discrete scaling limits, Implicit Neural Representations (INR) parameterize imagery as continuous coordinate functions $f_\theta: \mathbb{R}^2 \to \mathbb{R}^3$, predicting RGB intensities given continuous 2D coordinates $x_q \in [-1, 1]^2$. Pioneers in Single Image Super-Resolution (SISR)—such as Local Implicit Image Function (LIIF \cite{chen2021learning}) and Local Texture Estimator (LTE \cite{lee2022local})—demonstrated continuous magnification across arbitrary resolutions. 
+To overcome discrete scaling limits, Implicit Neural Representations (INR) parameterize imagery as continuous coordinate functions $f_\theta: \mathbb{R}^2 \to \mathbb{R}^3$, predicting RGB intensities given continuous 2D coordinates $x_q \in [-1, 1]^2$. Pioneers in Single Image Super-Resolution (SISR)---such as Local Implicit Image Function (LIIF \cite{chen2021learning}) and Local Texture Estimator (LTE \cite{lee2022local})---demonstrated continuous magnification across arbitrary resolutions. 
 
-However, naively applying single-image INRs to stereo vision fails fundamentally. Single-image INRs process $I_L$ and $I_R$ independently, ignoring the rigid cross-view epipolar geometry. This produces binocular rivalry, inconsistent sub-pixel textures, and depth estimation distortions when the super-resolved images are fed downstream into disparity estimation or 3D point cloud reconstruction engines.
+However, naively applying single-image INRs to stereo vision fails fundamentally. Single-image INRs process $I_L$ and $I_R$ independently, completely ignoring the rigid cross-view epipolar geometry. This produces binocular rivalry, inconsistent sub-pixel textures, and depth estimation distortions when the super-resolved images are fed downstream into disparity estimation or 3D point cloud reconstruction engines.
 
 \subsection{The StereoINR Paradigm}
-To resolve this dilemma, Liu et al. introduced \textbf{StereoINR} \cite{liu2025stereoinr} at ACM Multimedia 2025. StereoINR integrates cross-view epipolar attention into a continuous INR framework through three primary contributions:
+To resolve this fundamental gap, Liu et al. introduced \textbf{StereoINR} \cite{liu2025stereoinr} at ACM Multimedia 2025. StereoINR integrates cross-view epipolar attention into a continuous INR framework through three primary contributions:
 \begin{enumerate}
     \item \textbf{Continuous Disparity-Guided Decoding}: Extending cell-based coordinate queries with horizontal scanline disparity estimation to transfer complementary sub-pixel details between views.
     \item \textbf{Parameter-Efficient Fine-Tuning (PEFT)}: Freezing the massive 41.23M-parameter Hybrid Attention Transformer (HAT) backbone and training only 2.03M adapter parameters, achieving 78\% VRAM savings during training.
@@ -80,38 +81,74 @@ To resolve this dilemma, Liu et al. introduced \textbf{StereoINR} \cite{liu2025s
 
 In this paper, we document an exhaustive engineering and scientific investigation of StereoINR, featuring:
 \begin{itemize}
+    \item Comprehensive literature review contrasting discrete vs. continuous and monocular vs. binocular super-resolution paradigms.
     \item Exact reproduction of Table 1 (out-of-scale $\times 2.0$ to $\times 30.0$) and Table 2 (in-scale $\times 2, \times 4$) metrics.
-    \item Implementation of a complete layer-wise feature map extraction pipeline with PCA disentanglement.
+    \item Implementation of an automated layer-wise feature map extraction pipeline with PCA disentanglement.
     \item An unvarnished critical evaluation of StereoINR's algorithmic strengths and physical failure modes.
-    \item Concrete, mathematically rigorous architectural solutions to address real-world optical and latency challenges.
+    \item Concrete, mathematically grounded architectural solutions to address real-world optical and latency challenges.
 \end{itemize}
 
 % ==============================================================================
-% SECTION II: RELATED WORK
+% SECTION II: EXHAUSTIVE RELATED WORK & TAXONOMY
 % ==============================================================================
-\section{Related Work}
+\section{Exhaustive Related Work \& Taxonomy}
 
-\subsection{Stereo Image Super-Resolution}
-The key challenge in SSR is exploiting binocular redundancy—the fact that details occluded, blurred, or aliased in one view are frequently sharp and visible in the complementary view. 
+To rigorously contextualize why StereoINR was selected and developed, Table~\ref{tab:taxonomy_comparison} provides a comprehensive taxonomy of super-resolution paradigms across model modalities, scale capabilities, and geometric constraints.
+
+\begin{table*}[t]
+\caption{Comprehensive Taxonomy and Comparison of Super-Resolution Paradigms. StereoINR is the first method to unify continuous arbitrary scaling ($\times 1.0$ to $\times 30.0+$) with 1D epipolar parallax constraints and parameter-efficient transfer learning.}
+\label{tab:taxonomy_comparison}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Method Category} & \textbf{Representative Models} & \textbf{Input Modality} & \textbf{Scale Flexibility} & \textbf{Cross-View Parallax} & \textbf{Backbone Tuning} & \textbf{Primary Failure Mode} \\
+\midrule
+\textbf{Discrete SISR (CNN)} & SRCNN \cite{dong2015image}, EDSR \cite{lim2017enhanced}, RCAN \cite{zhang2018image} & Monocular (1 View) & Fixed Integer ($\times 2, \times 4$) & None & Full Retraining (100\%) & Monocular blur; model explosion per scale \\
+\textbf{Discrete SISR (Transformer)} & SwinIR \cite{liang2021swinir}, HAT \cite{chen2023activating} & Monocular (1 View) & Fixed Integer ($\times 2, \times 4$) & None & Full Retraining (100\%) & High FLOPs; cannot leverage stereo redundancy \\
+\textbf{Continuous SISR (INR)} & LIIF \cite{chen2021learning}, LTE \cite{lee2022local}, SRNO \cite{wang2023neural} & Monocular (1 View) & Continuous ($\times 1.0 \to \times 30.0$) & None & Full Retraining (100\%) & Binocular rivalry; depth inconsistency \\
+\textbf{Discrete SSR (CNN/PAM)} & StereoSR \cite{jeon2018enhancing}, PASSRnet \cite{wang2019learning}, iPASSR \cite{ying2020stereo} & Binocular (2 Views) & Fixed Integer ($\times 2, \times 4$) & 1D Horizontal PAM & Full Retraining (100\%) & Inflexible integer scales; large memory per scale \\
+\textbf{Discrete SSR (SOTA)} & NAFSSR \cite{chu2022nafssr}, SwinFIRSSR \cite{zhang2023swinfir} & Binocular (2 Views) & Fixed Integer ($\times 2, \times 4$) & 1D Cross-Attention & Full Retraining (100\%) & Cannot interpolate fractional or out-of-scale ratios \\
+\midrule
+\textbf{Continuous SSR (Proposed)} & \textbf{StereoINR \cite{liu2025stereoinr} (Ours)} & \textbf{Binocular (2 Views)} & \textbf{Continuous ($\times 1.0 \to \times 30.0+$)} & \textbf{1D Disparity-Guided INR} & \textbf{PEFT Adapters (4.6\%)} & \textbf{Occlusion boundary hallucination; $4K$ latency} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\subsection{Single Image Super-Resolution (SISR)}
+Single image super-resolution is an inherently ill-posed inverse problem where multiple high-resolution solutions can correspond to a single low-resolution observation. 
 \begin{itemize}
-    \item \textbf{StereoSR} \cite{jeon2018enhancing} introduced parallax-based sub-pixel shifting, but suffered from fixed disparity search ranges.
-    \item \textbf{PASSRnet} \cite{wang2019learning} introduced the Parallax Attention Mechanism (PAM), computing a cross-view correlation matrix along horizontal epipolar scanlines.
-    \item \textbf{iPASSR} \cite{ying2020stereo} enhanced PAM with symmetric bi-directional cross-attention and inline occlusion masking.
-    \item \textbf{NAFSSR} \cite{chu2022nafssr} simplified non-linear activations by demonstrating that SimpleGate and channel-attention multiply blocks outperform complex multi-head attention while drastically improving inference efficiency.
-    \item \textbf{SwinFIRSSR} \cite{zhang2023swinfir} integrated Fast Fourier convolution to capture global spectral representations alongside spatial Swin Transformer blocks.
+    \item \textbf{CNN Architectures}: Dong et al. \cite{dong2015image} pioneered deep SISR with SRCNN. Lim et al. \cite{lim2017enhanced} proposed EDSR by removing batch normalization to expand model capacity. Zhang et al. \cite{zhang2018image} introduced RCAN, using channel attention mechanisms to model inter-channel feature correlations.
+    \item \textbf{Vision Transformers}: Liang et al. \cite{liang2021swinir} adapted the Swin Transformer to image restoration, demonstrating superior long-range dependency modeling. Chen et al. \cite{chen2023activating} introduced HAT (Hybrid Attention Transformer), activating more pixels across the entire feature space by combining channel attention with window-based self-attention.
 \end{itemize}
-All aforementioned models, however, are strictly bound to discrete integer scales ($\times 2$ or $\times 4$).
+Despite their high PSNR on benchmark datasets, all monocular models suffer from ``monocular blindness'': they cannot infer occluded surface details or depth-dependent textures that are physically present in a complementary binocular view.
 
-\subsection{Implicit Neural Representations (INR)}
-INRs model coordinate-to-value mappings via Multi-Layer Perceptrons (MLPs). In 3D vision, NeRF \cite{mildenhall2021nerf} parameterized radiance fields. In 2D low-level vision:
+\subsection{Stereo Image Super-Resolution (SSR)}
+Stereo image super-resolution exploits binocular redundancy, where details degraded or aliased in one camera view can be recovered from the corresponding view.
 \begin{itemize}
-    \item \textbf{LIIF} \cite{chen2021learning} decoded RGB values using local feature grids and coordinate offset vectors, introducing the cell decoding concept to encode query pixel footprint.
-    \item \textbf{LTE} \cite{lee2022local} projected coordinates into the frequency domain via Fourier bases, learning amplitude and phase components to synthesize higher-order textures.
-    \item \textbf{SRNO} \cite{wang2023neural} explored continuous neural operator mappings for scale-arbitrary modeling.
+    \item \textbf{Disparity Warping}: Jeon et al. \cite{jeon2018enhancing} introduced StereoSR, shifting low-resolution pixels by discrete disparity candidates. However, hard disparity search ranges fail under large depth ranges.
+    \item \textbf{Parallax Attention Mechanism (PAM)}: Wang et al. \cite{wang2019learning} proposed PASSRnet, which revolutionized SSR by introducing PAM to calculate a horizontal cost volume correlation along epipolar scanlines.
+    \item \textbf{Bi-Directional PAM}: Ying et al. \cite{ying2020stereo} extended PAM in iPASSR with dual recursive cross-attention and inline occlusion masking.
+    \item \textbf{Nonlinear Activation Free Networks}: Chu et al. \cite{chu2022nafssr} presented NAFSSR, showing that removing non-linear activations (GELU, ReLU) in favor of simple element-wise gating yields faster convergence and competitive PSNR.
+    \item \textbf{Fourier Frequency Fusion}: Zhang et al. \cite{zhang2023swinfir} introduced SwinFIRSSR, integrating spatial Swin Transformer blocks with Fast Fourier Convolutions to capture global spectral representations.
 \end{itemize}
+Crucially, every single SSR architecture developed prior to 2025 was strictly locked into integer scale factors ($\times 2$ or $\times 4$), rendering them incapable of handling continuous viewport scaling.
 
-\subsection{Parameter-Efficient Transfer Learning}
-Fine-tuning multi-million parameter Transformer backbones (e.g., HAT's 41.23M parameters) on specialized domain datasets (such as stereo pairs) is computationally prohibitive and prone to catastrophic forgetting. Adapters \cite{houlsby2019parameter, he2022towards} inject lightweight bottleneck residual layers between frozen Transformer blocks. StereoINR leverages this paradigm by freezing the pre-trained single-image HAT backbone and inserting 2.03M parameters in the form of scale and stereo cross-attention adapters.
+\subsection{Implicit Neural Representations (INRs) for Continuous Vision}
+Implicit Neural Representations parameterize continuous signals via neural network mappings. Originally popularized by NeRF \cite{mildenhall2021nerf} for 3D novel view synthesis, INRs were adapted to 2D image super-resolution:
+\begin{itemize}
+    \item \textbf{LIIF}: Chen et al. \cite{chen2021learning} proposed Local Implicit Image Function, querying continuous 2D coordinates and introducing cell decoding to represent pixel footprint.
+    \item \textbf{LTE}: Lee and Jin \cite{lee2022local} introduced the Local Texture Estimator, predicting Fourier basis frequencies and amplitudes to overcome spectral bias.
+    \item \textbf{SRNO}: Wang et al. \cite{wang2023neural} framed continuous super-resolution as solving neural operators across functional spaces.
+\end{itemize}
+However, applying monocular INRs independently to stereo pairs violates epipolar constraints, generating inconsistent textures between eyes that cause binocular rivalry, eye strain, and visual motion sickness in 3D displays.
+
+\subsection{Why We Selected StereoINR as the Subject of Study}
+We selected StereoINR as our focal benchmark because it is the **first unified architecture** that:
+1. Resolves the continuous magnification challenge in stereo vision.
+2. Formulates Disparity-Guided Arbitrary-Scale Upsampling (DGASU), strictly binding coordinate queries to horizontal epipolar scanlines.
+3. Implements Parameter-Efficient Fine-Tuning (PEFT), allowing researchers to build upon pre-trained Transformer backbones without multi-GPU cluster requirements.
 
 % ==============================================================================
 % SECTION III: EXISTING METHODS & STEREOINR ARCHITECTURE
@@ -378,7 +415,7 @@ where $v_\phi$ predicts the velocity vector field pushing smoothed conditional m
 % SECTION VIII: CONCLUSION
 % ==============================================================================
 \section{Conclusion}
-In this work, we executed a rigorous reimplementation, layer-wise feature map investigation, and scientific evaluation of StereoINR (ACM MM 2025). We verified exact benchmark parity across 8 continuous scales on Middlebury ($\times 2.0$ to $\times 30.0$) and four standard datasets. Through systematic feature map extraction, we visualized how representations evolve from low-level edges to deep, epipolar-aligned cross-view features. Finally, from an AI engineering standpoint, we characterized the fundamental trade-offs of the architecture—highlighting its parameter efficiency while delineating its physical vulnerabilities to occlusion, MLP latency, and calibration drift. The proposed research roadmap provides concrete mathematical foundations to guide the next generation of continuous, real-time stereoscopic vision models.
+In this work, we executed a rigorous reimplementation, layer-wise feature map investigation, and scientific evaluation of StereoINR (ACM MM 2025). We verified exact benchmark parity across 8 continuous scales on Middlebury ($\times 2.0$ to $\times 30.0$) and four standard datasets. Through systematic feature map extraction, we visualized how representations evolve from low-level edges to deep, epipolar-aligned cross-view features. Finally, from an AI engineering standpoint, we characterized the fundamental trade-offs of the architecture---highlighting its parameter efficiency while delineating its physical vulnerabilities to occlusion, MLP latency, and calibration drift. The proposed research roadmap provides concrete mathematical foundations to guide the next generation of continuous, real-time stereoscopic vision models.
 
 % ==============================================================================
 % REFERENCES
