@@ -29,7 +29,6 @@
 \renewcommand{\textfraction}{0.05}
 \renewcommand{\floatpagefraction}{0.80}
 \renewcommand{\dbltopfraction}{0.95}
-\renewcommand{\dblbotfraction}{0.95}
 \renewcommand{\dblfloatpagefraction}{0.80}
 
 \hypersetup{
@@ -276,13 +275,13 @@ where $\lambda_{\text{edge}} = 0.1$ penalizes blurred edge transitions.
 \begin{figure*}[!t]
 \centering
 \IfFileExists{StereoINR_Feature_Maps_All_Stages.png}{%
-    \includegraphics[width=0.98\linewidth]{StereoINR_Feature_Maps_All_Stages.png}%
+    \includegraphics[height=0.42\textheight, width=0.72\linewidth, keepaspectratio]{StereoINR_Feature_Maps_All_Stages.png}%
 }{%
     \begin{tikzpicture}
-        \draw[dashed, draw=gray, fill=gray!5, rounded corners=6pt] (0, 0) rectangle (16, 6);
-        \node at (8, 3.5) {\Large \textbf{[Figure: Layer-Wise Feature Map Progression Across 7 Network Stages]}};
-        \node at (8, 2.7) {\small Column 1: Mean Channel Activation (Viridis) \quad|\quad Column 2: Max Salient Edge Channel (Inferno) \quad|\quad Column 3: PCA 3-Component RGB Projection};
-        \node at (8, 1.8) {\footnotesize \textit{Note: Upload `StereoINR\_Feature\_Maps\_All\_Stages.png' to your Overleaf project to view the full resolution renders.}};
+        \draw[dashed, draw=gray, fill=gray!5, rounded corners=6pt] (0, 0) rectangle (16, 4.2);
+        \node at (8, 2.5) {\Large \textbf{[Figure: Layer-Wise Feature Map Progression Across 7 Network Stages]}};
+        \node at (8, 1.8) {\small Column 1: Mean Channel Activation (Viridis) \quad|\quad Column 2: Max Salient Edge Channel (Inferno) \quad|\quad Column 3: PCA 3-Component RGB Projection};
+        \node at (8, 1.0) {\footnotesize \textit{Note: Upload `StereoINR\_Feature\_Maps\_All\_Stages.png' to your Overleaf project to view the full resolution renders.}};
     \end{tikzpicture}
 }
 \caption{Layer-wise feature map extraction across 7 representative stages of StereoINR. Column 1: Mean Channel Activation. Column 2: Maximum Salient Edge Channel. Column 3: Principal Component Analysis (PCA) 3-component projection into RGB space, illustrating textural and semantic disentanglement across network depth.}
@@ -308,7 +307,7 @@ Within the first Residual Hybrid Attention Group, window-based self-attention sh
 \subsubsection{Stages 4 and 8: Mid-to-Deep RHAG (rhag\_stage\_4, rhag\_stage\_8)}
 As feature maps progress through middle stages, the receptive field expands through overlapping cross-attention (OCA). The PCA projection reveals semantic region grouping: foreground objects, background planes, and repetitive textures cluster into distinct chromatic representations.
 
-\subsubsection{Stage 12: Deep Cross-View Aligned RHAG (rhag\_stage\_12)}
+\subsubsection{Stage 12: Deep Cross-View RHAG (rhag\_stage\_12)}
 In the final attention group, the Stereo Adapter actively exchanges information between left and right views. The activations become highly focused on parallax-displaced features, aligning complementary textures along horizontal epipolar trajectories.
 
 \subsubsection{Stages 13 and 14: Residual Aggregation and Pre-Upsampling}
@@ -322,13 +321,13 @@ In the final attention group, the Stereo Adapter actively exchanges information 
 \begin{figure*}[!b]
 \centering
 \IfFileExists{StereoINR_Comparison_Composite.png}{%
-    \includegraphics[width=0.95\linewidth]{StereoINR_Comparison_Composite.png}%
+    \includegraphics[width=0.90\linewidth, height=0.28\textheight, keepaspectratio]{StereoINR_Comparison_Composite.png}%
 }{%
     \begin{tikzpicture}
-        \draw[dashed, draw=gray, fill=gray!5, rounded corners=6pt] (0, 0) rectangle (16, 4.5);
-        \node at (8, 2.7) {\Large \textbf{[Figure: Qualitative Super-Resolution Comparison on Flickr1024 at Continuous Scale x2.0]}};
-        \node at (8, 2.0) {\small Bicubic Baseline: 18.67 dB \quad vs. \quad StereoINR Model: 25.27 dB (\textbf{+6.60 dB PSNR Gain})};
-        \node at (8, 1.3) {\footnotesize \textit{Note: Upload `StereoINR\_Comparison\_Composite.png' to your Overleaf project to view the full resolution renders.}};
+        \draw[dashed, draw=gray, fill=gray!5, rounded corners=6pt] (0, 0) rectangle (16, 3.8);
+        \node at (8, 2.3) {\Large \textbf{[Figure: Qualitative Super-Resolution Comparison on Flickr1024 at Continuous Scale x2.0]}};
+        \node at (8, 1.6) {\small Bicubic Baseline: 18.67 dB \quad vs. \quad StereoINR Model: 25.27 dB (\textbf{+6.60 dB PSNR Gain})};
+        \node at (8, 0.9) {\footnotesize \textit{Note: Upload `StereoINR\_Comparison\_Composite.png' to your Overleaf project to view the full resolution renders.}};
     \end{tikzpicture}
 }
 \caption{Qualitative super-resolution visual comparison on Flickr1024 test pair at continuous $\times 2.0$ scale. StereoINR (\textbf{25.27 dB}) achieves a \textbf{+6.60 dB PSNR gain} over the Bicubic baseline (\textbf{18.67 dB}), drastically eliminating edge blur and reducing residual reconstruction error.}
@@ -370,6 +369,7 @@ Table~\ref{tab:table2_results} reports in-scale comparisons ($\times 2.0, \times
 \caption{In-Scale Quantitative Comparison (PSNR [dB] / SSIM) on Standard SSR Benchmarks at $\times 2.0$ and $\times 4.0$.}
 \label{tab:table2_results}
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccccc}
 \toprule
 \textbf{Method} & \textbf{Tuned Params} & \multicolumn{2}{c}{\textbf{Middlebury}} & \multicolumn{2}{c}{\textbf{KITTI 2012}} & \multicolumn{2}{c}{\textbf{Flickr1024}} \\
@@ -386,7 +386,8 @@ SwinFIRSSR \cite{zhang2023swinfir} & 23.94M & \textbf{36.52 / 0.9598} & 30.25 / 
 \textbf{StereoINR (Paper)} & \textbf{2.03M} & 36.43 / 0.9590 & \textbf{30.47 / 0.8930} & 31.58 / 0.9289 & 27.35 / 0.8460 & 30.02 / 0.9254 & 25.32 / 0.8160 \\
 \textbf{StereoINR (Our Run)} & \textbf{2.03M} & 36.43 / 0.9590 & \textbf{30.47 / 0.8930} & 31.58 / 0.9289 & 27.35 / 0.8460 & 30.02 / 0.9254 & 25.32 / 0.8160 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
 
 \subsection{Table 3: Architectural Ablation Study}
@@ -466,12 +467,15 @@ To resolve the limitations identified above, we formulate four concrete, mathema
 \subsection{Improvement 1: Occlusion-Aware Gated DGASU (O-DGASU)}
 We propose estimating an explicit left-right cycle consistency occlusion confidence map $M_{\text{occ}} \in [0, 1]$:
 \begin{equation}
-M_{\text{occ}}(x) = \exp\left( -\frac{\| x + d_{L \to R}(x) + d_{R \to L}(x + d_{L \to R}(x)) - x \|_2^2}{2 \sigma_{\text{occ}}^2} \right)
+M_{\text{occ}}(x) = \exp\left( -\frac{\| x' + d_{R \to L}(x') - x \|_2^2}{2 \sigma_{\text{occ}}^2} \right)
 \label{eq:occ_gate}
 \end{equation}
-The continuous coordinate query is then re-parameterized via soft gating:
+where $x' = x + d_{L \to R}(x)$. The continuous coordinate query is then re-parameterized via soft gating:
 \begin{equation}
-I_{\text{SR}}(x_q) = M_{\text{occ}}(x_q^*) \cdot f_\theta^{\text{stereo}}(F_L, F_R) + (1 - M_{\text{occ}}(x_q^*)) \cdot f_\theta^{\text{mono}}(F_L)
+\begin{aligned}
+I_{\text{SR}}(x_q) &= M_{\text{occ}}(x_q^*) \cdot f_\theta^{\text{stereo}}(F_L, F_R) \\
+&\quad + (1 - M_{\text{occ}}(x_q^*)) \cdot f_\theta^{\text{mono}}(F_L)
+\end{aligned}
 \label{eq:gated_decoding}
 \end{equation}
 When a pixel is occluded ($M_{\text{occ}} \to 0$), the decoder dynamically decouples from the right view, falling back to pure monocular INR synthesis and completely eliminating boundary hallucination.
