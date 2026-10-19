@@ -23,11 +23,13 @@
 \setcounter{bottomnumber}{5}
 \setcounter{totalnumber}{10}
 \setcounter{dbltopnumber}{5}
+\setcounter{dblbotnumber}{5}
 \renewcommand{\topfraction}{0.95}
 \renewcommand{\bottomfraction}{0.95}
 \renewcommand{\textfraction}{0.05}
 \renewcommand{\floatpagefraction}{0.80}
 \renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\dblbotfraction}{0.95}
 \renewcommand{\dblfloatpagefraction}{0.80}
 
 \hypersetup{
@@ -339,7 +341,7 @@ All experiments were executed on Dual NVIDIA Tesla T4 GPUs (16GB VRAM each). The
 \subsection{Table 1: Arbitrary Continuous Out-of-Scale SSR}
 Table~\ref{tab:table1_results} summarizes continuous out-of-scale performance on Middlebury across 8 scales. Our live implementation achieves \textbf{exact bit-for-bit parity (0.00 dB delta)} with the paper's published ground truth.
 
-\begin{table}[h]
+\begin{table}[!t]
 \caption{Continuous Out-of-Scale SSR on Middlebury (PSNR [dB] / LPIPS). Bold indicates best performance.}
 \label{tab:table1_results}
 \centering
@@ -390,7 +392,7 @@ SwinFIRSSR \cite{zhang2023swinfir} & 23.94M & \textbf{36.52 / 0.9598} & 30.25 / 
 \subsection{Table 3: Architectural Ablation Study}
 To quantify the contribution of each design component, Table~\ref{tab:ablation_results} presents an ablation study isolating the feature backbone, stereo cross-attention, cell decoding footprint, and harmonic positional encodings.
 
-\begin{table}[h]
+\begin{table}[!b]
 \caption{Ablation Study of Architectural Components on Middlebury.}
 \label{tab:ablation_results}
 \centering
