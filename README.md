@@ -71,57 +71,61 @@ The overall architecture combines a pre-trained single-image Hybrid Attention Tr
 ```mermaid
 flowchart TD
     subgraph Inputs["1. Dual Binocular Input"]
-        IL["Left Image: I_L<br/>(B, 3, H, W)"]
-        IR["Right Image: I_R<br/>(B, 3, H, W)"]
+        IL["Left Image: I_L<br/><code>[B, 3, H, W]</code>"]
+        IR["Right Image: I_R<br/><code>[B, 3, H, W]</code>"]
     end
 
     subgraph Shallow["2. Shallow Feature Extractor"]
-        Concat["Channel Concatenation<br/>(B, 6, H, W)"]
-        ConvFirst["Conv2d 3x3<br/>(B, 180, H, W)"]
-        IL & IR --> Concat --> ConvFirst
+        ConvFirst["Conv2d 3x3 Projection<br/><code>[B, 180, H, W]</code>"]
+        IL & IR --> ConvFirst
     end
 
-    subgraph Backbone["3. Deep Feature Extraction (12 RHAG Stages - 41.23M Frozen)"]
-        RHAG1["RHAG 1-3<br/>Local Edge Primitives"]
-        RHAG4["RHAG 4-7<br/>Mid-Level Textures"]
-        RHAG8["RHAG 8-11<br/>Semantic Clustering"]
-        RHAG12["RHAG 12<br/>Deep Stereo Correlation"]
-        ConvFirst --> RHAG1 --> RHAG4 --> RHAG8 --> RHAG12
+    subgraph PEFT_Module["3. PEFT Hybrid Attention Transformer (HAT)"]
+        direction TB
+        subgraph Backbone["Frozen HAT Backbone (41.23M Parameters)"]
+            RHAG_Early["RHAG 1-3: Local Edge Primitives"]
+            RHAG_Mid["RHAG 4-8: Semantic Textures"]
+            RHAG_Deep["RHAG 9-12: Parallax Alignment"]
+            RHAG_Early --> RHAG_Mid --> RHAG_Deep
+        end
+
+        subgraph Adapters["Trainable Adapters (2.03M Parameters)"]
+            ScaleAd["Scale Conditioning Adapters"]
+            StereoAd["1D Parallax Cross-Attention Adapters"]
+        end
+
+        ScaleAd -.->|Scale Tokens| Backbone
+        StereoAd <-->|1D Epipolar Parallax| RHAG_Deep
     end
 
-    subgraph Adapters["4. Trainable PEFT Adapters (2.03M Parameters)"]
-        ScaleAd["Scale Adapters<br/>(Scale Conditioning)"]
-        StereoAd["Stereo Cross-Attention Adapters<br/>(Horizontal Scanline Matching)"]
-        ScaleAd -.-> RHAG1 & RHAG4 & RHAG8 & RHAG12
-        StereoAd -.-> RHAG1 & RHAG4 & RHAG8 & RHAG12
-    end
-
-    subgraph DGASU["5. DGASU & Continuous Coordinate Query Engine"]
-        PostConv["Conv After Body<br/>+ Skip Connection"]
-        PreUpsample["Conv Before Upsample<br/>(B, 64, H, W)"]
-        CoordInput["Continuous Query: x_q in [-1, 1]²<br/>Cell Size: c_q = (2/W_out, 2/H_out)<br/>Harmonic Encoding: γ(x_q) in R¹⁶²"]
-        INRDecoder["MLP Coordinate Decoder<br/>f_θ(F_L, F_R, x_q - x_q*, c_q, γ(x_q))"]
-        
-        RHAG12 --> PostConv --> PreUpsample --> INRDecoder
+    subgraph DGASU["4. DGASU & Continuous Coordinate Query Engine"]
+        direction TB
+        CoordInput["Continuous Query: x_q in [-1, 1]²<br/>Cell Size: c_q = (2/W_out, 2/H_out)<br/>40-Octave Harmonic: γ(x_q) in R¹⁶²"]
+        INRDecoder["MLP Coordinate Decoder f_θ<br/>Disparity-Guided Coordinate Synthesis"]
         CoordInput --> INRDecoder
     end
 
-    subgraph Output["6. Arbitrary Super-Resolved Output"]
-        ISR["High-Resolution Stereo Pair<br/>(I_SR^L, I_SR^R) at Arbitrary Scale (H_out, W_out)"]
-        INRDecoder --> ISR
+    subgraph Output["5. Arbitrary Super-Resolved Output"]
+        ISR["High-Resolution Stereo Pair<br/>(I_SR^L, I_SR^R) at Arbitrary Target (H_out, W_out)"]
     end
 
-    classDef input fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    classDef backbone fill:#ede7f6,stroke:#512da8,stroke-width:2px;
-    classDef adapter fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
-    classDef inr fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    classDef out fill:#fce4ec,stroke:#c2185b,stroke-width:2px;
+    ConvFirst --> Backbone
+    Backbone -->|Latents F_L, F_R| INRDecoder
+    INRDecoder --> ISR
 
-    class IL,IR,Concat input;
-    class ConvFirst,RHAG1,RHAG4,RHAG8,RHAG12 backbone;
-    class ScaleAd,StereoAd adapter;
-    class PostConv,PreUpsample,CoordInput,INRDecoder inr;
-    class ISR out;
+    classDef inputStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef convStyle fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+    classDef backboneStyle fill:#1e1b4b,stroke:#a855f7,stroke-width:2px,color:#ffffff;
+    classDef adapterStyle fill:#431407,stroke:#f97316,stroke-width:2px,color:#ffffff;
+    classDef inrStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ffffff;
+    classDef outStyle fill:#831843,stroke:#ec4899,stroke-width:2px,color:#ffffff;
+
+    class IL,IR inputStyle;
+    class ConvFirst convStyle;
+    class RHAG_Early,RHAG_Mid,RHAG_Deep backboneStyle;
+    class ScaleAd,StereoAd adapterStyle;
+    class CoordInput,INRDecoder inrStyle;
+    class ISR outStyle;
 ```
 
 ---
@@ -132,23 +136,23 @@ StereoINR samples continuous query coordinates $x_q$, aligns horizontal disparit
 
 ```mermaid
 flowchart LR
-    subgraph Coordinates["Query Coordinates & Scale"]
-        XQ["Continuous Coord<br/>x_q = (u, v) in [-1, 1]²"]
-        CQ["Cell Footprint<br/>c_q = (2/W_out, 2/H_out)"]
-        Gamma["40-Octave Pos Enc<br/>γ(x_q) in R¹⁶²"]
+    subgraph Coordinates["Query Coordinates & Scale Footprint"]
+        XQ["Continuous Coordinates<br/>x_q = (u, v) in [-1, 1]²"]
+        CQ["Continuous Cell Footprint<br/>c_q = (2/W_out, 2/H_out)"]
+        Gamma["40-Octave Harmonic Embedding<br/>γ(x_q) in R¹⁶²"]
     end
 
     subgraph Latents["Latent Feature Space"]
-        FL["Left Feature Grid: F_L"]
-        FR["Right Feature Grid: F_R"]
-        Disp["Estimated Disparity<br/>d* along Scanline"]
+        FL["Left Feature Grid F_L"]
+        FR["Right Feature Grid F_R"]
+        Disp["Estimated Horizontal Disparity<br/>d* = [d_x, 0]^T along Scanline"]
     end
 
-    subgraph Synthesis["Coordinate Decoding"]
-        Offset["Sub-pixel Offset<br/>x_q - x_q*"]
-        ConcatFeat["Feature Fusion:<br/>[F_L(x_q*), F_R(x_q* + d*), offset, c_q, γ(x_q)]"]
+    subgraph Synthesis["Continuous Coordinate Decoding"]
+        Offset["Continuous Sub-Pixel Offset<br/>x_q - x_q*"]
+        ConcatFeat["Feature Fusion Tensor<br/>[F_L(x_q*), F_R(x_q* + d*), offset, c_q, γ(x_q)]"]
         MLP["Multi-Layer Perceptron<br/>Decoder f_θ"]
-        RGB["Continuous RGB Radiance<br/>I_SR(x_q)"]
+        RGB["Continuous Super-Resolved Radiance<br/>I_SR(x_q) in R³"]
     end
 
     XQ --> Offset
@@ -157,13 +161,13 @@ flowchart LR
     Offset & CQ & Gamma --> ConcatFeat
     ConcatFeat --> MLP --> RGB
 
-    classDef coord fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
-    classDef latent fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
-    classDef synth fill:#e8f8f5,stroke:#00897b,stroke-width:2px;
+    classDef coordStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef latentStyle fill:#1e1b4b,stroke:#a855f7,stroke-width:2px,color:#ffffff;
+    classDef synthStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ffffff;
 
-    class XQ,CQ,Gamma coord;
-    class FL,FR,Disp latent;
-    class Offset,ConcatFeat,MLP,RGB synth;
+    class XQ,CQ,Gamma coordStyle;
+    class FL,FR,Disp latentStyle;
+    class Offset,ConcatFeat,MLP,RGB synthStyle;
 ```
 
 ---
@@ -213,12 +217,12 @@ $$x_q = \left( \frac{2u}{W_{\text{out}}} - 1, \, \frac{2v}{H_{\text{out}}} - 1 \
 
 The continuous super-resolved RGB radiance is formulated as:
 
-$$I_{\text{SR}}(x_q) = f_\theta\left( F_L(x_q^*), \, F_R(x_q^* + d^*), \, x_q - x_q^*, \, c_q, \, \gamma(x_q) \right)$$
+$$I_{\text{SR}}(x_q) = f_\theta\left( F_L({x_q}^*), \, F_R({x_q}^* + d^*), \, x_q - {x_q}^*, \, c_q, \, \gamma(x_q) \right)$$
 
 where:
-* $x_q^*$ is the nearest latent grid coordinate in left feature space $F_L$.
+* ${x_q}^*$ is the nearest latent grid coordinate in left feature space $F_L$.
 * $d^* = [d_x, 0]^T$ is the estimated horizontal disparity vector along the epipolar scanline.
-* $x_q - x_q^*$ represents the 2D continuous sub-pixel coordinate offset vector.
+* $x_q - {x_q}^*$ represents the 2D continuous sub-pixel coordinate offset vector.
 * $c_q$ conditions the local receptive field size to eliminate aliasing at extreme scale factors.
 * $\gamma(x_q)$ represents the Multi-Frequency Fourier Positional Encoding.
 
@@ -227,7 +231,7 @@ where:
 ### 2. Multi-Frequency Fourier Positional Encoding
 Standard coordinate MLPs suffer from spectral bias, struggling to reconstruct high frequencies without harmonic projection. Coordinates are embedded across 40 octaves ($k \in [0, 39]$):
 
-$$\gamma(x_q) = \left[ x_q, \, \left\{ \sin\left(\frac{2^k \pi x_q}{10}\right), \, \cos\left(\frac{2^k \pi x_q}{10}\right) \right\}_{k=0}^{39} \right] \in \mathbb{R}^{162}$$
+$$\gamma(x_q) = \left[ x_q, \, \Big\{ \sin\left(\frac{2^k \pi x_q}{10}\right), \, \cos\left(\frac{2^k \pi x_q}{10}\right) \Big\}_{k=0}^{39} \right] \in \mathbb{R}^{162}$$
 
 ---
 

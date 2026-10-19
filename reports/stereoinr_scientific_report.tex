@@ -225,14 +225,14 @@ x_q = \left( \frac{2u}{W_{\text{out}}} - 1, \, \frac{2v}{H_{\text{out}}} - 1 \ri
 
 For any query point $x_q$, the continuous super-resolved RGB radiance is formulated as:
 \begin{equation}
-I_{\text{SR}}(x_q) = f_\theta\left( F_L(x_q^*), \, F_R(x_q^* + d^*), \, x_q - x_q^*, \, c_q, \, \gamma(x_q) \right)
+I_{\text{SR}}(x_q) = f_\theta\left( F_L({x_q}^*), \, F_R({x_q}^* + d^*), \, x_q - {x_q}^*, \, c_q, \, \gamma(x_q) \right)
 \label{eq:stereoinr_decoding}
 \end{equation}
 where:
 \begin{itemize}
-    \item $x_q^*$ is the nearest latent feature coordinate in left feature space $F_L$.
+    \item ${x_q}^*$ is the nearest latent feature coordinate in left feature space $F_L$.
     \item $d^* = [d_x, 0]^T$ is the horizontal epipolar disparity vector.
-    \item $x_q - x_q^*$ represents the 2D continuous sub-pixel coordinate offset vector.
+    \item $x_q - {x_q}^*$ represents the 2D continuous sub-pixel coordinate offset vector.
     \item $c_q$ conditions the local receptive field size to eliminate aliasing at extreme scale factors.
     \item $\gamma(x_q)$ represents the Multi-Frequency Fourier Positional Encoding.
 \end{itemize}
@@ -240,7 +240,7 @@ where:
 \subsection{Multi-Frequency Fourier Positional Encoding}
 To overcome spectral bias, continuous coordinates are mapped across 40 harmonic octaves ($k \in [0, 39]$):
 \begin{equation}
-\gamma(x_q) = \left[ x_q, \, \left\{ \sin\left(\frac{2^k \pi x_q}{10}\right), \, \cos\left(\frac{2^k \pi x_q}{10}\right) \right\}_{k=0}^{39} \right] \in \mathbb{R}^{162}
+\gamma(x_q) = \left[ x_q, \, \Big\{ \sin\left(\frac{2^k \pi x_q}{10}\right), \, \cos\left(\frac{2^k \pi x_q}{10}\right) \Big\}_{k=0}^{39} \right] \in \mathbb{R}^{162}
 \label{eq:fourier_pos_enc}
 \end{equation}
 
