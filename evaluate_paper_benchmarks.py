@@ -87,11 +87,21 @@ def build_stereoinr_model():
     return StereoINR(**kwargs)
 
 
-def calculate_psnr(img1, img2, crop_border=4):
-    """PSNR matching paper evaluation protocol."""
-    if crop_border > 0:
+def calculate_psnr(img1, img2, crop_border=4, test_y_channel=True):
+    """
+    PSNR calculation matching official paper evaluation protocol.
+    When test_y_channel=True, evaluates on luminance (Y) channel of YCbCr
+    following ITU-R BT.601 (standard across NAFSSR, HAT, BasicSR, and StereoINR).
+    """
+    if crop_border > 0 and img1.shape[-2] > 2 * crop_border and img1.shape[-1] > 2 * crop_border:
         img1 = img1[:, :, crop_border:-crop_border, crop_border:-crop_border]
         img2 = img2[:, :, crop_border:-crop_border, crop_border:-crop_border]
+
+    if test_y_channel:
+        weight = torch.tensor([65.481, 128.553, 24.966], device=img1.device).view(1, 3, 1, 1) / 255.0
+        img1 = (img1 * weight).sum(dim=1, keepdim=True) + 16.0 / 255.0
+        img2 = (img2 * weight).sum(dim=1, keepdim=True) + 16.0 / 255.0
+
     mse = F.mse_loss(img1, img2).item()
     if mse == 0:
         return 100.0
@@ -106,39 +116,50 @@ def evaluate_table1(model, device, test_dir="datasets/StereoSR/test/Middlebury/h
     print(f"    Device: {device}")
     print("=" * 80)
 
-    pair_dirs = sorted(glob.glob(os.path.join(test_dir, "*")))
-    if not pair_dirs:
-        print(f"[Warning] No pairs found in {test_dir}. Checking fallback demo...")
-        pair_dirs = [os.path.join(root_dir, "demo")]
+    # Support both flat folders (demo/0001_L.png) and nested scene folders
+    left_files = sorted(glob.glob(os.path.join(test_dir, "**", "*_L.png"), recursive=True) +
+                        glob.glob(os.path.join(test_dir, "**", "*0.png"), recursive=True) +
+                        glob.glob(os.path.join(test_dir, "*_L.png")) +
+                        glob.glob(os.path.join(test_dir, "*0.png")))
+    # Deduplicate while preserving order
+    left_files = list(dict.fromkeys(left_files))
+    if not left_files:
+        fallback_demo = os.path.join(root_dir, "demo")
+        print(f"[Warning] No pairs found in {test_dir}. Checking fallback demo ({fallback_demo})...")
+        left_files = sorted(glob.glob(os.path.join(fallback_demo, "*_L.png")))
 
-    print(f"Found {len(pair_dirs)} test scene folders.")
+    print(f"Found {len(left_files)} test pair(s).")
 
     for s in scales:
-        psnr_list = []
+        psnr_y_list = []
+        psnr_rgb_list = []
         t0 = time.time()
-        for p_dir in pair_dirs[:5]:
-            l_paths = glob.glob(os.path.join(p_dir, "*0.png")) + glob.glob(os.path.join(p_dir, "*_L.png"))
-            r_paths = glob.glob(os.path.join(p_dir, "*1.png")) + glob.glob(os.path.join(p_dir, "*_R.png"))
-            if not l_paths or not r_paths:
+        for l_path in left_files[:5]:
+            r_path = l_path.replace('_L.png', '_R.png').replace('0.png', '1.png') if '_L.png' in l_path or '0.png' in l_path else None
+            if not r_path or not os.path.exists(r_path):
                 continue
 
-            l_img = Image.open(l_paths[0]).convert("RGB")
-            r_img = Image.open(r_paths[0]).convert("RGB")
+            l_img = Image.open(l_path).convert("RGB")
+            r_img = Image.open(r_path).convert("RGB")
             W, H = l_img.size
-            crop_w, crop_h = min(256, W), min(128, H)
-            l_crop = l_img.crop((0, 0, crop_w, crop_h))
-            r_crop = r_img.crop((0, 0, crop_w, crop_h))
+            ws = 16
+            lr_w = max(ws, int(256 / s // ws) * ws)
+            lr_h = max(ws, int(128 / s // ws) * ws)
+            hr_w = int(round(lr_w * s))
+            hr_h = int(round(lr_h * s))
 
-            lr_w = max(16, int(crop_w / s))
-            lr_h = max(16, int(crop_h / s))
+            l_crop = l_img.crop((0, 0, hr_w, hr_h))
+            r_crop = r_img.crop((0, 0, hr_w, hr_h))
+
             l_lr = l_crop.resize((lr_w, lr_h), Image.BICUBIC)
             r_lr = r_crop.resize((lr_w, lr_h), Image.BICUBIC)
 
             t_l = torch.tensor(np.array(l_lr)).permute(2, 0, 1).unsqueeze(0).float() / 255.0
             t_r = torch.tensor(np.array(r_lr)).permute(2, 0, 1).unsqueeze(0).float() / 255.0
             gt_l = torch.tensor(np.array(l_crop)).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+            gt_r = torch.tensor(np.array(r_crop)).permute(2, 0, 1).unsqueeze(0).float() / 255.0
 
-            t_l, t_r, gt_l = t_l.to(device), t_r.to(device), gt_l.to(device)
+            t_l, t_r, gt_l, gt_r = t_l.to(device), t_r.to(device), gt_l.to(device), gt_r.to(device)
 
             h_lr, w_lr = t_l.shape[-2:]
             h_hr, w_hr = gt_l.shape[-2:]
@@ -148,15 +169,21 @@ def evaluate_table1(model, device, test_dir="datasets/StereoSR/test/Middlebury/h
             cell[:, :, 1] *= 2.0 / w_hr
 
             with torch.no_grad():
-                out = model(t_l, t_r, s, coord, cell)
-                sr_l = out.view(1, h_hr, w_hr, 3).permute(0, 3, 1, 2)
-                p = calculate_psnr(sr_l, gt_l, crop_border=4)
-                psnr_list.append(p)
+                x = torch.cat([t_l, t_r], dim=1)
+                out = model(x, coord, cell)
+                sr_l = out[:, :3]
+                sr_r = out[:, 3:]
+                p_y = (calculate_psnr(sr_l, gt_l, crop_border=4, test_y_channel=True) + calculate_psnr(sr_r, gt_r, crop_border=4, test_y_channel=True)) / 2.0
+                p_rgb = (calculate_psnr(sr_l, gt_l, crop_border=4, test_y_channel=False) + calculate_psnr(sr_r, gt_r, crop_border=4, test_y_channel=False)) / 2.0
+                psnr_y_list.append(p_y)
+                psnr_rgb_list.append(p_rgb)
 
-        mean_p = np.mean(psnr_list) if psnr_list else 0.0
+        mean_y = np.mean(psnr_y_list) if psnr_y_list else 0.0
+        mean_rgb = np.mean(psnr_rgb_list) if psnr_rgb_list else 0.0
         ref_p = TABLE_1_PAPER_GROUND_TRUTH["StereoINR (Paper)"][s][0]
+        delta_p = mean_y - ref_p if mean_y > 0 else 0.0
         dt = time.time() - t0
-        print(f"  Scale x{s:>4.1f}: Live Mean PSNR = {mean_p:5.2f} dB (Paper Reference: {ref_p:5.2f} dB) | {dt:4.2f}s")
+        print(f"  Scale x{s:>4.1f}: Live Y-PSNR = {mean_y:5.2f} dB (Paper Ref: {ref_p:5.2f} dB, Delta: {delta_p:+5.2f} dB | Live RGB: {mean_rgb:5.2f} dB) | {dt:4.2f}s")
 
 
 def print_table2_matrix():
@@ -173,7 +200,8 @@ def print_table2_matrix():
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate StereoINR Paper Benchmarks")
-    parser.add_argument("--checkpoint", type=str, default="experiments/pretrained_models/StereoINR/StereoINR.pth")
+    default_ckpt = "weights/StereoINR.pth" if os.path.exists("weights/StereoINR.pth") else "experiments/pretrained_models/StereoINR/StereoINR.pth"
+    parser.add_argument("--checkpoint", type=str, default=default_ckpt)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--dataset_root", type=str, default="datasets/StereoSR/test/Middlebury/hr")
     args = parser.parse_args()
