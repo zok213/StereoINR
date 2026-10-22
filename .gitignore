@@ -18,6 +18,7 @@ test_cache/
 # Experiment runs, results, and logs
 experiments/
 results/
+demo_results/
 tb_logger/
 vis_outputs/
 weights/
