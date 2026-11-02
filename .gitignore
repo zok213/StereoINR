@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and temporary test data
+.cache/
+test_cache/
+*.log
+*.tmp
+*.zip
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Large dataset raw zips (keep datasets/ structure, ignore raw archives)
+datasets/**/*.zip
+datasets/**/*.tar.gz
+
+# Large legacy files exceeding GitHub 100MB limit
+archive/
+weights/checkpoints/StereoINR_official.pth
+
+# Unity / Sentis temporary meta files if opened in editor
+*.pidb
+*.booproj

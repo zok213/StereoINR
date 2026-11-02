@@ -1,0 +1,112 @@
+# ==============================================================================
+# Meta Quest 3S Video Passthrough Super-Resolution Production Configuration
+# Target Hardware: Qualcomm Snapdragon XR2 Gen 2 (SM8550-VR) / Adreno 740 GPU
+# Display: Single Fast-Switch LCD (3664 x 1920 Side-by-Side, 1832 x 1920 / eye)
+# Optics: Fresnel Lenses, 96° H-FOV, 90° V-FOV, ~20 PPD Native Central Density
+# OS: Meta Horizon OS (Android 12/14 base with restrictive SELinux NPU sandbox)
+# ==============================================================================
+
+system:
+  project_name: "Edge-StereoINR: Texture-Centric Passthrough SR"
+  version: "2.1.0-production"
+  device_target: "Meta Quest 3S"
+  chipset: "Qualcomm Snapdragon XR2 Gen 2"
+  primary_compute_engine: "Adreno 740 GPU (Vulkan Compute / Unity Sentis)"
+  npu_status: "Disabled (SELinux sandbox blocks third-party /dev/fastrpc-*)"
+  thermal_envelope_target_watts: 1.5
+
+optical_specifications:
+  display_panel:
+    panel_type: "Single Fast-Switch LCD"
+    total_resolution_width: 3664
+    total_resolution_height: 1920
+    per_eye_width: 1832
+    per_eye_height: 1920
+    refresh_rate_hz: 90
+    frame_budget_ms: 11.11
+    native_central_ppd: 20.0
+    lens_type: "Fresnel Lens"
+    optical_sweet_spot_radius_deg: 12.0
+    fresnel_ring_diffraction_falloff: 0.18
+
+  camera_sensors:
+    sensor_type: "Dual 4MP VST RGB Sensors (Global Shutter)"
+    native_sensor_resolution: [1280, 720]
+    focal_length_px: 805.5
+    pixel_pitch_um: 2.0
+    optical_center_x: 640.0
+    optical_center_y: 360.0
+
+  interpupillary_distance_ipd:
+    default_ipd_meters: 0.064
+    hardware_slider_positions:
+      pos_1_narrow_mm: 58.0
+      pos_2_medium_mm: 63.0
+      pos_3_wide_mm: 68.0
+
+vergence_disparity_anchoring:
+  nominal_reading_distance_m: 0.35  # Standard smartphone/book reading distance
+  disparity_formula: "d = (focal_length_px * ipd_meters) / distance_meters"
+  nominal_shift_d0_px: 147          # (805.5 * 0.064) / 0.35 = 147.29 px
+  residual_search_window_min_px: -8
+  residual_search_window_max_px: 8
+  disparity_hypotheses_count: 17
+  dynamic_ipd_compensation: true
+
+foveation_parameters:
+  patch_crop_width: 128
+  patch_crop_height: 128
+  upscale_factor: 2.0
+  super_resolved_patch_width: 256
+  super_resolved_patch_height: 256
+  effective_foveal_ppd: 40.0
+  foveal_radius_degrees: 12.0
+  blend_margin_pixels: 16
+  feather_falloff_exponent: 1.5
+
+model_architecture:
+  model_name: "TextureStereoPixelNet"
+  parameter_count: 83808            # ~0.084M parameters
+  weight_size_fp16_bytes: 167616    # 163.69 KB (Fits 100% in Adreno 1MB GMEM)
+  internal_feature_channels: 24
+  num_anisotropic_blocks: 3
+  dual_stream_decomposition:
+    wavelet_type: "Haar 2D"
+    low_freq_stream: "Structural Residual Trunk"
+    high_freq_stream: "Horizontal & Vertical Stroke Directional Guidance"
+  synthesis_head: "PixelShuffle (Sub-Pixel Convolution 2x)"
+  pointwise_mlp_queries_per_frame: 0
+
+horizon_os_performance_governor:
+  mode: "DYNAMIC_GAZE_DRIVEN"
+  states:
+    STANDBY_GAMING:
+      ai_active: false
+      cpu_level: "SustainedLow"
+      gpu_level: "SustainedLow"
+      target_power_watts: 0.12
+      duty_cycle_ms: 0.0
+    TEXT_ACQUISITION:
+      ai_active: true
+      cpu_level: "Boost"
+      gpu_level: "Boost"
+      max_burst_duration_seconds: 2.0
+      target_power_watts: 1.45
+      duty_cycle_ms: 1.2
+    SUSTAINED_READING:
+      ai_active: true
+      cpu_level: "SustainedHigh"
+      gpu_level: "SustainedHigh"
+      target_power_watts: 0.38
+      duty_cycle_ms: 1.4
+
+deployment_targets:
+  unity_sentis:
+    backend: "GPUCompute"
+    onnx_fp16_asset: "weights/onnx/texture_stereopixelnet_fp16.onnx"
+    zero_alloc_tensor_reuse: true
+  native_openxr:
+    graphics_api: "Vulkan 1.3"
+    compute_queue: "VK_QUEUE_COMPUTE_BIT"
+    framebuffer_format: "VK_FORMAT_R8G8B8A8_UNORM"
+    descriptor_sets: "Static Ring-Buffered Descriptor Pools"

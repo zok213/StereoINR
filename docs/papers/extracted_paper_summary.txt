@@ -1,0 +1,127 @@
+--- PAGE 1 ---
+arXiv:2505.05509v2  [eess.IV]  5 Jul 2025StereoINR: Cross-View Geometry Consistent Stereo Super
+Resolution with Implicit Neural Representation
+Yi Liu1, Xinyi Liu1, Yi Wan1, Panwang Xia1, Qiong Wu1, Yongjun Zhang1
+1School of Remote Sensing and Information Engineering, Wuhan University, Hubei, China
+SwinFIRSSR
+NAFSSR-L
+Ours
+GT
+Figure 1: Visual results achieved by NAFSSR[8], SwinFIRSSR[45], and our method on the Flickr1024[37] dataset.
+ABSTRACT
+Stereo image super-resolution (SSR) aims to enhance high-resolution
+details by leveraging information from stereo image pairs. How-
+ever, existing stereo super-resolution (SSR) upsampling methods
+(e.g., pixel shuffle) often overlook cross-view geometric consistency
+and are limited to fixed-scale upsampling. The key issue is that
+previous upsampling methods use convolution to independently
+process deep features of different views, lacking cross-view and non-
+local information perception, making it difficult to select beneficial
+information from multi-view scenes adaptively. In this work, we
+propose Stereo Implicit Neural Representation (StereoINR), which
+innovatively models stereo image pairs as continuous implicit rep-
+resentations. This continuous representation breaks through the
+scale limitations, providing a unified solution for arbitrary-scale
+stereo super-resolution reconstruction of left-right views. Further-
+more, by incorporating spatial warping and cross-attention mecha-
+nisms, StereoINR enables effective cross-view information 
+--- PAGE 2 ---
+Conference’17, July 2017, Washington, DC, USAYi Liu1, Xinyi Liu1, Yi Wan1, Panwang Xia1, Qiong Wu1, Yongjun Zhang1
+1School of Remote Sensing and Information Engineering, Wuhan University, Hubei, China
+Pixel shuffle Ours
+Left Right
+DI = 17.82
+DI = 16.65 DI = 19.71DI = 19.46
+Figure 2: Local attribution map (LAM) results achieved by
+different upsampling methods on the Flickr1024 [ 37] dataset.
+The first row shows the super-resolution results for the left
+view, while the second and third rows display the LAM re-
+sults for the left and right views, respectively. Red pixels
+indicate that the pixel participates in the reconstruction of
+the pixels in the green rectangle in the result of the left view.
+DI (Diffusion Index) indicates the range of involved pixels,
+with a higher DI indicating a wider receptive field.
+shuffle method, which integrates local information through convo-
+lution, the advantage of the INR method lies in its ability to incor-
+porate attention mechanisms to capture nonlocal and cross-view
+information. As demonstrated in Figure 2, with INR, our method
+is able to leverage more pixel information from both views to re-
+construct the high-resolution results. Motivated by this, we replace
+the convolution-based upsampling methods with INR to enhance
+the cross-view consistency of stereo super-resolution results. This
+approach not only has the potential to promote geometric consis-
+tency in super-resolved images but also overcomes the limitations
+of fixed-scale methods, of
+--- PAGE 3 ---
+StereoINR: Cross-View Geometry Consistent Stereo Super Resolution with Implicit Neural Representation Conference’17, July 2017, Washington, DC, USA
+LR_L
+LR_R
+SR_L
+SR_R
+DGASU
+HR Coord Shallow ExtractorDeep Extractor
+UpsamplingRHAGStereo 
+AdapterSpatial
+Adapter TunedFrozenConvScale
+Scale
+Adapter
+Figure 3: The overall architecture of proposed method. RHAG is the basic block in HAT[ 5] and is frozen during training. The
+spatial adapter is embedded in the Feed Forward stage of RHAG. The coordinates are randomly sampled from HR image.
+LN
+FC FCLN
+FC FC
+T
+T
+(a) Stereo Adapter (b) Spatial AdapterFC Down
+FC UpGELUScale
+(c) Scale AdapterLNFC
+FC
+Figure 4: The architecture of the adapter. (a) Stereo adapter,
+which uses stereo cross attention to achieve left and right
+view information interaction; (b) Spatial adapter, which mod-
+ulates input features to adapt to stereo super-resolution; (c)
+Scale adapter, which uses scale information to modulate in-
+put features.
+correlation volume of pixels along the epipolar line. Recently, many
+methods [ 8,42,44,45,47] have introduced various cross-attention
+modules that demonstrate strong performance in stereo super-
+resolution. However, these approaches typically restrict cross-view
+information interaction to the deep feature extraction stage, result-
+ing in isolated left and right views during the feature upsampling
+process. To overcome this limitation, we propose a novel upsam-
+pling module that leverages disparity constraints inherent in stereo
+ima
+--- PAGE 4 ---
+Conference’17, July 2017, Washington, DC, USAYi Liu1, Xinyi Liu1, Yi Wan1, Panwang Xia1, Qiong Wu1, Yongjun Zhang1
+1School of Remote Sensing and Information Engineering, Wuhan University, Hubei, China
+MLP
+MLP
+Positional
+encoding
+Concatenate
+Left-view
+dataflow
+Right-view 
+dataflowCoord
+Figure 5: The overall architecture of DGASU. Here, the self-
+attention and cross-attention are both the simple dot-product
+attention.
+𝑚≪𝑑. In the output stage, a second feed-forward sub-layer re-
+stores the original input dimension, projecting 𝑚back to𝑑as the
+final output of the spatial adapter module. As for the scale adapter,
+we adopt a structure similar to the channel attention block, modu-
+lating scale information along the channel dimension, which can
+be formulated as:
+𝑒=MLP(𝑠), (2)
+𝑥𝑜𝑢𝑡=LN(𝑥𝑖𝑛)⊙Sigmoid(MLP(𝑒))+𝑥𝑖𝑛. (3)
+where⊙denotes the element-wise multiplication, MLP denotes the
+MLP projector, LNdenotes LayerNorm, 𝑥𝑖𝑛is the input feature, and
+𝑥𝑜𝑢𝑡is the feature after modulation.
+It is noteworthy that our method differs from ASteISR[ 49] in
+that we aim for making the features extracted by the Encoder uni-
+versally applicable to detail reconstruction at arbitrary scales. To
+accomplish this, we explicitly inject scale-specific information into
+the scale adapter, allowing dynamic parameter modulation that
+adaptively adjusts features for different scaling factors. This design
+fundamentally enhances the model’s generalization capability for
+multi-resolution tasks, setting it apart from fixed-s

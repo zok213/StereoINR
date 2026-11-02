@@ -1,0 +1,419 @@
+=== PAGE 3 ===
+StereoINR: Cross-View Geometry Consistent Stereo Super Resolution with Implicit Neural Representation Conference’17, July 2017, Washington, DC, USA
+LR_L
+LR_R
+SR_L
+SR_R
+DGASU
+HR Coord Shallow ExtractorDeep Extractor
+UpsamplingRHAGStereo 
+AdapterSpatial
+Adapter TunedFrozenConvScale
+Scale
+Adapter
+Figure 3: The overall architecture of proposed method. RHAG is the basic block in HAT[ 5] and is frozen during training. The
+spatial adapter is embedded in the Feed Forward stage of RHAG. The coordinates are randomly sampled from HR image.
+LN
+FC FCLN
+FC FC
+T
+T
+(a) Stereo Adapter (b) Spatial AdapterFC Down
+FC UpGELUScale
+(c) Scale AdapterLNFC
+FC
+Figure 4: The architecture of the adapter. (a) Stereo adapter,
+which uses stereo cross attention to achieve left and right
+view information interaction; (b) Spatial adapter, which mod-
+ulates input features to adapt to stereo super-resolution; (c)
+Scale adapter, which uses scale information to modulate in-
+put features.
+correlation volume of pixels along the epipolar line. Recently, many
+methods [ 8,42,44,45,47] have introduced various cross-attention
+modules that demonstrate strong performance in stereo super-
+resolution. However, these approaches typically restrict cross-view
+information interaction to the deep feature extraction stage, result-
+ing in isolated left and right views during the feature upsampling
+process. To overcome this limitation, we propose a novel upsam-
+pling module that leverages disparity constraints inherent in stereo
+imaging. This module warps deep features using disparity infor-
+mation and incorporates the warped features as auxiliary data,
+enabling the recovery of high-resolution geometries that are con-
+sistent across views.
+Parameter Efficient Fine-tuning in Super Resolution. Pre-
+training & fine-tuning can enhance the transferring efficiency and
+performance in many high-level visual tasks. In low-level vision,
+IPT[2] demonstrates the benefits of multi-task training—covering
+denoising, deraining, and super-resolution, while EDT[ 17] pretrains
+on specific tasks with varied degradation levels, both achieving re-
+markable results. These approaches underscore the transferability
+of pretraining across different tasks. For a single task, pre-training
+leverages the diverse data distributions available in large-scale
+datasets. HAT[ 5] demonstrates this by pretraining its model onImageNet and subsequently fine-tuning on target datasets, thereby
+enhancing the representation capability of the Transformer archi-
+tecture. Moreover, ASteISR [ 49] is the first to propose transferring
+SISR methods to the field of stereo vision. Inspired by these works,
+we fine-tune the HAT encoder on the stereo datasets using adapter
+tuning.
+3 METHODS
+3.1 Overview
+Given any up-sample scale 𝑟∈R, we aim to reconstruct high
+resolution stereo image pairs 𝐼𝑆𝑅
+𝐿,𝐼𝑆𝑅
+𝑅∈R𝑟×ℎ,𝑟×𝑤,3from low reso-
+lution inputs 𝐼𝐿𝑅
+𝐿,𝐼𝐿𝑅
+𝑅∈Rℎ,𝑤,3. Given a 2D query coordinates 𝑥in
+a continuous image domain, the objective of arbitrary-scale stereo
+super-resolution is to establish a precise mapping between query
+coordinates and pixel color values:
+𝑠𝐿,𝑠𝑅=𝐼𝑆𝑅
+𝐿(𝑥),𝐼𝑆𝑅
+𝑅(𝑥)=F(E(𝐼𝐿𝑅
+𝐿,𝐼𝐿𝑅
+𝑅),𝑥;𝑟), (1)
+where𝑠𝐿,𝑠𝑅represent the predicted RGB pixel values correspond-
+ing to the coordinate 𝑥in the left and right views, respectively. E
+denotes the latent code encoder, and Fdenotes the disparity-guided
+arbitrary-scale up-sampling module. An overview of the proposed
+framework is presented in Figure 3.
+3.2 Adapter tuning latent encoder
+Since HAT is designed as a fixed-scale single-image super-resolution
+method, it lacks awareness of cross-view contextual relationships
+and multi-scale feature interactions, making its direct transfer to
+the stereo imaging domain inappropriate. To address this issue, we
+embed stereo, scale, and spatial adapters into the basic module of
+HAT, the Residual Hybrid Attention Group (RHAG) module [ 5].
+The architecture of these adapters is shown in Figure 4.
+Specifically, the stereo adapter leverage cross-attention to ex-
+change information from left and right views, which is similar to
+the SCAM in NAFSSR[ 8]. The spatial adapter is embedded within
+the attention module of RHAG, where it compresses and then re-
+stores feature dimensions. It projects the original input dimension 𝑑
+to a lower-dimensional space 𝑚, allowing control over the number
+of parameters in the adapter by adjusting the value of 𝑚. Typically,
+=== PAGE 4 ===
+Conference’17, July 2017, Washington, DC, USAYi Liu1, Xinyi Liu1, Yi Wan1, Panwang Xia1, Qiong Wu1, Yongjun Zhang1
+1School of Remote Sensing and Information Engineering, Wuhan University, Hubei, China
+MLP
+MLP
+Positional
+encoding
+Concatenate
+Left-view
+dataflow
+Right-view 
+dataflowCoord
+Figure 5: The overall architecture of DGASU. Here, the self-
+attention and cross-attention are both the simple dot-product
+attention.
+𝑚≪𝑑. In the output stage, a second feed-forward sub-layer re-
+stores the original input dimension, projecting 𝑚back to𝑑as the
+final output of the spatial adapter module. As for the scale adapter,
+we adopt a structure similar to the channel attention block, modu-
+lating scale information along the channel dimension, which can
+be formulated as:
+𝑒=MLP(𝑠), (2)
+𝑥𝑜𝑢𝑡=LN(𝑥𝑖𝑛)⊙Sigmoid(MLP(𝑒))+𝑥𝑖𝑛. (3)
+where⊙denotes the element-wise multiplication, MLP denotes the
+MLP projector, LNdenotes LayerNorm, 𝑥𝑖𝑛is the input feature, and
+𝑥𝑜𝑢𝑡is the feature after modulation.
+It is noteworthy that our method differs from ASteISR[ 49] in
+that we aim for making the features extracted by the Encoder uni-
+versally applicable to detail reconstruction at arbitrary scales. To
+accomplish this, we explicitly inject scale-specific information into
+the scale adapter, allowing dynamic parameter modulation that
+adaptively adjusts features for different scaling factors. This design
+fundamentally enhances the model’s generalization capability for
+multi-resolution tasks, setting it apart from fixed-scale approaches.
+Finally, the latent codes for the left and right viewpoints are
+obtained through the fine-tuned encoder E.
+𝑧𝐿,𝑧𝑅=E(𝐼𝐿𝑅
+𝐿,𝐼𝐿𝑅
+𝑅) (4)
+3.3 Disparity guided arbitrary scale upsampler
+After getting the latent codes with the deep feature extractor, we
+aim at generating a stereo continuous image representation for
+stereo image pairs. Initially, we estimate the disparity between the
+left and right view images:
+𝑑𝐿→𝑅=disp(𝐼𝐿𝑅
+𝐿,𝐼𝐿𝑅
+𝑅), (5)
+𝑑𝑅→𝐿=disp(𝐼𝐿𝑅
+𝑅,𝐼𝐿𝑅
+𝐿). (6)
+where disp(·)denotes a state-of-the-art disparity estimator. 𝑑𝐿→𝑅
+is employed to align the latent encoding of the right view with the
+left view, while 𝑑𝑅→𝐿is used to align the latent encoding of the left
+view with the right view:
+𝑧𝐿→𝑅=warp(𝑧𝑅,𝑑𝐿→𝑅), (7)
+𝑧𝑅→𝐿=warp(𝑧𝐿,𝑑𝑅→𝐿). (8)
+where warp(·)denotes the standard image/feature warping opera-
+tion using the bilinear kernel.
+Q
+K
+V
+QKVwarp
+warpSE Module
+SE Moduleconvconv
+SigmoidReLU
+conv
+ReLU ReLU
+conv conv
+SE ModuleSoftmax
+Concat
+Left-view
+dataflow
+Right-view
+dataflowMatrix 
+multiplication
+Sum
+Element-wise
+multiplicationFigure 6: The overall architecture of disparity-guided refine-
+ment module.
+To address the challenge of information extraction under com-
+plex multiview conditions while mitigating occlusion interference,
+we employ a cross-attention mechanism for adaptive spatial in-
+formation aggregation across viewpoints. This architecture uses
+attention-based feature alignment to dynamically compute inter-
+view attention scores, enabling: 1) selective emphasis on geometri-
+cally consistent and semantically complementary cues from non-
+occluded regions, and 2) effective suppression of conflicting signals
+due to texture ambiguities, parallax discontinuities, and partial oc-
+clusions. The learned attention weights facilitate optimal informa-
+tion fusion, enhancing feature discriminability while maintaining
+robustness against cross-view appearance variations. As depicted
+in Figure 6, the query (𝑄𝐿,𝑄𝑅)is derived from the latent codes of
+the current viewpoint, while the key (𝐾𝑅→𝐿,𝐾𝐿→𝑅)and the value
+(𝑉𝑅→𝐿,𝑉𝐿→𝑅)are constructed through aligned latent codes:
+𝑄𝐿=𝑊𝐿
+𝑞𝑧𝐿,𝐾𝑅→𝐿=𝑊𝐿
+𝑘𝑧𝑅→𝐿,𝑉𝑅→𝐿=𝑊𝐿
+𝑣𝑧𝑅→𝐿, (9)
+𝑄𝑅=𝑊𝑅
+𝑞𝑧𝑅,𝐾𝐿→𝑅=𝑊𝑅
+𝑘𝑧𝐿→𝑅,𝑉𝐿→𝑅=𝑊𝑅
+𝑣𝑧𝐿→𝑅.(10)
+Then we calculate the similarity between queries and keys to
+generate learnable attention weights, which are applied to perform
+a weighted summation of value vectors, ultimately achieving cross-
+view feature fusion:
+𝐹𝐿=softmax(𝑄𝐿𝐾𝑅→𝐿√
+𝐶)𝑉𝑅→𝐿, (11)
+𝐹𝑅=softmax(𝑄𝑅𝐾𝐿→𝑅√
+𝐶)𝑉𝐿→𝑅. (12)
+where𝐶denotes the feature channel of the query vectors. To further
+enhance feature selection and aggregation, we implement a variant
+of the squeeze and excitation mechanism as a form of global self-
+attention. It computes the refined features (e𝑧𝐿,e𝑧𝑅)from(𝐹𝐿,𝐹𝑅)
+=== PAGE 5 ===
+StereoINR: Cross-View Geometry Consistent Stereo Super Resolution with Implicit Neural Representation Conference’17, July 2017, Washington, DC, USA
+with reference to(𝑧𝐿,𝑧𝑅):
+e𝑧𝐿=𝑧𝐿+Conv(𝐹𝐿)+𝐹𝐿⊙sigmoid(Conv(𝐹𝐿)), (13)
+e𝑧𝑅=𝑧𝑅+Conv(𝐹𝑅)+𝐹𝑅⊙sigmoid(Conv(𝐹𝑅)). (14)
+Then, given a 2d coordinate 𝑥, we formulate the coordinate-to-
+color mapping as an MLP F𝜃:R2+𝐶→R3that predicts the corre-
+sponding RGB values conditioned on spatial coordinates, where 𝜃
+denotes the learnable network parameters.
+𝑠𝐿,𝑠𝑅=F𝜃(e𝑧∗
+𝐿,e𝑧∗
+𝑅,𝑥−𝑥∗). (15)
+where(e𝑧∗
+𝐿,e𝑧∗
+𝑅)are the nearest latent codes from the query coordi-
+nate𝑥,𝑥∗is the coordinate of the latent codes (e𝑧∗
+𝐿,e𝑧∗
+𝑅)in the image
+domain.
+Vanilla MLPs that employ ReLU activation functions exhibit
+inherent spectral bias [ 16,25], tending to capture low-frequency
+content. To address this problem, we map the input coordinates
+into a high-dimensional space by sinusoidal positional encoding
+and concatenate it with the latent codes.
+𝛾(𝑥)=concat(𝑥,𝑐𝑜𝑠(𝜋𝑥),𝑠𝑖𝑛(𝜋𝑥),...,𝑐𝑜𝑠(𝑛𝜋𝑥),𝑠𝑖𝑛(𝑛𝜋𝑥)).(16)
+Previous INR methods [ 39] aggregated features by stacking mul-
+tiple self-attention layers. We improve feature aggregation by alter-
+nating between self-attention and cross-attention, facilitating more
+effective information exchange between the left and right views. As
+shown in Figure 5, we aggregate multiple views information using
+alternating self-attention and cross-attention mechanisms. Finally,
+the MLP is adapted to output the predicted color values, which
+are then combined with the bicubic-upsampled input image pair
+through a LR skip connection to obtain the final super-resolution
+results.
+𝑠𝐿,𝑠𝑅=F𝜃(e𝑧∗
+𝐿,e𝑧∗
+𝑅,𝛾(𝑥−𝑥∗)))+ Bilinear(𝐼𝐿𝑅
+𝐿(𝑥),𝐼𝐿𝑅
+𝑅(𝑥)).(17)
+4 EXPERIMENTS
+4.1 Implementation Details
+Datasets . Our training and validation datasets are provided by
+iPASSR, sourced from Middlebury [ 28] and Flickr1024 [ 35]. Specif-
+ically, we utilize 860 pairs of stereo images for training and 112
+pairs for validation. To evaluate the generalization capability of our
+method, we employ the KITTI 2012 [ 11] and KITTI 2015 [ 22] test
+sets for comprehensive assessment.
+Training Details . We use 64×96patches as the inputs of the
+encoder. Let 𝐵denote the training batch size, we first sample 𝐵ran-
+dom scales𝑟𝑖following a continuous uniform distribution U(1,4),
+then we crop 𝐵patches with sizes{64×𝑟𝑖,96×𝑟𝑖}𝐵
+𝑖=1from training
+image pairs. 64×96inputs are their down-sampled counterpart.
+For the ground truths, we converted these images to pixel samples
+(coordinate-RGB pairs) and we sample 64×96pixel samples for
+each of them so that the shapes of ground-truths are the same in
+a batch, as is done in [ 6]. We use L1 loss and the Adam optimizer
+with an initial learning rate 5×10−4. All models are trained for
+200000 iterations with batch size 1per GPU, and the learning rate
+decays by the cosine annealing. In addition, we use SPyNet[ 26] to
+estimate the disparity between the left and right views for spatial
+warping. SPyNet is usually used to estimate the optical flow of
+video sequences. Since the horizontal optical flow in stereo pairs isequivalent to the disparity under rectified settings, we use its hori-
+zontal optical flows to perform spatial warping. During training, we
+fine-tune only the stereo-aware adapter, scale-aware adapter, spa-
+tial adapter, and disparity-guided arbitrary scale upsampler, while
+keeping all other parameters frozen.
+Evaluation Metrics . As the most widely used metrics for assessing
+image quality, PSNR and SSIM are not always consistent with the vi-
+sual perception of the human eye. LPIPS [ 46] is a learned perceptual
+image patch similarity metric designed to assess image quality in a
+manner that closely aligns with human visual perception. In order
+to measure the cross-view consistency of stereo images, NTIRE
+2023 [ 33] introduces Score to assess the quality of stereoscopic
+images by disparity:
+𝑆𝐶𝑂𝑅𝐸 =1−0.5×(P(𝐼𝑆𝑅
+𝐿,𝐼𝐻𝑅
+𝐿)+P(𝐼𝑆𝑅
+𝑅,𝐼𝐻𝑅
+𝑅))
+−0.1×L(𝐷𝑆𝑅,𝐷𝐻𝑅), (18)
+WherePdenotes LPIPS [ 46] andL(𝐷𝑆𝑅,𝐷𝐻𝑅)denotes the MAE
+between disparity maps 𝐷𝑆𝑅and𝐷𝐻𝑅. To evaluate the stereo con-
+sistency, we used a pre-trained model such as RAFT-Stereo [ 32] to
+estimate the disparity from SR and HR pairs.
+4.2 Results
+Since INR provides a foundation for arbitrary-scale stereo super-
+resolution, we divide the quantitative experimental comparisons
+into two parts: 1) Out-scale: Comparison with other arbitrary-scale
+super-resolution methods beyond the training scales ( ×4+); 2) In-
+scale: Comparison with current fixed-scale super-resolution meth-
+ods on scales covered by the training data ( ×2–×4) to validate our
+method’s performance within trained scales.
+Quantitive results. To validate the effectiveness of our method in
+both out-of-scale and in-scale stereo super-resolution, we conduct
+two sets of comparisons with state-of-the-art methods.
+For out-of-scale upsampling, we compare our method with other
+INR-based methods, such as LIIF [ 6], LTE [ 16], LINF [ 43], OPE-
+SR [30], and EQSR [ 36], for arbitrary-scale upsampling, as shown in
+Table 1. For a fair comparison, we retrained the other methods on
+the stereo image dataset. Since large-scale super-resolution signifi-
+cantly degrades geometric information, comparing disparity results
+becomes less meaningful. Therefore, we evaluate performance us-
+ing PSNR and perceptual loss (LPIPS), and our method achieves the
+best performance for out-of-scale upsampling.
+For in-scale upsampling, we compare our method with fixed-
+scale super-resolution approaches, including EDSR [ 19], RDN [ 48],
+StereoSR [ 14], iPASSR [ 38], SSRDEFNet [ 9], NAFSSR [ 8], and Swin-
+FIRSSR [ 45], as shown in Table 2. Our method demonstrates com-
+petitive performance in terms of PSNR and SSIM while achieving a
+significant improvement in stereo consistency (SCORE). These re-
+sults indicate that our approach successfully preserves multi-view
+geometric consistency during the upsampling process. Further-
+more, although trained on the Flickr1024 and Middlebury datasets,
+our model also performs well on the KITTI dataset, indicating its
+generalization capability across different datasets.
+Qualitative results. The in-scale qualitative results are shown
+in Figure 8 and Figure 7, where we compare our method with
+existing fixed-scale stereo super-resolution approaches at a ×4 scale.
+Our method effectively utilizes complementary information from
+=== PAGE 6 ===
+Conference’17, July 2017, Washington, DC, USAYi Liu1, Xinyi Liu1, Yi Wan1, Panwang Xia1, Qiong Wu1, Yongjun Zhang1
+1School of Remote Sensing and Information Engineering, Wuhan University, Hubei, China
+Table 1: Quantitative comparison with state-of-the-art methods for arbitrary-scale SSR on Middlebury [ 28] (PSNR↑/LPIPS↓).
+Red and blue colors indicate the best and the second-best performance, respectively.
+MethodPSNR↑/LPIPS↓
+×2×3×4×6×12×18×24×30
+Bicubic 30.99/0.2101 26.80/0.3060 25.17/0.3815 22.99/0.4733 20.01/0.6140 18.32/0.6748 17.45/0.6977 16.76/0.7129
+EDSR-LIIF [6] 34.79/0.1042 31.18/0.2313 29.01/0.2958 26.75/0.4112 23.25/0.5625 21.51/0.6525 20.08/0.6921 19.14/0.7166
+EDSR-LTE [16] 34.87/0.1039 31.26/0.2291 29.11/0.2936 26.79/0.4083 23.25/0.5603 21.51/0.6482 20.15/0.6908 19.19/0.7142
+EDSR-LINF [43] 34.89/0.1061 31.29/0.2121 29.13/0.2989 26.77/0.3929 23.20/0.5482 21.50/0.6227 20.05/0.6727 19.12/0.6944
+EDSR-OPESR [30] 34.74/0.1047 31.27/0.2278 29.14/0.2919 26.82/0.4082 23.31/0.5614 21.59/0.6482 20.42/0.6903 19.56/0.7150
+SwinIR-LIIF [6] 34.96/0.0934 31.30/0.2114 29.23/0.2746 26.82/0.3940 23.36/0.5417 21.47/0.6330 20.12/0.6752 19.41/0.7057
+SwinIR-LTE [16] 35.66/0.0932 32.00/0.2109 29.78/0.2741 27.29/0.3912 23.72/0.5392 21.76/0.6310 20.36/0.6714 19.35/0.7014
+SwinIR-LINF [43] 35.61/0.0960 31.95/0.1920 29.66/0.2789 27.26/0.3746 23.56/0.5174 21.74/0.5941 20.29/0.6493 19.23/0.6786
+EQSR [36] 35.81/0.0907 32.20/0.2056 30.02/0.2652 27.43/0.3875 23.52/0.5354 21.46/0.6269 20.04/0.6542 19.19/0.6640
+StereoINR ( Ours ) 36.43/0.0787 32.48/0.1807 30.47/0.2349 27.64/0.3590 23.98/0.5015 21.89/0.6000 20.57/0.6372 19.74/0.6630
+Bicubic
+Ours
+SwinIR-LTE
+EQSR
+GT
+Figure 7: Visual results ( ×6) achieved by different methods on the Flickr1024 [ 37] dataset. The images with red and green
+borders represent the left and right views respectively.
+Table 2: Quantitative results achieved by different methods on the KITTI 2012 [ 11], Middlebury [ 28], and Flickr1024 [ 35]
+datasets. # Tuned represents the number of trained parameters of the networks. Here, SCORE ↑, PSNR↑, and SSIM↑values
+achieved on a pair of stereo images (i.e., (Left+Right)/2) are reported. Red and blue colors indicate the best and the second-best
+performance, respectively.
+Method Scale #TunedSCORE↑ PSNR↑ SSIM↑
+KITTI2012 Middlebury Flickr1024 KITTI2012 Middlebury Flickr1024 KITTI2012 Middlebury Flickr1024
+EDSR ×2 38.6M 0.8264 0.8753 0.7536 30.96 34.95 28.66 0.9228 0.9492 0.9087
+RDN ×2 22.0M 0.8280 0.8757 0.7488 30.94 34.94 28.64 0.9227 0.9491 0.9084
+StereoSR ×2 1.08M 0.8061 0.8543 0.7247 29.51 33.23 25.96 0.9073 0.9348 0.8599
+iPASSR ×2 1.37M 0.8266 0.8663 0.7365 31.11 34.51 28.60 0.9240 0.9454 0.9097
+SSRDE-FNet ×2 2.10M 0.8267 0.8754 0.7423 31.23 35.09 28.85 0.9254 0.9511 0.9132
+NAFSSR-S ×2 1.54M 0.8371 0.8812 0.7747 31.38 35.30 29.19 0.9266 0.9514 0.9160
+SwinFIRSSR ×2 23.94M 0.8502 0.9022 0.7751 31.79 36.52 30.14 0.9321 0.9598 0.9286
+StereoINR ( Ours )×2 2.03M 0.8481 0.9025 0.7850 31.58 36.43 30.02 0.9289 0.9590 0.9254
+EDSR ×4 38.9M 0.5724 0.6569 0.2860 26.35 29.23 23.46 0.8015 0.8397 0.7285
+RDN ×4 22.0M 0.5716 0.6543 0.2815 26.32 29.27 23.47 0.8014 0.8404 0.7295
+StereoSR ×4 1.42M 0.5007 0.6021 0.2665 24.53 27.64 21.70 0.7555 0.8022 0.6460
+SRRes+SAM ×4 1.73M 0.5823 0.6455 0.3835 26.44 28.83 23.27 0.8018 0.8290 0.7233
+iPASSR ×4 1.42M 0.5736 0.6474 0.3077 26.56 29.16 23.44 0.8053 0.8367 0.7287
+SSRDE-FNet ×4 2.24M 0.5784 0.6500 0.3141 26.70 29.38 23.59 0.8082 0.8411 0.7352
+NAFSSR-S ×4 1.56M 0.5941 0.6665 0.3318 26.93 29.72 23.88 0.8145 0.8490 0.7468
+NAFSSR-L ×4 23.79M 0.6064 0.6893 0.3326 27.12 30.20 24.17 0.8194 0.8605 0.7589
+SwinFIRSSR ×4 24.09M 0.6116 0.6981 0.3211 27.16 30.44 24.29 0.8235 0.8687 0.7681
+StereoINR ( Ours )×4 2.03M 0.6369 0.7145 0.5544 27.14 30.47 24.32 0.8214 0.8674 0.7674
+different viewpoints to recover fine details, particularly in complex
+textures such as walls and grounds. We also annotate each imagewith its corresponding SCORE and observe that images with higher
+SCORE exhibit superior restoration of both textures and geometric
+=== PAGE 7 ===
+StereoINR: Cross-View Geometry Consistent Stereo Super Resolution with Implicit Neural Representation Conference’17, July 2017, Washington, DC, USA
+Bicubic
+iPASSR
+SCORE = 0.4462
+GT
+NAFSSR-L
+SCORE = 0.4628
+Ours
+SCORE = 0.5363SSRDEFNet
+SCORE = 0.4499
+StereoSR
+SCORE = 0.4242
+SwinFIRSSR
+SCORE = 0.4905
+Figure 8: Visual results ( ×4) achieved by different methods on the Flickr 1024 [ 35] dataset. The images with red and green
+borders represent the left and right views respectively.
+GT
+NAFSSR-L
+Ours
+SwinFIRSSR
+Figure 9: Visualization of disparity maps estimated from super-resolution results of different methods ( ×4) on the Flickr1024
+dataset.
+structures, thereby validating the effectiveness of SCORE as a metric
+for stereo consistency.
+Additionally, we evaluated the disparity results of super-resolution
+images generated by different methods. Using RAFT-Stereo [ 32], we
+estimate the disparity of the SR results, including those produced
+by SwinFIRSSR [ 45] and NAFSSR [ 8]. As shown in Figure 9, our
+method produces more consistent cross-view geometry and gener-
+ates more accurate disparity maps compared to other methods.4.3 Ablation Study
+4.3.1 Latent encoder. In this section, we take the vanilla HAT as
+the baseline encoder to investigate the impact of the stereo adapter,
+spatial adapter, and scale adapter. As demonstrated by the results in
+Table 3, the adapters offer significant performance improvements
+compared to the baseline. Compared to the vanilla HAT, the results
+indicate the importance of incorporating both cross-view informa-
+tion (introduced by the stereo adapter) and scale-aware information
+(extracted by the spatial adapter and scale adapter).

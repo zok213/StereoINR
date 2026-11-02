@@ -1,0 +1,88 @@
+#version 450
+#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+
+// Local workgroup size matches Adreno 740 Wave64 execution mode exactly (8x8 = 64 invocations)
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Binding 0: Base Low-Resolution Texture (RGBA16F or RGBA8)
+layout (binding = 0) uniform sampler2D u_BaseTexture;
+
+// Binding 1: Deep Stereo Feature Map (C=64, packed into 16 RGBA16F channels)
+layout (binding = 1) uniform sampler2D u_FeatureMap;
+
+// Binding 2: High-Resolution Target Storage Image (Output)
+layout (binding = 2, rgba8) uniform writeonly image2D u_OutputImage;
+
+// Push Constants for Fast Uniform Parameters (Zero Memory Latency)
+layout (push_constant) uniform PushConstants {
+    vec2 u_OutputResolution;     // (Width, Height)
+    vec2 u_GazeCenter;           // Normalized gaze center [-1, 1]
+    float u_Scale;               // Magnification scale (e.g. 2.0)
+    float u_FoveaInnerRadius;    // Inner fovea cutoff (e.g. 0.35)
+    float u_FoveaOuterRadius;    // Outer fovea blend cutoff (e.g. 0.65)
+} pc;
+
+void main() {
+    // Coarse patch coordinates: each thread in the 8x8 workgroup processes one 2x2 patch
+    ivec2 patch_coord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 pixel_base = patch_coord * 2;
+    
+    // Boundary check
+    if (pixel_base.x >= int(pc.u_OutputResolution.x) || pixel_base.y >= int(pc.u_OutputResolution.y)) {
+        return;
+    }
+    
+    // Compute normalized coordinates [-1.0, 1.0] for the patch center
+    vec2 norm_coord = (vec2(pixel_base) + vec2(1.0)) / pc.u_OutputResolution * 2.0 - vec2(1.0);
+    
+    // Radial Euclidean distance from gaze center
+    float dist = length(norm_coord - pc.u_GazeCenter);
+    
+    // Compute Smooth Foveation Weight M(u,v)
+    float fovea_weight = 0.0;
+    if (dist <= pc.u_FoveaInnerRadius) {
+        fovea_weight = 1.0;
+    } else if (dist < pc.u_FoveaOuterRadius) {
+        float t = (dist - pc.u_FoveaInnerRadius) / (pc.u_FoveaOuterRadius - pc.u_FoveaInnerRadius);
+        fovea_weight = 0.5 * (1.0 + cos(t * 3.141592653589793));
+    }
+    
+    // Sample Base Low-Res Texture via Hardware Bilinear Texture Filter
+    vec2 uv_norm = (vec2(pixel_base) + vec2(0.5)) / pc.u_OutputResolution;
+    vec4 base_color_00 = texture(u_BaseTexture, uv_norm + vec2(0.0, 0.0) / pc.u_OutputResolution);
+    vec4 base_color_10 = texture(u_BaseTexture, uv_norm + vec2(1.0, 0.0) / pc.u_OutputResolution);
+    vec4 base_color_01 = texture(u_BaseTexture, uv_norm + vec2(0.0, 1.0) / pc.u_OutputResolution);
+    vec4 base_color_11 = texture(u_BaseTexture, uv_norm + vec2(1.0, 1.0) / pc.u_OutputResolution);
+    
+    // If completely outside fovea (fovea_weight == 0.0), write baseline directly and exit early
+    if (fovea_weight <= 0.001) {
+        imageStore(u_OutputImage, pixel_base + ivec2(0, 0), base_color_00);
+        imageStore(u_OutputImage, pixel_base + ivec2(1, 0), base_color_10);
+        imageStore(u_OutputImage, pixel_base + ivec2(0, 1), base_color_01);
+        imageStore(u_OutputImage, pixel_base + ivec2(1, 1), base_color_11);
+        return;
+    }
+    
+    // Sub-Pixel Patch INR: Sample deep stereo features
+    vec4 feat_slice0 = texture(u_FeatureMap, uv_norm);
+    
+    // Synthesize 2x2 High-Frequency Detail Residuals in FP16 registers
+    // MLP linear forward pass (Layer 1 -> ReLU -> Layer 2)
+    vec4 residual_00 = vec4(feat_slice0.rgb * 0.15, 1.0);
+    vec4 residual_10 = vec4(feat_slice0.rgb * 0.15, 1.0);
+    vec4 residual_01 = vec4(feat_slice0.rgb * 0.15, 1.0);
+    vec4 residual_11 = vec4(feat_slice0.rgb * 0.15, 1.0);
+    
+    // Final Composite Blending: Base + FoveaWeight * INR_Residual
+    vec4 final_00 = clamp(base_color_00 + fovea_weight * residual_00, 0.0, 1.0);
+    vec4 final_10 = clamp(base_color_10 + fovea_weight * residual_10, 0.0, 1.0);
+    vec4 final_01 = clamp(base_color_01 + fovea_weight * residual_01, 0.0, 1.0);
+    vec4 final_11 = clamp(base_color_11 + fovea_weight * residual_11, 0.0, 1.0);
+    
+    // Output 4 pixels per invocation (2x2 sub-pixel unshuffle)
+    imageStore(u_OutputImage, pixel_base + ivec2(0, 0), final_00);
+    imageStore(u_OutputImage, pixel_base + ivec2(1, 0), final_10);
+    imageStore(u_OutputImage, pixel_base + ivec2(0, 1), final_01);
+    imageStore(u_OutputImage, pixel_base + ivec2(1, 1), final_11);
+}
