@@ -28,7 +28,94 @@ if ROOT_DIR not in sys.path:
 sys.path.insert(0, os.path.join(ROOT_DIR, 'external', 'NAFRSSR'))
 
 from NAFRSSR_M_Net import NAFSSR
-from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedDyTNAFRSSR
+from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedDyTNAFRSSR, DyTNAFBlock
+
+
+class KaggleWindowedSCAM(torch.nn.Module):
+    def __init__(self, c: int, min_disp: int = -2, max_disp: int = 14):
+        super().__init__()
+        self.min_disp = min_disp
+        self.max_disp = max_disp
+        self.scale = c ** -0.5
+        self.q_l = torch.nn.Conv2d(c, c, kernel_size=1, bias=False)
+        self.k_r = torch.nn.Conv2d(c, c, kernel_size=1, bias=False)
+        self.v_r = torch.nn.Conv2d(c, c, kernel_size=1, bias=False)
+        self.q_r = torch.nn.Conv2d(c, c, kernel_size=1, bias=False)
+        self.k_l = torch.nn.Conv2d(c, c, kernel_size=1, bias=False)
+        self.v_l = torch.nn.Conv2d(c, c, kernel_size=1, bias=False)
+        self.beta = torch.nn.Parameter(torch.zeros(1, c, 1, 1))
+        self.gamma = torch.nn.Parameter(torch.zeros(1, c, 1, 1))
+
+    def forward(self, x_l: torch.Tensor, x_r: torch.Tensor):
+        B, C, H, W = x_l.shape
+        ql = self.q_l(x_l)
+        kr = self.k_r(x_r)
+        vr = self.v_r(x_r)
+        qr = self.q_r(x_r)
+        kl = self.k_l(x_l)
+        vl = self.v_l(x_l)
+
+        corr_l2r = []
+        shifted_vr = []
+        corr_r2l = []
+        shifted_vl = []
+
+        for offset in range(self.min_disp, self.max_disp + 1):
+            if offset > 0:
+                kr_s = F.pad(kr[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
+                vr_s = F.pad(vr[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
+                kl_s = F.pad(kl[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+                vl_s = F.pad(vl[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+            elif offset < 0:
+                abs_off = abs(offset)
+                kr_s = F.pad(kr[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
+                vr_s = F.pad(vr[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
+                kl_s = F.pad(kl[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
+                vl_s = F.pad(vl[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
+            else:
+                kr_s, vr_s = kr, vr
+                kl_s, vl_s = kl, vl
+
+            corr_l2r.append(torch.sum(ql * kr_s, dim=1, keepdim=True) * self.scale)
+            shifted_vr.append(vr_s)
+            corr_r2l.append(torch.sum(qr * kl_s, dim=1, keepdim=True) * self.scale)
+            shifted_vl.append(vl_s)
+
+        weights_l2r = F.softmax(torch.cat(corr_l2r, dim=1), dim=1)
+        vr_stack = torch.stack(shifted_vr, dim=1)
+        f_r2l = torch.sum(vr_stack * weights_l2r.unsqueeze(2), dim=1)
+
+        weights_r2l = F.softmax(torch.cat(corr_r2l, dim=1), dim=1)
+        vl_stack = torch.stack(shifted_vl, dim=1)
+        f_l2r = torch.sum(vl_stack * weights_r2l.unsqueeze(2), dim=1)
+
+        return x_l + f_r2l * self.beta, x_r + f_l2r * self.gamma
+
+
+class KaggleWindowedDyTNAFRSSR(torch.nn.Module):
+    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14):
+        super().__init__()
+        self.up_scale = up_scale
+        self.intro = torch.nn.Conv2d(in_channels, width, kernel_size=3, padding=1)
+        self.stereo_fusion = KaggleWindowedSCAM(width, min_disp=min_disp, max_disp=max_disp)
+        self.blocks = torch.nn.ModuleList([DyTNAFBlock(width) for _ in range(num_blks)])
+        self.up = torch.nn.Sequential(
+            torch.nn.Conv2d(width, in_channels * (up_scale ** 2), kernel_size=3, padding=1),
+            torch.nn.PixelShuffle(up_scale)
+        )
+
+    def forward(self, x_l: torch.Tensor, x_r: torch.Tensor):
+        inp_bic_l = F.interpolate(x_l, scale_factor=float(self.up_scale), mode='bicubic', align_corners=False)
+        inp_bic_r = F.interpolate(x_r, scale_factor=float(self.up_scale), mode='bicubic', align_corners=False)
+        fl = self.intro(x_l)
+        fr = self.intro(x_r)
+        fl, fr = self.stereo_fusion(fl, fr)
+        for blk in self.blocks:
+            fl = blk(fl)
+            fr = blk(fr)
+        out_l = self.up(fl) + inp_bic_l
+        out_r = self.up(fr) + inp_bic_r
+        return out_l, out_r
 
 
 def rgb2ycbcr_y(img_np: np.ndarray) -> np.ndarray:
@@ -114,7 +201,7 @@ def run_full_benchmark():
 
     # 3. Load DyT-NAFRSSR Kaggle Checkpoint
     print("[*] Loading Windowed DyT-NAFRSSR Kaggle Dual-T4 Checkpoint...")
-    dyt_kg = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14, fixup_zero_init=True).to(device).eval()
+    dyt_kg = KaggleWindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14).to(device).eval()
     ckpt_kg_path = 'weights/kaggle_dual_t4/dyt_nafrssr_quest3s_best.pth'
     has_kg = False
     if os.path.exists(ckpt_kg_path):
