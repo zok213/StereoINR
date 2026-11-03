@@ -166,7 +166,7 @@ class WindowedDyTNAFRSSR(nn.Module):
     - 100% GMEM Tile residency (< 1MB peak activation).
     - 4x Sub-Pixel PixelShuffle reconstruction.
     """
-    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14):
+    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14, fixup_zero_init: bool = True):
         super().__init__()
         self.up_scale = up_scale
         self.intro = nn.Conv2d(in_channels, width, kernel_size=3, padding=1, bias=True)
@@ -180,6 +180,12 @@ class WindowedDyTNAFRSSR(nn.Module):
             nn.Conv2d(width, in_channels * (up_scale ** 2), kernel_size=3, padding=1, bias=True),
             nn.PixelShuffle(up_scale)
         )
+
+        if fixup_zero_init:
+            # Fixup Zero-Init: Mathematically guarantees out(t=0) == Bicubic.
+            # Prevents random residual noise from degrading initial PSNR below Bicubic.
+            nn.init.zeros_(self.up[0].weight)
+            nn.init.zeros_(self.up[0].bias)
 
     def forward(self, img_l: torch.Tensor, img_r: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         # Bicubic base residual connection
