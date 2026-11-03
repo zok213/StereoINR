@@ -107,7 +107,7 @@ class DyTNAFBlock(nn.Module):
         x = self.conv3(self.sg(self.conv2(self.conv1(x))))
         y = inp + x * self.beta
         x = self.norm2(y)
-        x = self.conv5(self.sg(self.conv4(x)))\
+        x = self.conv5(self.sg(self.conv4(x)))
         return y + x * self.gamma
 
 class KaggleWindowedDyTNAFRSSR(nn.Module):
