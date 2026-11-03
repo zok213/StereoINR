@@ -279,10 +279,47 @@ def evaluate_models(device, ckpt_dyt_path):
         print("-" * 115)
 
 
+def wait_for_completion(kernel_slug: str = "zok213/stereoinr-turbo-dual-t4", max_wait_sec: int = 1800, poll_interval: int = 30):
+    print(f"[*] Starting auto-monitor for Kaggle kernel: {kernel_slug}")
+    start_t = time.time()
+    while time.time() - start_t < max_wait_sec:
+        try:
+            res = subprocess.run(["kaggle", "kernels", "status", kernel_slug], capture_output=True, text=True, check=True)
+            status_line = res.stdout.strip()
+            print(f"[{time.strftime('%H:%M:%S')}] {status_line}")
+            if "COMPLETE" in status_line:
+                print("[*] Kernel finished successfully! Downloading output artifacts...")
+                out_dir = os.path.join(ROOT_DIR, "weights", "kaggle_dual_t4")
+                os.makedirs(out_dir, exist_ok=True)
+                dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", out_dir, "--force"], capture_output=True, text=True, check=True)
+                print(dl_res.stdout)
+                return True
+            elif "ERROR" in status_line or "FAILED" in status_line:
+                print(f"[!] Kernel failed with status: {status_line}")
+                return False
+        except Exception as e:
+            print(f"[WARN] Error polling status: {e}")
+        time.sleep(poll_interval)
+    print("[!] Timeout waiting for kernel.")
+    return False
+
+
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--wait', action='store_true', help='Wait for Kaggle kernel to finish before evaluating')
+    args = parser.parse_args()
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_best.pth')
-    if os.path.exists(ckpt):
-        evaluate_models(device, ckpt)
+
+    if args.wait:
+        success = wait_for_completion()
+        if success and os.path.exists(ckpt):
+            evaluate_models(device, ckpt)
     else:
-        print(f"Checkpoint not found at: {ckpt}")
+        if os.path.exists(ckpt):
+            evaluate_models(device, ckpt)
+        else:
+            print(f"Checkpoint not found at: {ckpt}")
+
