@@ -32,6 +32,8 @@ datasets/**/*.tar.gz
 # Large legacy files exceeding GitHub 100MB limit
 archive/
 weights/checkpoints/StereoINR_official.pth
+external/**/*.pth
+external/**/*.pth.tar
 
 # Unity / Sentis temporary meta files if opened in editor
 *.pidb

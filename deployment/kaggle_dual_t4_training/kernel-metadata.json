@@ -9,7 +9,10 @@
   "enable_tpu": "false",
   "enable_internet": "true",
   "dataset_sources": [
-    "tunt96/flickr1024"
+    "tunt96/flickr1024",
+    "minhanhtruong/middleburystereodataset",
+    "sadeghkalami/kitti-stereo-evaluation-2015",
+    "konstantinnizovskiy/kitti-stereo-2012-training-data"
   ],
   "competition_sources": [],
   "kernel_sources": [],
