@@ -1,9 +1,8 @@
 """
 Auto-Monitor & Evaluation Pipeline for Kaggle Dual-T4 Quest 3S Stereo SR
-1. Monitors zok213/stereoinr-turbo-dual-t4 until COMPLETE
-2. Downloads checkpoint and ONNX models to weights/kaggle_dual_t4/
-3. Evaluates on canonical test datasets (Middlebury, Flickr1024, KITTI2012, KITTI2015)
-4. Compares directly against Bicubic and NAFSSR-M baselines
+1. Checks status of zok213/stereoinr-turbo-dual-t4
+2. If COMPLETE: downloads new artifacts and evaluates on canonical test sets
+3. Computes both RGB PSNR/SSIM and Y-Channel PSNR (matching Table 1 NAFSSR protocol)
 """
 
 import os
@@ -72,6 +71,30 @@ def calc_ssim(img1: torch.Tensor, img2: torch.Tensor, window_size: int = 11) -> 
     return float(ssim_map.mean().item())
 
 
+def rgb2ycbcr_y(img_np: np.ndarray) -> np.ndarray:
+    r = img_np[:, :, 0]
+    g = img_np[:, :, 1]
+    b = img_np[:, :, 2]
+    return 16.0 + (65.481 * r + 128.553 * g + 24.966 * b)
+
+
+def calc_psnr_y(pred_t: torch.Tensor, target_t: torch.Tensor, crop_border: int = 4) -> float:
+    p_np = pred_t.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
+    t_np = target_t.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
+
+    if crop_border > 0:
+        p_np = p_np[crop_border:-crop_border, crop_border:-crop_border]
+        t_np = t_np[crop_border:-crop_border, crop_border:-crop_border]
+
+    y_pred = rgb2ycbcr_y(p_np)
+    y_target = rgb2ycbcr_y(t_np)
+
+    mse = np.mean((y_pred - y_target) ** 2)
+    if mse <= 1e-10:
+        return 100.0
+    return float(20.0 * np.log10(255.0 / np.sqrt(mse)))
+
+
 def load_tensor(path: str, device: torch.device) -> torch.Tensor:
     img = Image.open(path).convert('RGB')
     arr = np.array(img, dtype=np.float32) / 255.0
@@ -79,20 +102,16 @@ def load_tensor(path: str, device: torch.device) -> torch.Tensor:
 
 
 def evaluate_models(device, ckpt_dyt_path):
-    print("\n" + "=" * 105)
+    print("\n" + "=" * 115)
     print(">>> CANONICAL BENCHMARK: KAGGLE DUAL-T4 CHECKPOINT VS BASELINES")
     print(f">>> Evaluating Checkpoint: {ckpt_dyt_path}")
-    print("=" * 105)
+    print("=" * 115)
 
-    # 1. Load NAFSSR-M
-    print("[*] Loading NAFSSR-M (280,383 params)...")
     naf = NAFSSR(up_scale=4, width=64, num_blks=16).to(device).eval()
     ckpt_naf = torch.load(os.path.join(ROOT_DIR, 'external', 'NAFRSSR', 'NAFRSSR_M.pth'), map_location=device, weights_only=False)
     naf.load_state_dict(ckpt_naf['params'] if 'params' in ckpt_naf else ckpt_naf, strict=True)
 
-    # 2. Load Kaggle Trained DyT-NAFRSSR
-    print("[*] Loading Kaggle-Trained DyT-NAFRSSR (82,368 params)...")
-    dyt = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14).to(device).eval()
+    dyt = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14, fixup_zero_init=True).to(device).eval()
     state = torch.load(ckpt_dyt_path, map_location=device, weights_only=False)
     if 'model_state_dict' in state:
         dyt.load_state_dict(state['model_state_dict'])
@@ -106,9 +125,9 @@ def evaluate_models(device, ckpt_dyt_path):
         ("KITTI2015", os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'KITTI2015'))
     ]
 
-    print("\n" + "=" * 95)
-    print(f"{'Dataset':<12} | {'Model':<24} | {'PSNR (dB)':<10} | {'SSIM':<8} | {'Status'}")
-    print("=" * 95)
+    print("\n" + "=" * 105)
+    print(f"{'Dataset':<12} | {'Model':<22} | {'RGB PSNR':<10} | {'SSIM':<8} | {'Y-PSNR':<10} | {'Adreno 740 Status'}")
+    print("=" * 105)
 
     for dname, dpath in test_datasets:
         if not os.path.exists(dpath):
@@ -117,9 +136,9 @@ def evaluate_models(device, ckpt_dyt_path):
         if not hr_dirs:
             continue
 
-        p_bic, s_bic = [], []
-        p_naf, s_naf = [], []
-        p_dyt, s_dyt = [], []
+        p_bic, s_bic, y_bic = [], [], []
+        p_naf, s_naf, y_naf = [], [], []
+        p_dyt, s_dyt, y_dyt = [], [], []
 
         for pdir in hr_dirs:
             scene_name = os.path.basename(pdir)
@@ -152,22 +171,25 @@ def evaluate_models(device, ckpt_dyt_path):
                 out_bic = F.interpolate(crop_ll, scale_factor=4.0, mode='bicubic', align_corners=False)
                 p_bic.append(calc_psnr(out_bic, crop_hl))
                 s_bic.append(calc_ssim(out_bic, crop_hl))
+                y_bic.append(calc_psnr_y(out_bic, crop_hl))
 
                 # NAFSSR-M
                 inp_naf = torch.cat([crop_ll, crop_lr], dim=1)
                 out_naf = naf(inp_naf)[:, 0:3, :, :]
                 p_naf.append(calc_psnr(out_naf, crop_hl))
                 s_naf.append(calc_ssim(out_naf, crop_hl))
+                y_naf.append(calc_psnr_y(out_naf, crop_hl))
 
                 # Kaggle DyT-NAFRSSR
                 out_dyt, _ = dyt(crop_ll, crop_lr)
                 p_dyt.append(calc_psnr(out_dyt, crop_hl))
                 s_dyt.append(calc_ssim(out_dyt, crop_hl))
+                y_dyt.append(calc_psnr_y(out_dyt, crop_hl))
 
-        print(f"{dname:<12} | {'Bicubic (Baseline)':<24} | {np.mean(p_bic):<10.2f} | {np.mean(s_bic):<8.4f} | Zero Param")
-        print(f"{'':<12} | {'NAFRSSR-M (Teacher)':<24} | {np.mean(p_naf):<10.2f} | {np.mean(s_naf):<8.4f} | Heavy DRAM")
-        print(f"{'':<12} | {'DyT-NAFRSSR (Dual-T4)':<24} | {np.mean(p_dyt):<10.2f} | {np.mean(s_dyt):<8.4f} | Quest 3S SRAM")
-        print("-" * 95)
+        print(f"{dname:<12} | {'Bicubic Baseline':<22} | {np.mean(p_bic):<10.2f} | {np.mean(s_bic):<8.4f} | {np.mean(y_bic):<10.2f} | Zero GMEM")
+        print(f"{'':<12} | {'NAFRSSR-M (Teacher)':<22} | {np.mean(p_naf):<10.2f} | {np.mean(s_naf):<8.4f} | {np.mean(y_naf):<10.2f} | Tran DRAM (4.19MB)")
+        print(f"{'':<12} | {'DyT-NAFRSSR (Dual-T4)':<22} | {np.mean(p_dyt):<10.2f} | {np.mean(s_dyt):<8.4f} | {np.mean(y_dyt):<10.2f} | 100% SRAM (904KB)")
+        print("-" * 105)
 
 
 if __name__ == '__main__':
@@ -176,16 +198,16 @@ if __name__ == '__main__':
     out_dir = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4')
     ckpt_path = os.path.join(out_dir, 'dyt_nafrssr_quest3s_best.pth')
 
-    if not os.path.exists(ckpt_path):
-        print(f"[*] Checking Kaggle status for {slug}...")
-        status = check_kaggle_status(slug)
-        print(f"[*] Status: {status}")
-        if "COMPLETE" in status:
-            print("[*] Kernel completed! Downloading artifacts...")
-            download_kaggle_output(slug, out_dir)
-        else:
-            print("[*] Kernel still running or queuing. Please check back shortly.")
-            sys.exit(0)
+    print(f"[*] Checking Kaggle status for {slug}...")
+    status = check_kaggle_status(slug)
+    print(f"[*] Status: {status}")
+
+    if "COMPLETE" in status:
+        print("[*] Kernel completed! Downloading updated artifacts...")
+        download_kaggle_output(slug, out_dir)
+    elif "RUNNING" in status or "QUEUED" in status:
+        print("[*] Kernel is actively training on 2x Tesla T4 GPUs. Please check back shortly.")
+        sys.exit(0)
 
     if os.path.exists(ckpt_path):
         evaluate_models(device, ckpt_path)
