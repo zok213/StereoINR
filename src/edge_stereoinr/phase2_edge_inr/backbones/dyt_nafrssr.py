@@ -49,15 +49,17 @@ class SimpleGate(nn.Module):
 
 class WindowedSCAM(nn.Module):
     """
-    Windowed Stereo Cross Attention Module (Windowed-SCAM)
-    Restricted to horizontal epipolar window [-K, +K] around vergence anchor.
-    Uses ONNX-compliant shifting and padding.
-    Fits 100% within 1MB Adreno 740 Tile GMEM cache.
+    Epipolar-Guided Windowed Stereo Cross Attention Module (Windowed-SCAM).
+    Restricted to horizontal epipolar window [min_disp, max_disp].
+    Enforces true stereoscopic parity: Left matches Right at (x - d), Right matches Left at (x + d).
+    Default [-2, 14] provides 17 hypotheses covering up to 56px HR disparity within 1024 KB GMEM.
     """
-    def __init__(self, channels: int, max_disp_window: int = 8):
+    def __init__(self, channels: int, min_disp: int = -2, max_disp: int = 14):
         super().__init__()
         self.channels = channels
-        self.max_disp = max_disp_window
+        self.min_disp = min_disp
+        self.max_disp = max_disp
+        self.num_hypotheses = max_disp - min_disp + 1
         self.scale = channels ** -0.5
 
         self.norm_l = DynamicTanh(channels)
@@ -80,18 +82,22 @@ class WindowedSCAM(nn.Module):
         corr_r2l = []
         shifted_v_l = []
 
-        for offset in range(-self.max_disp, self.max_disp + 1):
-            if offset < 0:
-                abs_off = abs(offset)
-                q_r_s = F.pad(q_r[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
-                v_r_s = F.pad(v_r[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
-                q_l_s = F.pad(q_l[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
-                v_l_s = F.pad(v_l[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
-            elif offset > 0:
-                q_r_s = F.pad(q_r[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
-                v_r_s = F.pad(v_r[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+        for offset in range(self.min_disp, self.max_disp + 1):
+            if offset > 0:
+                # Left query at x matches Right key at (x - offset): shift Right to right (pad left)
+                q_r_s = F.pad(q_r[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
+                v_r_s = F.pad(v_r[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
+                # Right query at x matches Left key at (x + offset): shift Left to left (pad right)
                 q_l_s = F.pad(q_l[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
                 v_l_s = F.pad(v_l[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+            elif offset < 0:
+                abs_off = abs(offset)
+                # Left query at x matches Right key at (x + abs_off): shift Right to left (pad right)
+                q_r_s = F.pad(q_r[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
+                v_r_s = F.pad(v_r[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
+                # Right query at x matches Left key at (x - abs_off): shift Left to right (pad left)
+                q_l_s = F.pad(q_l[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
+                v_l_s = F.pad(v_l[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
             else:
                 q_r_s, v_r_s = q_r, v_r
                 q_l_s, v_l_s = q_l, v_l
@@ -160,14 +166,14 @@ class WindowedDyTNAFRSSR(nn.Module):
     - 100% GMEM Tile residency (< 1MB peak activation).
     - 4x Sub-Pixel PixelShuffle reconstruction.
     """
-    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, max_disp: int = 8):
+    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14):
         super().__init__()
         self.up_scale = up_scale
         self.intro = nn.Conv2d(in_channels, width, kernel_size=3, padding=1, bias=True)
 
         # Feature processing blocks with Windowed Epipolar Attention
         self.blocks = nn.ModuleList([DyTNAFBlock(width) for _ in range(num_blks)])
-        self.stereo_fusion = WindowedSCAM(width, max_disp_window=max_disp)
+        self.stereo_fusion = WindowedSCAM(width, min_disp=min_disp, max_disp=max_disp)
 
         # Hardware-accelerated Sub-pixel Upsampling Head
         self.up = nn.Sequential(

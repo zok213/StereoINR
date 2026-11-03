@@ -76,7 +76,7 @@ def run_phase1_dataset_benchmark(device: torch.device):
         nafrssr_m.load_state_dict(ckpt['params'] if 'params' in ckpt else ckpt, strict=True)
 
     # DyT-NAFRSSR Distilled
-    dyt_distilled = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, max_disp=8).to(device).eval()
+    dyt_distilled = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4).to(device).eval()
     w_dyt = os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'dyt_nafrssr_distilled.pth')
     if os.path.exists(w_dyt):
         ckpt = torch.load(w_dyt, map_location=device)
@@ -174,13 +174,19 @@ def run_phase2_noise_robustness(device: torch.device):
     print(">>> PHASE 2: SENSOR NOISE & DYNAMIC ILLUMINATION ROBUSTNESS TESTING")
     print("=" * 90)
 
-    # Test near-field patch under low-light shot noise
-    h, w = 64, 64
-    clean_l = torch.rand(1, 3, h, w, device=device)
-    clean_r = torch.roll(clean_l, shifts=-15, dims=3)
+    # Test near-field patch under low-light shot noise on real structured image
+    cloth_path = os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'lr_x4', 'cloth2', 'lr0.png')
+    cloth_r_path = os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'lr_x4', 'cloth2', 'lr1.png')
+    if os.path.exists(cloth_path):
+        clean_l = load_image(cloth_path, device)[:, :, 20:84, 20:84]
+        clean_r = load_image(cloth_r_path, device)[:, :, 20:84, 20:84]
+    else:
+        clean_l = torch.ones(1, 3, 64, 64, device=device) * 0.8
+        clean_l[:, :, 20:44, 20:44] = 0.2
+        clean_r = torch.roll(clean_l, shifts=-4, dims=3)
 
     # 1. Clean forward
-    dyt_distilled = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, max_disp=8).to(device).eval()
+    dyt_distilled = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4).to(device).eval()
     w_dyt = os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'dyt_nafrssr_distilled.pth')
     if os.path.exists(w_dyt):
         dyt_distilled.load_state_dict(torch.load(w_dyt, map_location=device)['model_state_dict'])
@@ -229,7 +235,7 @@ def run_phase3_numerical_precision(device: torch.device):
     print("=" * 90)
 
     # Load DyT model in FP32
-    dyt_fp32 = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, max_disp=8).to(device).eval()
+    dyt_fp32 = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4).to(device).eval()
     w_dyt = os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'dyt_nafrssr_distilled.pth')
     if os.path.exists(w_dyt):
         dyt_fp32.load_state_dict(torch.load(w_dyt, map_location=device)['model_state_dict'])
@@ -244,7 +250,7 @@ def run_phase3_numerical_precision(device: torch.device):
         out_32 = dyt_fp32(x_l_32, x_r_32)[0]
 
     # FP16 conversion & inference
-    dyt_fp16 = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, max_disp=8).to(device).half().eval()
+    dyt_fp16 = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4).to(device).half().eval()
     if os.path.exists(w_dyt):
         ckpt = torch.load(w_dyt, map_location=device)
         dyt_fp16.load_state_dict({k: v.half() for k, v in ckpt['model_state_dict'].items()})

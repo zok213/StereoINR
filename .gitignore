@@ -6,6 +6,7 @@ __pycache__/
 # Caches and temporary test data
 .cache/
 test_cache/
+datasets/distillation_cache/
 *.log
 *.tmp
 *.zip
