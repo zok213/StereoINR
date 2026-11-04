@@ -213,6 +213,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    soup_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_soup_best.pth')
     v9_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_v9_best.pth')
     v8_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_best.pth')
     v6_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_v6_best.pth')
@@ -220,11 +221,11 @@ if __name__ == '__main__':
 
     if args.wait:
         success = wait_for_completion()
-        ckpt = v9_ckpt if os.path.exists(v9_ckpt) else (v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt))
+        ckpt = soup_ckpt if os.path.exists(soup_ckpt) else (v9_ckpt if os.path.exists(v9_ckpt) else (v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt)))
         if success and os.path.exists(ckpt):
             evaluate_models(device, ckpt)
     else:
-        ckpt = v9_ckpt if os.path.exists(v9_ckpt) else (v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt))
+        ckpt = soup_ckpt if os.path.exists(soup_ckpt) else (v9_ckpt if os.path.exists(v9_ckpt) else (v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt)))
         if os.path.exists(ckpt):
             evaluate_models(device, ckpt)
         else:
