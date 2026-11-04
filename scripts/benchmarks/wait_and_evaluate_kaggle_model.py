@@ -193,7 +193,7 @@ def wait_for_completion(kernel_slug: str = "zok213/stereoinr-turbo-dual-t4", max
                 print("[*] Kernel finished successfully! Downloading output artifacts...")
                 out_dir = os.path.join(ROOT_DIR, "weights", "kaggle_dual_t4")
                 os.makedirs(out_dir, exist_ok=True)
-                dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", out_dir], capture_output=True, text=True)
+                dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", out_dir], capture_output=True, encoding='utf-8', errors='replace')
                 print(dl_res.stdout)
                 return True
             elif "ERROR" in status_line or "FAILED" in status_line:
