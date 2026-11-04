@@ -193,7 +193,7 @@ def wait_for_completion(kernel_slug: str = "zok213/stereoinr-turbo-dual-t4", max
                 print("[*] Kernel finished successfully! Downloading output artifacts...")
                 out_dir = os.path.join(ROOT_DIR, "weights", "kaggle_dual_t4")
                 os.makedirs(out_dir, exist_ok=True)
-                dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", out_dir, "--force"], capture_output=True, text=True, check=True)
+                dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", out_dir], capture_output=True, text=True)
                 print(dl_res.stdout)
                 return True
             elif "ERROR" in status_line or "FAILED" in status_line:
@@ -213,17 +213,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    v9_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_v9_best.pth')
     v8_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_best.pth')
     v6_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_v6_best.pth')
     v5_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_best.pth')
 
     if args.wait:
         success = wait_for_completion()
-        ckpt = v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt)
+        ckpt = v9_ckpt if os.path.exists(v9_ckpt) else (v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt))
         if success and os.path.exists(ckpt):
             evaluate_models(device, ckpt)
     else:
-        ckpt = v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt)
+        ckpt = v9_ckpt if os.path.exists(v9_ckpt) else (v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt))
         if os.path.exists(ckpt):
             evaluate_models(device, ckpt)
         else:
