@@ -27,6 +27,7 @@ from NAFRSSR_M_Net import NAFSSR
 
 
 from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedDyTNAFRSSR, WindowedSCAM, DynamicTanh, DyTNAFBlock
+from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_continuous_scale_inr import ContinuousDyTEdgeINR
 
 
 def check_kaggle_status(slug="zok213/stereoinr-turbo-dual-t4"):
@@ -102,13 +103,16 @@ def evaluate_models(device, ckpt_dyt_path):
     ckpt_naf = torch.load(os.path.join(ROOT_DIR, 'external', 'NAFRSSR', 'NAFRSSR_M.pth'), map_location=device, weights_only=False)
     naf.load_state_dict(ckpt_naf['params'] if 'params' in ckpt_naf else ckpt_naf, strict=True)
 
-    # Supports both v5 and v6 checkpoints
-    dyt = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14, interleave_fusion=True).to(device).eval()
     state = torch.load(ckpt_dyt_path, map_location=device, weights_only=False)
-    if 'model_state_dict' in state:
-        dyt.load_state_dict(state['model_state_dict'], strict=False)
+    sd = state['model_state_dict'] if 'model_state_dict' in state else state
+    if 'scale_adapter.mlp.0.weight' in sd or 'cont_head.0.weight' in sd or 'continuous' in ckpt_dyt_path.lower():
+        dyt = ContinuousDyTEdgeINR(width=48, num_blks=4).to(device).eval()
+        dyt.load_state_dict(sd, strict=False)
+        print(f"[*] Loaded ContinuousDyTEdgeINR model ({sum(p.numel() for p in dyt.parameters()):,} params)")
     else:
-        dyt.load_state_dict(state, strict=False)
+        dyt = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14, interleave_fusion=True).to(device).eval()
+        dyt.load_state_dict(sd, strict=False)
+        print(f"[*] Loaded WindowedDyTNAFRSSR model ({sum(p.numel() for p in dyt.parameters()):,} params)")
 
     test_datasets = [
         ("Middlebury", os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury')),
@@ -164,7 +168,10 @@ def evaluate_models(device, ckpt_dyt_path):
                 y_naf.append(calc_psnr_y(out_naf, crop_hl))
                 s_naf.append(calc_ssim(out_naf, crop_hl))
 
-                out_dyt, _ = dyt(crop_ll, crop_lr)
+                if isinstance(dyt, ContinuousDyTEdgeINR):
+                    out_dyt, _ = dyt(crop_ll, crop_lr, scale=4.0)
+                else:
+                    out_dyt, _ = dyt(crop_ll, crop_lr)
                 y_dyt.append(calc_psnr_y(out_dyt, crop_hl))
                 s_dyt.append(calc_ssim(out_dyt, crop_hl))
 
@@ -206,13 +213,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_best.pth')
+    v8_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_best.pth')
+    v6_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_v6_best.pth')
+    v5_ckpt = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_nafrssr_quest3s_best.pth')
 
     if args.wait:
         success = wait_for_completion()
+        ckpt = v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt)
         if success and os.path.exists(ckpt):
             evaluate_models(device, ckpt)
     else:
+        ckpt = v8_ckpt if os.path.exists(v8_ckpt) else (v6_ckpt if os.path.exists(v6_ckpt) else v5_ckpt)
         if os.path.exists(ckpt):
             evaluate_models(device, ckpt)
         else:
