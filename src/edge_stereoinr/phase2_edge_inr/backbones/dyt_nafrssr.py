@@ -160,15 +160,17 @@ class DyTNAFBlock(nn.Module):
 
 class WindowedDyTNAFRSSR(nn.Module):
     """
-    Mobile-Engineered NAFRSSR with Dynamic Tanh (DyT) & Windowed Epipolar Cross-Attention.
+    Mobile-Engineered NAFRSSR with Dynamic Tanh (DyT) & Interleaved Recurrent Cross-Attention (IRCA).
     Directly addresses:
     - Zero LayerNorm reduction barrier stalls.
     - 100% GMEM Tile residency (< 1MB peak activation).
+    - Interleaved Epipolar Cross-Attention with 0 added parameters (recurrent weight sharing).
     - 4x Sub-Pixel PixelShuffle reconstruction.
     """
-    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14, fixup_zero_init: bool = True):
+    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14, interleave_fusion: bool = True, fixup_zero_init: bool = True):
         super().__init__()
         self.up_scale = up_scale
+        self.interleave_fusion = interleave_fusion
         self.intro = nn.Conv2d(in_channels, width, kernel_size=3, padding=1, bias=True)
 
         # Feature processing blocks with Windowed Epipolar Attention
@@ -195,11 +197,13 @@ class WindowedDyTNAFRSSR(nn.Module):
         feat_l = self.intro(img_l)
         feat_r = self.intro(img_r)
 
-        # Inter-view cross attention
+        # Base input-level cross-attention
         feat_l, feat_r = self.stereo_fusion(feat_l, feat_r)
 
-        # Sequential DyT-NAF blocks
-        for blk in self.blocks:
+        # Sequential DyT-NAF blocks with optional Interleaved Recurrent Fusion
+        for i, blk in enumerate(self.blocks):
+            if self.interleave_fusion and i > 0:
+                feat_l, feat_r = self.stereo_fusion(feat_l, feat_r)
             feat_l = blk(feat_l)
             feat_r = blk(feat_r)
 
