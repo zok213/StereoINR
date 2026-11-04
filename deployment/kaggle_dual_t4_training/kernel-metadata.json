@@ -1,7 +1,7 @@
 {
   "id": "zok213/stereoinr-turbo-dual-t4",
   "title": "StereoINR Turbo Dual T4",
-  "code_file": "train_quest3s_v6_irca_dual_t4.ipynb",
+  "code_file": "train_quest3s_v8_continuous_multidataset.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": "true",
@@ -12,7 +12,9 @@
     "tunt96/flickr1024",
     "minhanhtruong/middleburystereodataset",
     "sadeghkalami/kitti-stereo-evaluation-2015",
-    "konstantinnizovskiy/kitti-stereo-2012-training-data"
+    "konstantinnizovskiy/kitti-stereo-2012-training-data",
+    "jinshelgeorge/stereo-images-dataset",
+    "xrliu549/instereo2k256"
   ],
   "competition_sources": [],
   "kernel_sources": [],
