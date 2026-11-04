@@ -26,113 +26,7 @@ sys.path.insert(0, os.path.join(ROOT_DIR, 'external', 'NAFRSSR'))
 from NAFRSSR_M_Net import NAFSSR
 
 
-# Architecture matching Kaggle checkpoint exactly
-class DynamicTanh(nn.Module):
-    def __init__(self, channels: int):
-        super().__init__()
-        self.alpha = nn.Parameter(torch.ones(1, channels, 1, 1))
-        self.gamma = nn.Parameter(torch.ones(1, channels, 1, 1))
-        self.beta = nn.Parameter(torch.zeros(1, channels, 1, 1))
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.gamma * torch.tanh(self.alpha * x) + self.beta
-
-class SimpleGate(nn.Module):
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x1, x2 = x.chunk(2, dim=1)
-        return x1 * x2
-
-class KaggleWindowedSCAM(nn.Module):
-    def __init__(self, c: int, min_disp: int = -2, max_disp: int = 14):
-        super().__init__()
-        self.min_disp = min_disp
-        self.max_disp = max_disp
-        self.scale = c ** -0.5
-        self.q_l = nn.Conv2d(c, c, kernel_size=1, bias=False)
-        self.k_r = nn.Conv2d(c, c, kernel_size=1, bias=False)
-        self.v_r = nn.Conv2d(c, c, kernel_size=1, bias=False)
-        self.q_r = nn.Conv2d(c, c, kernel_size=1, bias=False)
-        self.k_l = nn.Conv2d(c, c, kernel_size=1, bias=False)
-        self.v_l = nn.Conv2d(c, c, kernel_size=1, bias=False)
-        self.beta = nn.Parameter(torch.zeros(1, c, 1, 1))
-        self.gamma = nn.Parameter(torch.zeros(1, c, 1, 1))
-    def forward(self, x_l: torch.Tensor, x_r: torch.Tensor):
-        ql = self.q_l(x_l)
-        kr = self.k_r(x_r)
-        vr = self.v_r(x_r)
-        qr = self.q_r(x_r)
-        kl = self.k_l(x_l)
-        vl = self.v_l(x_l)
-        corr_l2r, corr_r2l, shifted_v_r, shifted_v_l = [], [], [], []
-        for d in range(self.min_disp, self.max_disp + 1):
-            if d >= 0:
-                kr_s = F.pad(kr[:, :, :, d:], (0, d, 0, 0))
-                vr_s = F.pad(vr[:, :, :, d:], (0, d, 0, 0))
-            else:
-                kr_s = F.pad(kr[:, :, :, :d], (-d, 0, 0, 0))
-                vr_s = F.pad(vr[:, :, :, :d], (-d, 0, 0, 0))
-            corr_l2r.append(torch.sum(ql * kr_s, dim=1, keepdim=True) * self.scale)
-            shifted_v_r.append(vr_s)
-            d_rev = -d
-            if d_rev >= 0:
-                kl_s = F.pad(kl[:, :, :, d_rev:], (0, d_rev, 0, 0))
-                vl_s = F.pad(vl[:, :, :, d_rev:], (0, d_rev, 0, 0))
-            else:
-                kl_s = F.pad(kl[:, :, :, :d_rev], (-d_rev, 0, 0, 0))
-                vl_s = F.pad(vl[:, :, :, :d_rev], (-d_rev, 0, 0, 0))
-            corr_r2l.append(torch.sum(qr * kl_s, dim=1, keepdim=True) * self.scale)
-            shifted_v_l.append(vl_s)
-        w_l2r = F.softmax(torch.cat(corr_l2r, dim=1), dim=1)
-        f_r2l = torch.sum(torch.stack(shifted_v_r, dim=1) * w_l2r.unsqueeze(2), dim=1)
-        w_r2l = F.softmax(torch.cat(corr_r2l, dim=1), dim=1)
-        f_l2r = torch.sum(torch.stack(shifted_v_l, dim=1) * w_r2l.unsqueeze(2), dim=1)
-        return x_l + f_r2l * self.beta, x_r + f_l2r * self.gamma
-
-class DyTNAFBlock(nn.Module):
-    def __init__(self, c: int, dw_expand: int = 2, ffn_expand: int = 2):
-        super().__init__()
-        dw_c = c * dw_expand
-        self.conv1 = nn.Conv2d(c, dw_c, kernel_size=1)
-        self.conv2 = nn.Conv2d(dw_c, dw_c, kernel_size=3, padding=1, groups=dw_c)
-        self.conv3 = nn.Conv2d(dw_c // 2, c, kernel_size=3, padding=1, groups=c // 4)
-        self.sg = SimpleGate()
-        ffn_c = ffn_expand * c
-        self.conv4 = nn.Conv2d(c, ffn_c, kernel_size=1)
-        self.conv5 = nn.Conv2d(ffn_c // 2, c, kernel_size=1)
-        self.norm1 = DynamicTanh(c)
-        self.norm2 = DynamicTanh(c)
-        self.beta = nn.Parameter(torch.zeros(1, c, 1, 1))
-        self.gamma = nn.Parameter(torch.zeros(1, c, 1, 1))
-    def forward(self, inp: torch.Tensor) -> torch.Tensor:
-        x = self.norm1(inp)
-        x = self.conv3(self.sg(self.conv2(self.conv1(x))))
-        y = inp + x * self.beta
-        x = self.norm2(y)
-        x = self.conv5(self.sg(self.conv4(x)))
-        return y + x * self.gamma
-
-class KaggleWindowedDyTNAFRSSR(nn.Module):
-    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, up_scale: int = 4, min_disp: int = -2, max_disp: int = 14):
-        super().__init__()
-        self.up_scale = up_scale
-        self.intro = nn.Conv2d(in_channels, width, kernel_size=3, padding=1)
-        self.stereo_fusion = KaggleWindowedSCAM(width, min_disp=min_disp, max_disp=max_disp)
-        self.blocks = nn.ModuleList([DyTNAFBlock(width) for _ in range(num_blks)])
-        self.up = nn.Sequential(
-            nn.Conv2d(width, in_channels * (up_scale ** 2), kernel_size=3, padding=1),
-            nn.PixelShuffle(up_scale)
-        )
-    def forward(self, img_l: torch.Tensor, img_r: torch.Tensor):
-        base_l = F.interpolate(img_l, scale_factor=self.up_scale, mode='bicubic', align_corners=False)
-        base_r = F.interpolate(img_r, scale_factor=self.up_scale, mode='bicubic', align_corners=False)
-        fl = self.intro(img_l)
-        fr = self.intro(img_r)
-        fl, fr = self.stereo_fusion(fl, fr)
-        for b in self.blocks:
-            fl = b(fl)
-            fr = b(fr)
-        out_l = self.up(fl) + base_l
-        out_r = self.up(fr) + base_r
-        return torch.clamp(out_l, 0.0, 1.0), torch.clamp(out_r, 0.0, 1.0)
+from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedDyTNAFRSSR, WindowedSCAM, DynamicTanh, DyTNAFBlock
 
 
 def check_kaggle_status(slug="zok213/stereoinr-turbo-dual-t4"):
@@ -208,12 +102,13 @@ def evaluate_models(device, ckpt_dyt_path):
     ckpt_naf = torch.load(os.path.join(ROOT_DIR, 'external', 'NAFRSSR', 'NAFRSSR_M.pth'), map_location=device, weights_only=False)
     naf.load_state_dict(ckpt_naf['params'] if 'params' in ckpt_naf else ckpt_naf, strict=True)
 
-    dyt = KaggleWindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14).to(device).eval()
+    # Supports both v5 and v6 checkpoints
+    dyt = WindowedDyTNAFRSSR(width=48, num_blks=4, up_scale=4, min_disp=-2, max_disp=14, interleave_fusion=True).to(device).eval()
     state = torch.load(ckpt_dyt_path, map_location=device, weights_only=False)
     if 'model_state_dict' in state:
-        dyt.load_state_dict(state['model_state_dict'])
+        dyt.load_state_dict(state['model_state_dict'], strict=False)
     else:
-        dyt.load_state_dict(state)
+        dyt.load_state_dict(state, strict=False)
 
     test_datasets = [
         ("Middlebury", os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury')),
