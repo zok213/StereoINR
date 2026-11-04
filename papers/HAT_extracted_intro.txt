@@ -1,0 +1,321 @@
+=== PAGE 1 ===
+Activating More Pixels in Image Super-Resolution Transformer
+Xiangyu Chen1,2,3Xintao Wang4Jiantao Zhou1Yu Qiao2,3Chao Dong2,3†
+1State Key Laboratory of Internet of Things for Smart City, University of Macau
+2Shenzhen Key Lab of Computer Vision and Pattern Recognition,
+Shenzhen Institute of Advanced Technology, Chinese Academy of Sciences
+3Shanghai Artiﬁcial Intelligence Laboratory4ARC Lab, Tencent PCG
+https://github.com/XPixelGroup/HAT
+Abstract
+Transformer-based methods have shown impressive per-
+formance in low-level vision tasks, such as image super-
+resolution. However, we ﬁnd that these networks can only
+utilize a limited spatial range of input information through
+attribution analysis. This implies that the potential of
+Transformer is still not fully exploited in existing networks.
+In order to activate more input pixels for better recon-
+struction, we propose a novel Hybrid Attention Transformer
+(HAT). It combines both channel attention and window-
+based self-attention schemes, thus making use of their com-
+plementary advantages of being able to utilize global statis-
+tics and strong local ﬁtting capability. Moreover, to better
+aggregate the cross-window information, we introduce an
+overlapping cross-attention module to enhance the interac-
+tion between neighboring window features. In the train-
+ing stage, we additionally adopt a same-task pre-training
+strategy to exploit the potential of the model for further im-
+provement. Extensive experiments show the effectiveness of
+the proposed modules, and we further scale up the model to
+demonstrate that the performance of this task can be greatly
+improved. Our overall method signiﬁcantly outperforms the
+state-of-the-art methods by more than 1dB.
+1. Introduction
+Single image super-resolution (SR) is a classic prob-
+lem in computer vision and image processing. It aims
+to reconstruct a high-resolution image from a given low-
+resolution input. Since deep learning has been success-
+fully applied to the SR task [10], numerous methods based
+on the convolutional neural network (CNN) have been pro-
+posed [8, 11, 12, 24, 29, 32, 68, 70] and almost dominate this
+ﬁeld in the past few years. Recently, due to the success in
+natural language processing, Transformer [53] has attracted
+the attention of the computer vision community. After mak-
+†Corresponding author.
+Figure 1. Performance comparison on PSNR(dB) of the proposed
+HAT with the state-of-the-art methods SwinIR [31] and EDT [27].
+HAT-L represents a larger variant of HAT. Our approach can sur-
+pass the state-of-the-art methods by 0.3dB ∼1.2dB.
+ing rapid progress on high-level vision tasks [14, 39, 54],
+Transformer-based methods are also developed for low-
+level vision tasks [6, 57, 65], as well as for SR [27, 31]. Es-
+pecially, a newly designed network, SwinIR [31], obtains a
+breakthrough improvement in this task.
+Despite the success, “why Transformer is better than
+CNN” remains a mystery. An intuitive explanation is that
+this kind of network can beneﬁt from the self-attention
+mechanism and utilize long-range information. Thus, we
+employ the attribution analysis method LAM [15] to ex-
+amine the involved range of utilized information for recon-
+struction in SwinIR. Interestingly, we ﬁnd that SwinIR does
+NOT exploit more input pixels than CNN-based methods
+(e.g., RCAN [68]) in super-resolution, as shown in Fig. 2.
+Besides, although SwinIR obtains higher quantitative per-
+formance on average, it produces inferior results to RCAN
+in some samples, due to the limited range of utilized infor-
+mation. These phenomena illustrate that Transformer has
+a stronger ability to model local information, but the range
+of its utilized information needs to be expanded. In addi-
+tion, we also ﬁnd that blocking artifacts would appear in the
+intermediate features of SwinIR, as depicted in Fig. 3. It
+demonstrates that the shift window mechanism cannot per-
+fectly realize cross-window information interaction.
+1arXiv:2205.04437v3  [eess.IV]  19 Mar 2023
+=== PAGE 2 ===
+To address the above-mentioned limitations and further
+develop the potential of Transformer for SR, we propose
+a Hybrid Attention Transformer, namely HAT. Our HAT
+combines channel attention and self-attention schemes, in
+order to take advantage of the former’s capability in using
+global information and the powerful representative ability
+of the latter. Besides, we introduce an overlapping cross-
+attention module to achieve more direct interaction of ad-
+jacent window features. Beneﬁting from these designs, our
+model can activate more pixels for reconstruction and thus
+obtains signiﬁcant performance improvement.
+Since Transformers do not have an inductive bias like
+CNNs, large-scale data pre-training is important to unlock
+the potential of such models. In this work, we provide an
+effective same-task pre-training strategy. Different from
+IPT [6] using multiple restoration tasks for pre-training and
+EDT [27] using multiple degradation levels for pre-training,
+we directly perform pre-training using large-scale dataset
+on the same task. We believe that large-scale data is what
+really matters for pre-training, and experimental results also
+show the superiority of our strategy. Equipped with the
+above designs, HAT can surpass the state-of-the-art meth-
+ods by a huge margin (0.3dB ∼1.2dB), as shown in Fig. 1.
+Contributions: 1) We design a novel Hybrid Attention
+Transformer (HAT) that combines self-attention, channel
+attention and a new overlapping cross-attention to activate
+more pixels for better reconstruction. 2)We propose an ef-
+fective same-task pre-training strategy to further exploit the
+potential of SR Transformer and show the importance of
+large-scale data pre-training for the task. 3)Our method
+achieves state-of-the-art performance. By further scaling
+up HAT to build a big model, we greatly extend the perfor-
+mance upper bound of the SR task.
+2. Related Work
+2.1. Deep Networks for Image SR
+Since SRCNN [10] ﬁrst introduces deep convolution
+neural networks (CNNs) to the image SR task and obtains
+superior performance over conventional SR methods, nu-
+merous deep networks [8, 11, 12, 21, 27, 31, 32, 42, 43, 47,
+68, 70] have been proposed for SR to further improve the
+reconstruction quality. For instance, many methods apply
+more elaborate convolution module designs, such as resid-
+ual block [25, 32] and dense block [56, 70], to enhance the
+model representation ability. Several works explore more
+different frameworks like recursive neural network [22, 48]
+and graph neural network [72]. To improve perceptual qual-
+ity, [25, 55, 56, 67] introduce adversarial learning to gener-
+ate more realistic results. By using attention mechanism,
+[8, 35, 42, 43, 68, 69] achieve further improvement in terms
+of reconstruction ﬁdelity. Recently, a series of Transformer-
+based networks [6, 27, 31] are proposed and constantly re-fresh the state-of-the-art of SR task, showing the powerful
+representation ability of Transformer.
+To better understand the working mechanisms of SR net-
+works, several works are proposed to analyze and interpret
+the SR networks. LAM [15] adopts the integral gradient
+method to explore which input pixels contribute most to the
+ﬁnal performance. DDR [37] reveals the deep semantic rep-
+resentations in SR networks based on deep feature dimen-
+sionality reduction and visualization. FAIG [62] aims to
+ﬁnd discriminative ﬁlters for speciﬁc degradations in blind
+SR. RDSR [23] introduces channel saliency map to demon-
+strate that Dropout can help prevent co-adapting for real-SR
+networks. SRGA [38] aims to evaluate the generalization
+ability of SR methods. In this work, we exploit LAM [15]
+to analyse and understand the behavior of SR networks.
+2.2. Vision Transformer
+Recently, Transformer [53] has attracted the attention of
+computer vision community due to its success in the ﬁeld of
+natural language processing. A series of Transformer-based
+methods [7,13,14,20,26,28,39,44,54,59,60,63] have been
+developed for high-level vision tasks, including image clas-
+siﬁcation [14,28,39,46,52], object detection [5,7,36,39,50],
+segmentation [3, 18, 54, 58], etc. Although vision Trans-
+former has shown its superiority on modeling long-range
+dependency [14,45], there are still many works demonstrat-
+ing that the convolution can help Transformer achieve better
+visual representation [26,59,61,63,64]. Due to the impres-
+sive performance, Transformer has also been introduced for
+low-level vision tasks [4, 6, 27, 30, 31, 51, 57, 65]. Speciﬁ-
+cally, IPT [6] develops a ViT-style network and introduces
+multi-task pre-training for image processing. SwinIR [31]
+proposes an image restoration Transformer based on [39].
+VRT [30] introduces Transformer-based networks to video
+restoration. EDT [27] adopts self-attention mechanism and
+multi-related-task pre-training strategy to further refresh the
+state-of-the-art of SR. However, existing works still cannot
+fully exploit the potential of Transformer, while our method
+can activate more input pixels for better reconstruction.
+3. Methodology
+3.1. Motivation
+Swin Transformer [39] has already presented excellent
+performance in image super-resolution [31]. Then we are
+eager to know what makes it work better than CNN-based
+methods. To reveal its working mechanisms, we resort to a
+diagnostic tool – LAM [15], which is an attribution method
+designed for SR. With LAM, we could tell which input pix-
+els contribute most to the selected region. As shown in
+Fig. 2, the red marked points are informative pixels that
+contribute to the reconstruction. Intuitively, the more in-
+formation is utilized, the better performance can be ob-
+2
+=== PAGE 3 ===
+Figure 2. LAM [15] results for different networks. The LAM
+attribution reﬂects the importance of each pixel in the input LR
+image when reconstructing the patch marked with a box. Diffusion
+index (DI) [15] reﬂects the range of involved pixels. A higher DI
+represents a wider range of utilized pixels. The results indicate
+that SwinIR utilizes less information compared to RCAN, while
+HAT uses the most pixels for reconstruction.
+Figure 3. The blocking artifacts appear in the intermediate features
+of SwinIR [31]. “Layer N ” represents the intermediate features
+after theNthlayer ( i.e., RSTB in SwinIR and RHAG in HAT.)
+tained. This is true for CNN-based methods, as comparing
+RCAN [68] and EDSR [32]. However, for the Transformer-
+based method – SwinIR, its LAM does not show a larger
+range than RCAN. This is in contradiction with our com-
+mon sense, but could also provide us with additional in-
+sights. First, it implies that SwinIR has a much stronger
+mapping ability than CNN, and thus could use less infor-
+mation to achieve better performance. Second, SwinIR may
+restore wrong textures due to the limited range of utilized
+pixels, and we think it can be further improved if it could ex-
+ploit more input pixels. Therefore, we aim to design a net-
+work that can take advantage of similar self-attention while
+activating more pixels for reconstruction. As depicted in
+Fig. 2, our HAT can see pixels almost all over the image
+and restore correct and clear textures.
+Besides, we can observe obvious blocking artifacts in the
+intermediate features of SwinIR, as shown in Fig. 3. These
+artifacts are caused by the window partition mechanism,
+which suggests that the shifted window mechanism is inef-
+ﬁcient to build the cross-window connection. Some works
+for high-level vision tasks [13,20,44,60] also point out that
+enhancing the connection among windows can improve the
+window-based self-attention methods. Thus, we strengthen
+cross-window information interactions when designing our
+approach and the blocking artifacts in the intermediate fea-
+tures obtained by HAT are signiﬁcantly alleviated.3.2. Network Architecture
+3.2.1 The Overall Structure
+As shown in Fig. 4, the overall network consists of three
+parts, including shallow feature extraction, deep feature ex-
+traction and image reconstruction. The architecture design
+is widely used in previous works [31, 68]. Speciﬁcally,
+for a given low-resolution (LR) input ILR∈RH×W×Cin,
+we ﬁrst exploit one convolution layer to extract the shal-
+low featureF0∈RH×W×C, whereCinandCdenote the
+channel number of the input and the intermediate feature.
+Then, a series of residual hybrid attention groups (RHAG)
+and one 3×3convolution layer HConv(·)are utilized to
+perform the deep feature extraction. After that, we add a
+global residual connection to fuse shallow features F0and
+deep features FD∈RH×W×C, and then reconstruct the
+high-resolution result via a reconstruction module. As de-
+picted in Fig. 4, each RHAG contains several hybrid at-
+tention blocks (HAB), an overlapping cross-attention block
+(OCAB) and a 3×3convolution layer with a residual con-
+nection. For the reconstruction module, the pixel-shufﬂe
+method [47] is adopted to up-sample the fused feature. We
+simply useL1loss to optimize the network parameters.
+3.2.2 Hybrid Attention Block (HAB)
+As shown in Fig. 2, more pixels are activated when chan-
+nel attention is adopted, as global information is involved
+to calculate the channel attention weights. Besides, many
+works illustrate that convolution can help Transformer get
+better visual representation or achieve easier optimiza-
+tion [26,59,61,63,71]. Therefore, we incorporate a channel
+attention-based convolution block into the standard Trans-
+former block to enhance the representation ability of the
+network. As demonstrated in Fig. 4, a channel atten-
+tion block (CAB) is inserted into the standard Swin Trans-
+former block after the ﬁrst LayerNorm (LN) layer in parallel
+with the window-based multi-head self-attention (W-MSA)
+module. Note that shifted window-based self-attention
+(SW-MSA) is adopted at intervals in consecutive HABs
+similar to [31, 39]. To avoid the possible conﬂict of CAB
+and MSA on optimization and visual representation, a small
+constantαis multiplied to the output of CAB. For a given
+input feature X, the whole process of HAB is computed as
+XN= LN(X),
+XM=(S)W-MSA (XN) +αCAB(XN) +X, (1)
+Y= MLP(LN( XM)) +XM,
+whereXNandXMdenote the intermediate features. Y
+represents the output of HAB. Especially, we treat each
+pixel as a token for embedding ( i.e., set patch size as 1 for
+patch embedding following [31]). MLP denotes a multi-
+layer perceptron. For calculation of the self-attention mod-
+3
+=== PAGE 4 ===
+Figure 4. The overall architecture of HAT and the structure of RHAG and HAB.
+ule, given an input feature of size H×W×C, it is ﬁrst
+partitioned intoHW
+M2local windows of size M×M, then
+self-attention is calculated inside each window. For a local
+window feature XW∈RM2×C, the query ,keyandvalue
+matrices are computed by linear mappings as Q,KandV.
+Then the window-based self-attention is formulated as
+Attention(Q,K,V ) = SoftMax( QKT/√
+d+B)V,(2)
+wheredrepresents the dimension of query /key.Bdenotes
+the relative position encoding and is calculated as [53].
+Note that we use a large window size to compute self-
+attention, since we ﬁnd it signiﬁcantly enlarges the range
+of used pixels, as depicted in Sec.4.2. Besides, to build
+the connections between neighboring non-overlapping win-
+dows, we also utilize the shifted window partitioning ap-
+proach [39] and set the shift size to half of the window size.
+A CAB consists of two standard convolution layers with
+a GELU activation [17] and a channel attention (CA) mod-
+ule, as shown in Fig. 4. Since the Transformer-based struc-
+ture often requires a large number of channels for token em-
+bedding, directly using convolutions with constant width
+incurs a large computation cost. Thus, we compress the
+channel numbers of the two convolution layers by a con-
+stantβ. For an input feature with Cchannels, the channel
+number of the output feature after the ﬁrst convolution layer
+is squeezed toC
+β, then the feature is expanded to Cchannels
+through the second layer. Next, a standard CA module [68]
+is exploited to adaptively rescale channel-wise features.
+3.2.3 Overlapping Cross-Attention Block (OCAB)
+We introduce OCAB to directly establish cross-window
+connections and enhance the representative ability for the
+Figure 5. The overlapping window partition for OCA.
+window self-attention. Our OCAB consists of an overlap-
+ping cross-attention (OCA) layer and an MLP layer simi-
+lar to the standard Swin Transformer block [39]. But for
+OCA, as depicted in Fig. 5, we use different window sizes
+to partition the projected features. Speciﬁcally, for the
+XQ,XK,XV∈RH×W×Cof the input feature X,XQ
+is partitioned intoHW
+M2non-overlapping windows of size
+M×M, whileXK,XVare unfolded toHW
+M2overlapping
+windows of size Mo×Mo. It is calculated as
+Mo= (1 +γ)×M, (3)
+whereγis a constant to control the overlapping size. To
+better understand this operation, the standard window parti-
+tion can be considered as a sliding partition with the kernel
+size and the stride both equal to the window size M. In con-
+trast, the overlapping window partition can be viewed as a
+sliding partition with the kernel size equal to Mo, while the
+stride is equal to M. Zero-padding with sizeγM
+2is used to
+ensure the size consistency of overlapping windows. The
+attention matrix is calculated as Equ. 2, and the relative
+position bias B∈RM×Mois also adopted. Unlike WSA
+whose query ,keyandvalue are calculated from the same
+4
