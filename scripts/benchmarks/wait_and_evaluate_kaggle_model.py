@@ -279,7 +279,7 @@ def evaluate_models(device, ckpt_dyt_path):
         print("-" * 115)
 
 
-def wait_for_completion(kernel_slug: str = "zok213/stereoinr-turbo-dual-t4", max_wait_sec: int = 1800, poll_interval: int = 30):
+def wait_for_completion(kernel_slug: str = "zok213/stereoinr-turbo-dual-t4", max_wait_sec: int = 7200, poll_interval: int = 20):
     print(f"[*] Starting auto-monitor for Kaggle kernel: {kernel_slug}")
     start_t = time.time()
     while time.time() - start_t < max_wait_sec:
