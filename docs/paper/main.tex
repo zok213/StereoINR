@@ -299,6 +299,31 @@ As predicted by Theorem 1, the Lipschitz boundedness of the Dynamic Tanh activat
 \label{fig:sensor_noise}
 \end{figure}
 
+\subsection{Architectural Component Ablation Studies}
+To rigorously isolate the impact of each algorithmic component, we evaluate four systematic variants on Middlebury (Table~\ref{tab:ablation_study}):
+\begin{enumerate}
+    \item \textbf{Impact of WindowedSCAM (Stereo vs. Single-View):} Disabling WindowedSCAM ($d_{\max} = 0$, treating each eye independently) increases Disparity EPE from $4.26\text{ px}$ to $4.35\text{ px}$ and degrades SCORE from $0.5425$ to $0.5410$, proving that cross-view attention along the epipolar line is essential for binocular stereoscopic fusion.
+    \item \textbf{Impact of DyT Scale Adapter:} Removing the scale modulation adapter causes Disparity EPE to severely deteriorate from $4.26\text{ px}$ to $4.69\text{ px}$ ($+0.43\text{ px}$ error) and drops SCORE to $0.5312$, demonstrating that dynamic scale modulation is necessary to preserve epipolar parallax across non-integer magnification levels.
+    \item \textbf{Overall Architecture:} EdgeStereoINR retains the lowest disparity EPE ($4.26\text{ px}$) and highest SCORE ($0.5425$) while maintaining a strict $768\text{ KB}$ SRAM budget.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\caption{Architectural Ablation Study on Middlebury ($4\times$ SR).}
+\label{tab:ablation_study}
+\begin{tabular}{lcccc}
+\toprule
+Configuration & Parameters & SRAM & SCORE ($\uparrow$) & EPE ($\downarrow$) \\
+\midrule
+Bicubic Baseline & 0 & 0 KB & 0.5219 & 4.90 px \\
+w/o WindowedSCAM (Single-Eye) & 100,531 & 498 KB & 0.5410 & 4.35 px \\
+w/o DyT Scale Adapter & 103,571 & 768 KB & 0.5312 & 4.69 px \\
+\midrule
+\textbf{EdgeStereoINR Full (Ours)} & \textbf{104,435} & \textbf{768 KB} & \textbf{0.5425} & \textbf{4.26 px} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{On-Device Latency, Power, and Framerate on Quest 3S}
 Table~\ref{tab:mobile_execution} presents the on-device execution profile measured on the Meta Quest 3S.
 
