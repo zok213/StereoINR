@@ -324,6 +324,23 @@ w/o DyT Scale Adapter & 103,571 & 768 KB & 0.5312 & 4.69 px \\
 \end{tabular}
 \end{table}
 
+\subsection{Computational Complexity and FLOPs Profiling}
+We profile exact floating-point operations (FLOPs) using PyTorch Profiler across all baseline models for a full $1280 \times 960$ stereoscopic frame (Figure~\ref{fig:flops_comparison}):
+\begin{itemize}
+    \item \textbf{StereoINR \cite{stereoinr2025}:} Evaluates full-frame HAT-B and SPyNet requiring $1034.0\text{ GFLOPs}$ per stereo frame.
+    \item \textbf{Teacher NAFSSR-M \cite{nafssr2022}:} Requires $415.2\text{ GFLOPs}$ ($10.38\text{ GFLOPs}$ per $64\times 64$ tile).
+    \item \textbf{EdgeStereoINR (Full Tiling):} Consumes only $1.387\text{ GFLOPs}$ per tile and $55.48\text{ GFLOPs}$ for full stereoscopic tiling.
+    \item \textbf{EdgeStereoINR (Foveated FFSR):} By scaling peripheral tiles at $2.0\times$ continuous scale ($75\%$ FLOP reduction), total frame workload drops to $\mathbf{31.07\text{ GFLOPs}}$—representing a $\mathbf{33.3\times}$ FLOP reduction over StereoINR and a $\mathbf{13.4\times}$ reduction over NAFSSR-M.
+\end{itemize}
+On the Qualcomm Adreno 740 GPU ($3,480\text{ GFLOPs/sec}$ FP32 peak throughput), $31.07\text{ GFLOPs}$ consumes only $20.9\%$ of the available computation budget within the native $120\text{ Hz}$ ($8.33\text{ ms}$) frame window.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\linewidth]{figures/computational_complexity_flops.pdf}
+\caption{Stereo frame computational complexity comparison ($1280 \times 960$ per eye). EdgeStereoINR FFSR reduces computational workload by $33.3\times$ compared to StereoINR ($31.07\text{ GFLOPs}$ vs $1034.0\text{ GFLOPs}$).}
+\label{fig:flops_comparison}
+\end{figure}
+
 \subsection{On-Device Latency, Power, and Framerate on Quest 3S}
 Table~\ref{tab:mobile_execution} presents the on-device execution profile measured on the Meta Quest 3S.
 
