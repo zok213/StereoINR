@@ -206,6 +206,13 @@ EdgeStereoINR delivers consistent, statistically significant gains of $\mathbf{+
 
 Furthermore, we evaluate Multi-Scale Structural Similarity (MS-SSIM \cite{wang2003multiscale}) across 5 dyadic spatial frequency decomposition levels to assess human perceptual fidelity in spatial computing displays. EdgeStereoINR consistently surpasses Bicubic across all four datasets: Middlebury ($0.9431$ vs $0.9394$), KITTI 2012 ($0.8934$ vs $0.8712$), KITTI 2015 ($0.8876$ vs $0.8650$), and Flickr1024 ($0.8320$ vs $0.8145$), confirming superior structural and contrast preservation across multiple visual scale bands.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\linewidth]{figures/visual_qualitative_comparison.pdf}
+\caption{Visual qualitative comparison ($4\times$ SR) on Middlebury \textit{cloth2}. Left: Full scene with region-of-interest (ROI) crop box. Right: Zoom-in crops comparing (a) Bicubic interpolation, (b) Teacher NAFSSR-M, (c) EdgeStereoINR (Ours), and (d) Ground Truth HR with annotated patch PSNR / SSIM. EdgeStereoINR faithfully reconstructs the high-frequency thread weave without aliasing artifacts.}
+\label{fig:visual_qualitative}
+\end{figure*}
+
 \subsection{Binocular Depth & Disparity Consistency (SCORE & EPE)}
 In stereoscopic passthrough, disparity consistency is more crucial than 2D pixel sharpness; geometric inconsistency causes severe ocular fatigue and nausea. We evaluate cross-view consistency using the Stereo Consistency Metric (SCORE \cite{stereoinr2025}) and Disparity End-Point Error (EPE) measured against ground-truth Middlebury disparity maps.
 
