@@ -32,14 +32,21 @@ class DyTScaleAdapter(nn.Module):
         )
         self.norm = DynamicTanh(channels)
 
-    def forward(self, feat: torch.Tensor, scale: float) -> torch.Tensor:
-        # scale: float scalar (e.g. 2.5) or tensor of shape (B, 1)
+    def forward(self, feat: torch.Tensor, scale) -> torch.Tensor:
+        # scale: float scalar (e.g. 2.5), 2D tensor (B, 1), or 4D spatial scale map (B, 1, H, W)
         if isinstance(scale, (int, float)):
             scale_t = torch.tensor([[float(scale)]], device=feat.device, dtype=feat.dtype)
+            mod = torch.sigmoid(self.mlp(scale_t)).unsqueeze(-1).unsqueeze(-1)  # (B, C, 1, 1)
+        elif torch.is_tensor(scale) and scale.dim() == 4:
+            # Spatially-varying foveated scale map (B, 1, H, W)
+            B, _, H, W = scale.shape
+            scale_flat = scale.permute(0, 2, 3, 1).reshape(-1, 1).to(feat.dtype)  # (B*H*W, 1)
+            mod_flat = torch.sigmoid(self.mlp(scale_flat))  # (B*H*W, C)
+            mod = mod_flat.view(B, H, W, -1).permute(0, 3, 1, 2)  # (B, C, H, W)
         else:
             scale_t = scale.view(-1, 1).to(feat.dtype)
+            mod = torch.sigmoid(self.mlp(scale_t)).unsqueeze(-1).unsqueeze(-1)  # (B, C, 1, 1)
         
-        mod = torch.sigmoid(self.mlp(scale_t)).unsqueeze(-1).unsqueeze(-1)  # (B, C, 1, 1)
         return self.norm(feat) * mod + feat
 
 
