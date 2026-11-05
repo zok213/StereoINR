@@ -1,0 +1,49 @@
+{
+  "benchmark": "Left-Right Consistency Occlusion Gating",
+  "target_hardware": "Meta Quest 3S (Adreno 740 GMEM SRAM)",
+  "average_matched_pct": 73.14016050184185,
+  "average_occluded_pct": 26.85983949815816,
+  "average_lrc_error_px": 0.8094646573066712,
+  "per_scene": {
+    "cloth2": {
+      "resolution_lr": "162x138",
+      "matched_percentage": 79.48649132224011,
+      "occluded_percentage": 20.513508677759887,
+      "mean_lrc_error_px": 0.7115599513053894,
+      "mean_confidence_matched": 0.9605004787445068,
+      "mean_confidence_occluded": 0.4648449122905731
+    },
+    "motorcycle": {
+      "resolution_lr": "185x124",
+      "matched_percentage": 65.68003487358325,
+      "occluded_percentage": 34.31996512641675,
+      "mean_lrc_error_px": 0.9513795971870422,
+      "mean_confidence_matched": 0.9538741707801819,
+      "mean_confidence_occluded": 0.4545139670372009
+    },
+    "piano": {
+      "resolution_lr": "176x120",
+      "matched_percentage": 77.38162878787878,
+      "occluded_percentage": 22.618371212121218,
+      "mean_lrc_error_px": 0.7280370593070984,
+      "mean_confidence_matched": 0.9577099084854126,
+      "mean_confidence_occluded": 0.4765672981739044
+    },
+    "pipes": {
+      "resolution_lr": "183x121",
+      "matched_percentage": 67.72343404236102,
+      "occluded_percentage": 32.27656595763898,
+      "mean_lrc_error_px": 0.9181758761405945,
+      "mean_confidence_matched": 0.9559764862060547,
+      "mean_confidence_occluded": 0.4558736979961395
+    },
+    "sword2": {
+      "resolution_lr": "178x125",
+      "matched_percentage": 75.42921348314606,
+      "occluded_percentage": 24.570786516853943,
+      "mean_lrc_error_px": 0.7381708025932312,
+      "mean_confidence_matched": 0.9733260273933411,
+      "mean_confidence_occluded": 0.42031440138816833
+    }
+  }
+}
