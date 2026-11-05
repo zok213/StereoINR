@@ -62,61 +62,58 @@ class WindowedSCAM(nn.Module):
         self.num_hypotheses = max_disp - min_disp + 1
         self.scale = channels ** -0.5
 
-        self.norm_l = DynamicTanh(channels)
-        self.l_proj = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1, groups=channels)
+        self.q_l = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+        self.k_r = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+        self.v_r = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+        self.q_r = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+        self.k_l = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+        self.v_l = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
         self.beta = nn.Parameter(torch.zeros(1, channels, 1, 1))
         self.gamma = nn.Parameter(torch.zeros(1, channels, 1, 1))
 
     def forward(self, x_l: torch.Tensor, x_r: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         B, C, H, W = x_l.shape
 
-        # Linear projections with DyT normalization
-        q_l = self.l_proj(self.norm_l(x_l))  # (B, C, H, W)
-        q_r = self.l_proj(self.norm_l(x_r))  # (B, C, H, W)
-        v_l = x_l
-        v_r = x_r
+        ql = self.q_l(x_l)
+        kr = self.k_r(x_r)
+        vr = self.v_r(x_r)
+        qr = self.q_r(x_r)
+        kl = self.k_l(x_l)
+        vl = self.v_l(x_l)
 
         corr_l2r = []
-        shifted_v_r = []
-
+        shifted_vr = []
         corr_r2l = []
-        shifted_v_l = []
+        shifted_vl = []
 
         for offset in range(self.min_disp, self.max_disp + 1):
             if offset > 0:
-                # Left query at x matches Right key at (x - offset): shift Right to right (pad left)
-                q_r_s = F.pad(q_r[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
-                v_r_s = F.pad(v_r[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
-                # Right query at x matches Left key at (x + offset): shift Left to left (pad right)
-                q_l_s = F.pad(q_l[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
-                v_l_s = F.pad(v_l[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+                kr_s = F.pad(kr[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
+                vr_s = F.pad(vr[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
+                kl_s = F.pad(kl[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+                vl_s = F.pad(vl[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
             elif offset < 0:
                 abs_off = abs(offset)
-                # Left query at x matches Right key at (x + abs_off): shift Right to left (pad right)
-                q_r_s = F.pad(q_r[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
-                v_r_s = F.pad(v_r[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
-                # Right query at x matches Left key at (x - abs_off): shift Left to right (pad left)
-                q_l_s = F.pad(q_l[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
-                v_l_s = F.pad(v_l[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
+                kr_s = F.pad(kr[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
+                vr_s = F.pad(vr[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
+                kl_s = F.pad(kl[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
+                vl_s = F.pad(vl[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
             else:
-                q_r_s, v_r_s = q_r, v_r
-                q_l_s, v_l_s = q_l, v_l
+                kr_s, vr_s = kr, vr
+                kl_s, vl_s = kl, vl
 
-            sim_l2r = torch.sum(q_l * q_r_s, dim=1, keepdim=True) * self.scale
-            corr_l2r.append(sim_l2r)
-            shifted_v_r.append(v_r_s)
+            corr_l2r.append(torch.sum(ql * kr_s, dim=1, keepdim=True) * self.scale)
+            shifted_vr.append(vr_s)
+            corr_r2l.append(torch.sum(qr * kl_s, dim=1, keepdim=True) * self.scale)
+            shifted_vl.append(vl_s)
 
-            sim_r2l = torch.sum(q_r * q_l_s, dim=1, keepdim=True) * self.scale
-            corr_r2l.append(sim_r2l)
-            shifted_v_l.append(v_l_s)
+        weights_l2r = F.softmax(torch.cat(corr_l2r, dim=1), dim=1)
+        vr_stack = torch.stack(shifted_vr, dim=1)
+        f_r2l = torch.sum(vr_stack * weights_l2r.unsqueeze(2), dim=1)
 
-        weights_l2r = F.softmax(torch.cat(corr_l2r, dim=1), dim=1)   # (B, 17, H, W)
-        v_r_stack = torch.stack(shifted_v_r, dim=1)                  # (B, 17, C, H, W)
-        f_r2l = torch.sum(v_r_stack * weights_l2r.unsqueeze(2), dim=1)
-
-        weights_r2l = F.softmax(torch.cat(corr_r2l, dim=1), dim=1)   # (B, 17, H, W)
-        v_l_stack = torch.stack(shifted_v_l, dim=1)                  # (B, 17, C, H, W)
-        f_l2r = torch.sum(v_l_stack * weights_r2l.unsqueeze(2), dim=1)
+        weights_r2l = F.softmax(torch.cat(corr_r2l, dim=1), dim=1)
+        vl_stack = torch.stack(shifted_vl, dim=1)
+        f_l2r = torch.sum(vl_stack * weights_r2l.unsqueeze(2), dim=1)
 
         out_l = x_l + f_r2l * self.beta
         out_r = x_r + f_l2r * self.gamma

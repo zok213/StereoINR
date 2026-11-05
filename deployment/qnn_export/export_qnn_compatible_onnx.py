@@ -42,7 +42,7 @@ def export_qnn_onnx():
     print("[*] Loading Model Soup checkpoint...")
     base_model = ContinuousDyTEdgeINR(width=48, num_blks=4).to(device).eval()
     sd = torch.load(ckpt_path, map_location=device, weights_only=False)
-    base_model.load_state_dict(sd['model_state_dict'] if 'model_state_dict' in sd else sd, strict=False)
+    base_model.load_state_dict(sd['model_state_dict'] if 'model_state_dict' in sd else sd, strict=True)
     
     wrapper = QNNFixedScaleWrapper(base_model, fixed_scale=4.0)
     
