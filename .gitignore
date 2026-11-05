@@ -38,3 +38,6 @@ external/**/*.pth.tar
 # Unity / Sentis temporary meta files if opened in editor
 *.pidb
 *.booproj
+
+# Local scratch and debug scripts
+scratch/

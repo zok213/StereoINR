@@ -31,6 +31,8 @@ namespace ActiveStereo.EdgeStereoINR
         private int frameCount = 0;
         private float fps = 0.0f;
 
+        private bool _allocatedSyntheticTextures = false;
+
         private void Start()
         {
             // Auto-detect streamers if not assigned
@@ -39,7 +41,74 @@ namespace ActiveStereo.EdgeStereoINR
             if (foveatedStreamer == null)
                 foveatedStreamer = GetComponent<FoveatedStereoSentisStreamer>();
 
+            EnsureTestTextures();
             UpdateStreamerMode();
+        }
+
+        private void EnsureTestTextures()
+        {
+            if (uniformStreamer != null && uniformStreamer.leftCameraFeed == null)
+            {
+                RenderTexture lFeed = new RenderTexture(320, 240, 0, RenderTextureFormat.ARGB32);
+                RenderTexture rFeed = new RenderTexture(320, 240, 0, RenderTextureFormat.ARGB32);
+                lFeed.Create();
+                rFeed.Create();
+
+                // Draw procedural stereo checkerboard pattern with horizontal disparity
+                Texture2D texL = new Texture2D(320, 240, TextureFormat.RGB24, false);
+                Texture2D texR = new Texture2D(320, 240, TextureFormat.RGB24, false);
+                for (int y = 0; y < 240; y++)
+                {
+                    for (int x = 0; x < 320; x++)
+                    {
+                        bool checkL = ((x / 32) + (y / 32)) % 2 == 0;
+                        bool checkR = (((x + 6) / 32) + (y / 32)) % 2 == 0; // 6px horizontal stereo disparity
+                        texL.SetPixel(x, y, checkL ? Color.white : new Color(0.2f, 0.4f, 0.8f));
+                        texR.SetPixel(x, y, checkR ? Color.white : new Color(0.2f, 0.4f, 0.8f));
+                    }
+                }
+                texL.Apply();
+                texR.Apply();
+                Graphics.Blit(texL, lFeed);
+                Graphics.Blit(texR, rFeed);
+                Destroy(texL);
+                Destroy(texR);
+
+                RenderTexture lOut = new RenderTexture(1280, 960, 0, RenderTextureFormat.ARGBHalf);
+                RenderTexture rOut = new RenderTexture(1280, 960, 0, RenderTextureFormat.ARGBHalf);
+                lOut.Create();
+                rOut.Create();
+
+                uniformStreamer.leftCameraFeed = lFeed;
+                uniformStreamer.rightCameraFeed = rFeed;
+                uniformStreamer.leftOutputEyeTarget = lOut;
+                uniformStreamer.rightOutputEyeTarget = rOut;
+
+                if (leftEyeDisplay != null) leftEyeDisplay.texture = lOut;
+                if (rightEyeDisplay != null) rightEyeDisplay.texture = rOut;
+
+                _allocatedSyntheticTextures = true;
+                Debug.Log("[StereoPassthroughDemo] Auto-allocated synthetic 320x240 stereo test feeds and 1280x960 output targets.");
+            }
+
+            if (foveatedStreamer != null && foveatedStreamer.leftCameraFeed == null && uniformStreamer != null)
+            {
+                foveatedStreamer.leftCameraFeed = uniformStreamer.leftCameraFeed;
+                foveatedStreamer.rightCameraFeed = uniformStreamer.rightCameraFeed;
+                foveatedStreamer.leftOutputEyeTarget = uniformStreamer.leftOutputEyeTarget;
+                foveatedStreamer.rightOutputEyeTarget = uniformStreamer.rightOutputEyeTarget;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_allocatedSyntheticTextures && uniformStreamer != null)
+            {
+                if (uniformStreamer.leftCameraFeed != null) uniformStreamer.leftCameraFeed.Release();
+                if (uniformStreamer.rightCameraFeed != null) uniformStreamer.rightCameraFeed.Release();
+                if (uniformStreamer.leftOutputEyeTarget != null) uniformStreamer.leftOutputEyeTarget.Release();
+                if (uniformStreamer.rightOutputEyeTarget != null) uniformStreamer.rightOutputEyeTarget.Release();
+            }
         }
 
         private void Update()
