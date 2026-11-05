@@ -1,0 +1,28 @@
+{
+  "name": "com.activestereo.edgestreoinr",
+  "version": "1.0.0",
+  "displayName": "EdgeStereoINR - Real-Time Mobile Stereo Super-Resolution",
+  "description": "Zero-GMEM-Spill Continuous Stereoscopic Super-Resolution (1.2x - 8.0x) for Meta Quest 3S passthrough using Unity Sentis and Adreno 740 GPU compute.",
+  "unity": "6000.0",
+  "unityRelease": "0b1",
+  "dependencies": {
+    "com.unity.sentis": "2.1.0",
+    "com.unity.xr.oculus": "4.2.0"
+  },
+  "keywords": [
+    "stereoscopic",
+    "super-resolution",
+    "passthrough",
+    "quest3s",
+    "sentis",
+    "inr",
+    "xr",
+    "vr",
+    "mr"
+  ],
+  "author": {
+    "name": "Active Stereo Research Consortium",
+    "email": "edge.stereoinr@research.org",
+    "url": "https://github.com/activestereo/edgestreoinr"
+  }
+}
