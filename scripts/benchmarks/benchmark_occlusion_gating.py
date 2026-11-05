@@ -76,7 +76,7 @@ def benchmark_occlusion_gating():
         with torch.no_grad():
             f_l = intro(l_lr)
             f_r = intro(r_lr)
-            _, _, m_occ, lrc_err = og_scam(f_l, f_r, return_mask=True)
+            _, _, m_occ, _, lrc_err, _ = og_scam(f_l, f_r, return_mask=True)
 
         m_np = m_occ.squeeze().cpu().numpy()
         err_np = lrc_err.squeeze().cpu().numpy()

@@ -44,19 +44,22 @@ def test_og_scam_parity_and_gating():
     og_scam.gamma.data.fill_(0.2)
 
     with torch.no_grad():
-        out_l, out_r, m_occ, lrc_err = og_scam(x_l, x_r, return_mask=True)
+        out_l, out_r, m_occ_l, m_occ_r, lrc_err_l, lrc_err_r = og_scam(x_l, x_r, return_mask=True)
 
-    print(f"[*] Mean Occlusion Confidence (All Pixels): {m_occ.mean().item():.4f}")
-    print(f"[*] Mean LRC Error (All Pixels): {lrc_err.mean().item():.4f} pixels")
+    print(f"[*] Mean Occlusion Confidence Left: {m_occ_l.mean().item():.4f}")
+    print(f"[*] Mean Occlusion Confidence Right: {m_occ_r.mean().item():.4f}")
+    print(f"[*] Mean LRC Error Left: {lrc_err_l.mean().item():.4f} pixels")
+    print(f"[*] Mean LRC Error Right: {lrc_err_r.mean().item():.4f} pixels")
 
-    occ_conf = m_occ[:, :, :, 20:30].mean().item()
-    valid_conf = m_occ[:, :, :, 35:50].mean().item()
+    occ_conf = m_occ_l[:, :, :, 20:30].mean().item()
+    valid_conf = m_occ_l[:, :, :, 35:50].mean().item()
 
     print(f"[*] Confidence in Occluded Region (x in [20, 30]): {occ_conf:.4f}")
     print(f"[*] Confidence in Valid Matched Region (x in [35, 50]): {valid_conf:.4f}")
 
     assert valid_conf > occ_conf, f"Valid confidence {valid_conf} not higher than occluded {occ_conf}"
-    assert not torch.isnan(out_l).any(), "NaN found in output"
+    assert not torch.isnan(out_l).any(), "NaN found in left output"
+    assert not torch.isnan(out_r).any(), "NaN found in right output"
 
     print("\n>>> OCCLUSION GATING VALIDATION:")
     print("1. Valid matched stereo pixels receive high confidence (> 0.60).")

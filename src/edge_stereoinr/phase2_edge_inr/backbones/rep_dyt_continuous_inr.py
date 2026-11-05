@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedSCAM, DynamicTanh
+from src.edge_stereoinr.phase2_edge_inr.backbones.og_windowed_scam import OcclusionGatedWindowedSCAM
 from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_continuous_scale_inr import DyTScaleAdapter
 from src.edge_stereoinr.phase2_edge_inr.backbones.rep_dyt_block import RepDyTNAFBlock
 
@@ -23,11 +24,15 @@ class ContinuousRepDyTEdgeINR(nn.Module):
     Structural Reparameterized Continuous Stereo INR (RepDyT-Edge-INR)
     Production architecture for Meta Quest 3S (Adreno 740 Vulkan Compute).
     """
-    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, min_disp: int = -2, max_disp: int = 14):
+    def __init__(self, in_channels: int = 3, width: int = 48, num_blks: int = 4, min_disp: int = -2, max_disp: int = 14, enable_occlusion_gating: bool = True):
         super().__init__()
         self.width = width
+        self.enable_occlusion_gating = enable_occlusion_gating
         self.intro = nn.Conv2d(in_channels, width, kernel_size=3, padding=1, bias=True)
-        self.stereo_fusion = WindowedSCAM(width, min_disp=min_disp, max_disp=max_disp)
+        if enable_occlusion_gating:
+            self.stereo_fusion = OcclusionGatedWindowedSCAM(width, min_disp=min_disp, max_disp=max_disp)
+        else:
+            self.stereo_fusion = WindowedSCAM(width, min_disp=min_disp, max_disp=max_disp)
         self.blocks = nn.ModuleList([RepDyTNAFBlock(width) for _ in range(num_blks)])
         self.scale_adapter = DyTScaleAdapter(width)
 

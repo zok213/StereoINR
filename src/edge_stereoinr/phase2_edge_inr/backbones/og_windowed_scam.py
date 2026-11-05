@@ -97,29 +97,41 @@ class OcclusionGatedWindowedSCAM(nn.Module):
         # 1. Soft disparity estimates along epipolar window
         disp_vals = torch.arange(self.min_disp, self.max_disp + 1, device=x_l.device, dtype=x_l.dtype).view(1, -1, 1, 1)
         disp_l2r = torch.sum(weights_l2r * disp_vals, dim=1, keepdim=True)  # (B, 1, H, W)
-        disp_r2l = torch.sum(weights_r2l * (-disp_vals), dim=1, keepdim=True)  # (B, 1, H, W)
+        disp_r2l_neg = torch.sum(weights_r2l * (-disp_vals), dim=1, keepdim=True)  # (B, 1, H, W)
+        disp_r2l_mag = -disp_r2l_neg
 
-        # 2. Warp right disparity to left coordinate frame
+        # Common coordinate grid
         grid_y, grid_x = torch.meshgrid(
             torch.linspace(-1, 1, H, device=x_l.device),
             torch.linspace(-1, 1, W, device=x_l.device),
             indexing='ij'
         )
-        norm_disp_l = (disp_l2r.squeeze(1) * 2.0) / float(W)
-        grid_x_warped = grid_x.unsqueeze(0).repeat(B, 1, 1) - norm_disp_l
-        grid_warped = torch.stack((grid_x_warped, grid_y.unsqueeze(0).repeat(B, 1, 1)), dim=3)
-        disp_r_in_l = F.grid_sample(disp_r2l, grid_warped, mode='bilinear', padding_mode='border', align_corners=True)
+        grid_y = grid_y.unsqueeze(0).repeat(B, 1, 1)
 
-        # 3. Left-Right Consistency (LRC) check
-        lrc_error = torch.abs(disp_l2r + disp_r_in_l)
+        # 2a. Warp right disparity to left coordinate frame
+        norm_disp_l = (disp_l2r.squeeze(1) * 2.0) / x_l.shape[3]
+        grid_x_warped_l = grid_x.unsqueeze(0).repeat(B, 1, 1) - norm_disp_l
+        grid_warped_l = torch.stack((grid_x_warped_l, grid_y), dim=3)
+        disp_r_in_l = F.grid_sample(disp_r2l_neg, grid_warped_l, mode='bilinear', padding_mode='border', align_corners=True)
 
-        # 4. Occlusion Confidence Mask in [0, 1]
-        m_occ = torch.exp(- (lrc_error ** 2) / (2.0 * self.sigma_occ ** 2))
+        # 2b. Warp left disparity to right coordinate frame
+        norm_disp_r = (disp_r2l_mag.squeeze(1) * 2.0) / x_l.shape[3]
+        grid_x_warped_r = grid_x.unsqueeze(0).repeat(B, 1, 1) + norm_disp_r
+        grid_warped_r = torch.stack((grid_x_warped_r, grid_y), dim=3)
+        disp_l_in_r = F.grid_sample(disp_l2r, grid_warped_r, mode='bilinear', padding_mode='border', align_corners=True)
 
-        # 5. Gated fusion: Occluded regions fall back safely to identity x_l without spurious bleeding
-        out_l = x_l + (f_r2l * m_occ) * self.beta
-        out_r = x_r + f_l2r * self.gamma
+        # 3. Bidirectional Left-Right Consistency (LRC) check
+        lrc_error_l = torch.abs(disp_l2r + disp_r_in_l)
+        lrc_error_r = torch.abs(disp_r2l_mag - disp_l_in_r)
+
+        # 4. Bidirectional Occlusion Confidence Masks in [0, 1]
+        m_occ_l = torch.exp(- (lrc_error_l ** 2) / (2.0 * self.sigma_occ ** 2))
+        m_occ_r = torch.exp(- (lrc_error_r ** 2) / (2.0 * self.sigma_occ ** 2))
+
+        # 5. Gated fusion: Occluded regions fall back safely to identity without spurious cross-view bleeding
+        out_l = x_l + (f_r2l * m_occ_l) * self.beta
+        out_r = x_r + (f_l2r * m_occ_r) * self.gamma
 
         if return_mask:
-            return out_l, out_r, m_occ, lrc_error
+            return out_l, out_r, m_occ_l, m_occ_r, lrc_error_l, lrc_error_r
         return out_l, out_r
