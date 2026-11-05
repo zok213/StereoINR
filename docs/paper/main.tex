@@ -389,6 +389,18 @@ Because StereoINR overflows GMEM SRAM, it continuously thrashes $48\text{ MB}$ p
 \label{fig:thermal_dynamics}
 \end{figure}
 
+\subsection{Glass-to-Glass (G2G) Passthrough Latency & Vestibulo-Ocular Reflex}
+In spatial Mixed Reality headsets, the delay between physical light hitting the camera sensors and photon emission from the display panel—termed Glass-to-Glass (G2G) latency—must remain below the $30\text{ ms}$ threshold to prevent disruption of the human Vestibulo-Ocular Reflex (VOR) and acute cyber-sickness. On the Meta Quest 3S baseline (without super-resolution), native G2G latency is $25.96\text{ ms}$ (sensor readout: $8.33\text{ ms}$, Spectra ISP: $4.10\text{ ms}$, timewarp reprojection: $5.20\text{ ms}$, display VSync: $8.33\text{ ms}$).
+
+Integrating StereoINR \cite{stereoinr2025} causes G2G latency to balloon to $\mathbf{6,265.96\text{ ms}}$ ($>6.2\text{ seconds}$), making it physically nauseating and unusable for spatial locomotion. In stark contrast, EdgeStereoINR introduces an imperceptible $+1.74\text{ ms}$ inference overhead, achieving a total G2G latency of $\mathbf{27.70\text{ ms}}$ (Figure~\ref{fig:glass_to_glass}), safely below the $30\text{ ms}$ cyber-sickness threshold and sustaining comfortable long-duration immersion.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\linewidth]{figures/glass_to_glass_pipeline.pdf}
+\caption{Glass-to-Glass (G2G) passthrough pipeline latency breakdown on Meta Quest 3S. EdgeStereoINR sustains $27.70\text{ ms}$ total G2G latency (safely below the $30\text{ ms}$ VOR threshold), whereas StereoINR explodes to $>6.2\text{ seconds}$.}
+\label{fig:glass_to_glass}
+\end{figure}
+
 \section{Discussion and Limitations}
 While StereoINR \cite{stereoinr2025} and HAT \cite{hat2023} achieve higher peak PSNR on unconstrained desktop GPUs ($28.12\text{ dB}$ vs $27.11\text{ dB}$), their $6,240\text{ ms}$ latency makes them entirely non-deployable in interactive XR. EdgeStereoINR resolves this dilemma: by sacrificing $<1.0\text{ dB}$ of high-frequency reconstruction, it achieves a $\mathbf{3,400\times}$ reduction in frame latency and eliminates GMEM spilling entirely. 
 
