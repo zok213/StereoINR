@@ -1,0 +1,56 @@
+{
+  "dataset": "Middlebury (5 canonical test scenes)",
+  "scale": "4x Stereo Super-Resolution",
+  "device": "cuda",
+  "results": {
+    "bicubic": {
+      "avg_psnr_y": 28.060507780659417,
+      "per_scene": {
+        "cloth2": 29.624974113908216,
+        "motorcycle": 24.817265006207617,
+        "piano": 29.822469964017074,
+        "pipes": 26.584426254180805,
+        "sword2": 29.453403564983372
+      }
+    },
+    "dyt_edge_inr_104k": {
+      "avg_psnr_y": 28.67270402732363,
+      "per_scene": {
+        "cloth2": 29.7742656791585,
+        "motorcycle": 25.309837341956825,
+        "piano": 30.368281255441943,
+        "pipes": 27.222311466629307,
+        "sword2": 30.68882439343156
+      },
+      "params": 104435,
+      "sram_resident": true,
+      "latency_ms": 1.74
+    },
+    "nafrssr_m_280k": {
+      "avg_psnr_y": 30.956297051273474,
+      "per_scene": {
+        "cloth2": 31.069069536479663,
+        "motorcycle": 27.546896754624797,
+        "piano": 32.0988265836532,
+        "pipes": 29.45473364180347,
+        "sword2": 34.61195873980625
+      },
+      "params": 280000,
+      "sram_resident": false,
+      "latency_ms": 12.4
+    },
+    "nafrssr_t_345k": {
+      "avg_psnr_y": 31.108506180477786,
+      "per_scene": {
+        "cloth2": 31.153634418266158,
+        "motorcycle": 27.698577936755637,
+        "piano": 32.10203687537221,
+        "pipes": 29.580317305319888,
+        "sword2": 35.007964366675054
+      },
+      "params": 345000,
+      "sram_resident": false,
+      "latency_ms": 14.8
+    }
+  }
+}

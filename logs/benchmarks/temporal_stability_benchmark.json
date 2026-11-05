@@ -1,0 +1,11 @@
+{
+  "benchmark": "VR Passthrough Temporal Consistency & Anti-Flicker",
+  "target_hardware": "Meta Quest 3S (Adreno 740 Vulkan)",
+  "frames_tested": 30,
+  "inter_frame_scintillation_twe_raw": 0.004998735633903536,
+  "inter_frame_scintillation_twe_stabilized": 0.0004554430247637732,
+  "high_freq_noise_variance_raw": 0.1249354379872481,
+  "high_freq_noise_variance_stabilized": 0.03553992894788583,
+  "temporal_jitter_reduction_pct": 90.88883553523482,
+  "anti_flicker_status": "PASS"
+}

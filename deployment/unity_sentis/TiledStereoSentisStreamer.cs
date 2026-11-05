@@ -55,6 +55,7 @@ namespace ActiveStereo.EdgeStereoINR
         // Sentis Runtime
         private Model _runtimeModel;
         private IWorker _worker;
+        private TemporalStereoSentisStreamer _temporalFilter;
 
         // Dynamic Tensor Name Mapping
         private string _inputNameL = "input_l";
@@ -76,6 +77,7 @@ namespace ActiveStereo.EdgeStereoINR
 
         void Awake()
         {
+            _temporalFilter = GetComponent<TemporalStereoSentisStreamer>();
             InitializeSentisEngine();
         }
 
@@ -301,6 +303,12 @@ namespace ActiveStereo.EdgeStereoINR
             finally
             {
                 scaleTensor?.Dispose();
+            }
+
+            // Post-process temporal stabilization if attached
+            if (_temporalFilter != null && _temporalFilter.isActiveAndEnabled)
+            {
+                _temporalFilter.ApplyTemporalFilter();
             }
         }
 

@@ -1,0 +1,30 @@
+{
+  "benchmark": "DyT-Edge-INR Precision & Quantization Audit",
+  "target_hardware": "Qualcomm Adreno 740 (Snapdragon XR2 Gen 2 / Quest 3S)",
+  "modes": {
+    "fp32": {
+      "max_abs_error": 0.0,
+      "mse": 0.0,
+      "snr_db": "inf",
+      "fidelity_psnr_db": "Reference"
+    },
+    "fp16": {
+      "max_abs_error": 0.0010862350463867188,
+      "mse": 4.1612025825088494e-08,
+      "snr_db": 68.57652982776992,
+      "fidelity_psnr_db": 73.80770704025326
+    },
+    "int8_ptq": {
+      "max_abs_error": 0.013418734073638916,
+      "mse": 4.964699201082112e-06,
+      "snr_db": 47.809892504815565,
+      "fidelity_psnr_db": 53.0410697172989
+    }
+  },
+  "adreno_740_implications": {
+    "fp16_alu_throughput_tflops": 6.96,
+    "fp32_alu_throughput_tflops": 3.48,
+    "sram_bandwidth_reduction": "50%",
+    "optimal_deployment_format": "Native FP16 (Vulkan Compute / Sentis)"
+  }
+}
