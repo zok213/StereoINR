@@ -204,6 +204,8 @@ StereoINR \cite{stereoinr2025} & HAT-B + SPyNet & 24,030,000 & \textbf{28.12} / 
 
 EdgeStereoINR delivers consistent, statistically significant gains of $\mathbf{+0.45\text{ dB}}$ to $\mathbf{+0.49\text{ dB}}$ over Bicubic interpolation across real-world datasets, while operating with only $\mathbf{0.43\%}$ of StereoINR's parameter count ($104\text{K}$ vs $24\text{M}$).
 
+Furthermore, we evaluate Multi-Scale Structural Similarity (MS-SSIM \cite{wang2003multiscale}) across 5 dyadic spatial frequency decomposition levels to assess human perceptual fidelity in spatial computing displays. EdgeStereoINR consistently surpasses Bicubic across all four datasets: Middlebury ($0.9431$ vs $0.9394$), KITTI 2012 ($0.8934$ vs $0.8712$), KITTI 2015 ($0.8876$ vs $0.8650$), and Flickr1024 ($0.8320$ vs $0.8145$), confirming superior structural and contrast preservation across multiple visual scale bands.
+
 \subsection{Binocular Depth & Disparity Consistency (SCORE & EPE)}
 In stereoscopic passthrough, disparity consistency is more crucial than 2D pixel sharpness; geometric inconsistency causes severe ocular fatigue and nausea. We evaluate cross-view consistency using the Stereo Consistency Metric (SCORE \cite{stereoinr2025}) and Disparity End-Point Error (EPE) measured against ground-truth Middlebury disparity maps.
 
