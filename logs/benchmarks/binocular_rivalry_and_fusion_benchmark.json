@@ -1,0 +1,34 @@
+{
+  "benchmark": "Stereoscopic Binocular Rivalry & Inter-Ocular Fusion Audit",
+  "target_hardware": "Meta Quest 3S (Adreno 740 GMEM SRAM)",
+  "summary": {
+    "bicubic": {
+      "mono_psnr_db": 28.060507780659417,
+      "dwe_psnr_db": 17.45075498295764,
+      "io_ssim": 0.800024106014979,
+      "iogd_error": 0.1690024495124817,
+      "clinical_rating": "Severe Rivalry / Eye Strain"
+    },
+    "sisr_isolated": {
+      "mono_psnr_db": 28.673100009673913,
+      "dwe_psnr_db": 17.502724791016778,
+      "io_ssim": 0.8013173880912954,
+      "iogd_error": 0.17375918924808503,
+      "clinical_rating": "Severe Rivalry / Eye Strain"
+    },
+    "repdyt_std_scam": {
+      "mono_psnr_db": 28.67270402732363,
+      "dwe_psnr_db": 17.50608010373559,
+      "io_ssim": 0.8017142180910428,
+      "iogd_error": 0.17376139461994172,
+      "clinical_rating": "Severe Rivalry / Eye Strain"
+    },
+    "repdyt_og_scam": {
+      "mono_psnr_db": 28.664079470515304,
+      "dwe_psnr_db": 17.510297254887398,
+      "io_ssim": 0.8017344852483523,
+      "iogd_error": 0.17351936995983125,
+      "clinical_rating": "Severe Rivalry / Eye Strain"
+    }
+  }
+}
