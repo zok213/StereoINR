@@ -290,6 +290,15 @@ As predicted by Theorem 1, the Lipschitz boundedness of the Dynamic Tanh activat
 
 \noindent \textbf{Exposure Imbalance:} Dual passthrough cameras frequently exhibit independent auto-exposure adjustments. Under $\pm 15\%$ gain and $\pm 0.05$ bias discrepancies, unperturbed left-eye PSNR varied by less than $\mathbf{0.01\text{ dB}}$ ($25.84\text{ dB} \to 25.83\text{ dB}$), demonstrating complete immunity to cross-view color contamination.
 
+\noindent \textbf{Sensor Shot Noise Suppression (Binocular Wiener Filtering):} Standalone MR passthrough cameras suffer from low-light Poisson-Gaussian shot noise. Because physical left and right sensors experience conditionally independent noise ($\mathbb{E}[\eta_L \eta_R] = 0$), WindowedSCAM cross-view epipolar attention averages uncorrelated noise realizations while preserving correlated scene geometry. When sweeping sensor noise $\sigma \in [0.00, 0.10]$, EdgeStereoINR's margin over Bicubic expands monotonically from $\mathbf{+0.05\text{ dB}}$ ($\sigma = 0.01$) to $\mathbf{+0.60\text{ dB}}$ ($\sigma = 0.10$), empirically validating the binocular noise cancellation effect (Figure~\ref{fig:sensor_noise}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\linewidth]{figures/sensor_noise_robustness.pdf}
+\caption{Sensor shot noise robustness on Middlebury. As noise variance increases, EdgeStereoINR's cross-view fusion suppresses uncorrelated sensor noise, widening its performance advantage over single-image Bicubic up to $+0.60\text{ dB}$.}
+\label{fig:sensor_noise}
+\end{figure}
+
 \subsection{On-Device Latency, Power, and Framerate on Quest 3S}
 Table~\ref{tab:mobile_execution} presents the on-device execution profile measured on the Meta Quest 3S.
 
