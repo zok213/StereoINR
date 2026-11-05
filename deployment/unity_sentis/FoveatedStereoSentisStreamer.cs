@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Sentis;
 
-namespace EdgeStereoINR.Sentis
+namespace ActiveStereo.EdgeStereoINR
 {
     /// <summary>
     /// Continuous Foveated Streaming Sentis Engine for Meta Quest 3S (Snapdragon XR2 Gen 2 / Adreno 740).
     /// Dynamically modulates per-tile magnification scale factor based on eccentricity
     /// from the optical sweet spot or gaze fixation point.
     /// Reduces GPU execution time by 45-60%, unlocking 120 FPS VR Passthrough.
+    /// 
+    /// Note on NPU: Retail Meta Quest 3S Horizon OS blocks third-party APKs from /dev/fastrpc-*
+    /// via SELinux, so Adreno 740 GPU via Sentis Vulkan Compute is the official production path.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public class FoveatedStereoSentisStreamer : MonoBehaviour
@@ -17,6 +20,10 @@ namespace EdgeStereoINR.Sentis
         [Header("Sentis Model Asset")]
         public ModelAsset modelAsset;
         public BackendType backendType = BackendType.GPUCompute;
+
+        [Header("Execution Mode")]
+        [Tooltip("If true, automatically processes every frame during LateUpdate")]
+        public bool autoProcessOnLateUpdate = true;
 
         [Header("Tiling & Foveation Parameters")]
         [Range(32, 96)] public int tileSize = 64;
@@ -41,11 +48,20 @@ namespace EdgeStereoINR.Sentis
         [Header("Shaders")]
         public Material hannBlendMaterial;
 
+        // Sentis Runtime
         private Model _runtimeModel;
         private IWorker _worker;
+
+        // Dynamic Tensor Name Mapping
+        private string _inputNameL = "input_l";
+        private string _inputNameR = "input_r";
+        private string _scaleInputName = null;
+        private string _outputNameL = "output_l";
+        private string _outputNameR = "output_r";
+
         private int _step;
-        private List<int> _yStarts = new List<int>();
-        private List<int> _xStarts = new List<int>();
+        private readonly List<int> _yStarts = new List<int>();
+        private readonly List<int> _xStarts = new List<int>();
 
         private RenderTexture _tileRTLeft;
         private RenderTexture _tileRTRight;
@@ -55,6 +71,14 @@ namespace EdgeStereoINR.Sentis
         void Awake()
         {
             InitializeFoveatedEngine();
+        }
+
+        void LateUpdate()
+        {
+            if (autoProcessOnLateUpdate && isActiveAndEnabled)
+            {
+                ProcessFoveatedFrame();
+            }
         }
 
         void OnDestroy()
@@ -71,17 +95,22 @@ namespace EdgeStereoINR.Sentis
             }
 
             _runtimeModel = ModelLoader.Load(modelAsset);
+            ResolveTensorNames();
+
             _worker = new Worker(_runtimeModel, backendType);
             _step = tileSize - overlap;
 
-            int inH = leftCameraFeed.height;
-            int inW = leftCameraFeed.width;
+            if (leftCameraFeed != null)
+            {
+                int inH = leftCameraFeed.height;
+                int inW = leftCameraFeed.width;
 
-            for (int y = 0; y <= inH - tileSize; y += _step) _yStarts.Add(y);
-            if (_yStarts.Count == 0 || _yStarts[_yStarts.Count - 1] + tileSize < inH) _yStarts.Add(Mathf.Max(0, inH - tileSize));
+                for (int y = 0; y <= inH - tileSize; y += _step) _yStarts.Add(y);
+                if (_yStarts.Count == 0 || _yStarts[_yStarts.Count - 1] + tileSize < inH) _yStarts.Add(Mathf.Max(0, inH - tileSize));
 
-            for (int x = 0; x <= inW - tileSize; x += _step) _xStarts.Add(x);
-            if (_xStarts.Count == 0 || _xStarts[_xStarts.Count - 1] + tileSize < inW) _xStarts.Add(Mathf.Max(0, inW - tileSize));
+                for (int x = 0; x <= inW - tileSize; x += _step) _xStarts.Add(x);
+                if (_xStarts.Count == 0 || _xStarts[_xStarts.Count - 1] + tileSize < inW) _xStarts.Add(Mathf.Max(0, inW - tileSize));
+            }
 
             int maxOutTileSize = tileSize * 4;
             _tileRTLeft = new RenderTexture(tileSize, tileSize, 0, RenderTextureFormat.ARGBHalf);
@@ -93,6 +122,57 @@ namespace EdgeStereoINR.Sentis
             _tileRTRight.Create();
             _srTileRTLeft.Create();
             _srTileRTRight.Create();
+
+            Debug.Log($"[FoveatedStreamer] Initialized with backend {backendType}. Peak SRAM: {(48 * tileSize * tileSize * 4) / 1024f:F1} KB.");
+        }
+
+        private void ResolveTensorNames()
+        {
+            if (_runtimeModel == null) return;
+
+            foreach (var input in _runtimeModel.inputs)
+            {
+                string lower = input.name.ToLower();
+                if (lower.Contains("scale") || lower.Contains("reshape") || input.shape.rank == 0)
+                {
+                    _scaleInputName = input.name;
+                }
+                else if (lower.Contains("left") || lower.EndsWith("_l") || lower.Contains("l_") || lower == "input_0")
+                {
+                    _inputNameL = input.name;
+                }
+                else if (lower.Contains("right") || lower.EndsWith("_r") || lower.Contains("r_") || lower == "input_1")
+                {
+                    _inputNameR = input.name;
+                }
+            }
+
+            if (string.IsNullOrEmpty(_inputNameL) && _runtimeModel.inputs.Count >= 2)
+            {
+                _inputNameL = _runtimeModel.inputs[0].name;
+                _inputNameR = _runtimeModel.inputs[1].name;
+            }
+
+            foreach (var output in _runtimeModel.outputs)
+            {
+                string lower = output.name.ToLower();
+                if (lower.Contains("left") || lower.EndsWith("_l") || lower.Contains("l_"))
+                {
+                    _outputNameL = output.name;
+                }
+                else if (lower.Contains("right") || lower.EndsWith("_r") || lower.Contains("r_"))
+                {
+                    _outputNameR = output.name;
+                }
+            }
+
+            if (string.IsNullOrEmpty(_outputNameL) && _runtimeModel.outputs.Count >= 2)
+            {
+                _outputNameL = _runtimeModel.outputs[0].name;
+                _outputNameR = _runtimeModel.outputs[1].name;
+            }
+
+            Debug.Log($"[FoveatedStreamer] Resolved Tensors: InputL='{_inputNameL}', InputR='{_inputNameR}', Scale='{_scaleInputName}', OutL='{_outputNameL}', OutR='{_outputNameR}'");
         }
 
         /// <summary>
@@ -118,7 +198,8 @@ namespace EdgeStereoINR.Sentis
 
         public void ProcessFoveatedFrame()
         {
-            if (_worker == null) return;
+            if (_worker == null || leftCameraFeed == null || rightCameraFeed == null) return;
+            if (leftOutputEyeTarget == null || rightOutputEyeTarget == null) return;
 
             int inH = leftCameraFeed.height;
             int inW = leftCameraFeed.width;
@@ -148,28 +229,51 @@ namespace EdgeStereoINR.Sentis
 
                     float tileScale = GetTileScale((xs + xe) * 0.5f, (ys + ye) * 0.5f, inW, inH);
 
-                    // Copy input tile
+                    // Copy input tile (GPU direct)
                     Graphics.CopyTexture(leftCameraFeed, 0, 0, xs, ys, tileSize, tileSize, _tileRTLeft, 0, 0, 0, 0);
                     Graphics.CopyTexture(rightCameraFeed, 0, 0, xs, ys, tileSize, tileSize, _tileRTRight, 0, 0, 0, 0);
 
                     using TensorFloat inputL = TextureConverter.ToTensor(_tileRTLeft, tileSize, tileSize, 3);
                     using TensorFloat inputR = TextureConverter.ToTensor(_tileRTRight, tileSize, tileSize, 3);
 
-                    _worker.SetInput("input_l", inputL);
-                    _worker.SetInput("input_r", inputR);
-                    _worker.Schedule();
+                    _worker.SetInput(_inputNameL, inputL);
+                    _worker.SetInput(_inputNameR, inputR);
 
-                    using TensorFloat outL = _worker.PeekOutput("output_l") as TensorFloat;
-                    using TensorFloat outR = _worker.PeekOutput("output_r") as TensorFloat;
+                    TensorFloat scaleTensor = null;
+                    if (!string.IsNullOrEmpty(_scaleInputName))
+                    {
+                        scaleTensor = new TensorFloat(new TensorShape(), new float[] { tileScale });
+                        _worker.SetInput(_scaleInputName, scaleTensor);
+                    }
 
-                    TextureConverter.RenderToTexture(outL, _srTileRTLeft);
-                    TextureConverter.RenderToTexture(outR, _srTileRTRight);
+                    try
+                    {
+                        _worker.Schedule();
 
-                    hannBlendMaterial.SetVector("_DestRect", new Vector4(oxs, oys, oxe - oxs, oye - oys));
-                    hannBlendMaterial.SetVector("_TargetDims", new Vector4(outW, outH, 1.0f / outW, 1.0f / outH));
+                        using TensorFloat outL = _worker.PeekOutput(_outputNameL) as TensorFloat;
+                        using TensorFloat outR = _worker.PeekOutput(_outputNameR) as TensorFloat;
 
-                    Graphics.Blit(_srTileRTLeft, leftOutputEyeTarget, hannBlendMaterial, 0);
-                    Graphics.Blit(_srTileRTRight, rightOutputEyeTarget, hannBlendMaterial, 0);
+                        TextureConverter.RenderToTexture(outL, _srTileRTLeft);
+                        TextureConverter.RenderToTexture(outR, _srTileRTRight);
+
+                        if (hannBlendMaterial != null)
+                        {
+                            hannBlendMaterial.SetVector("_DestRect", new Vector4(oxs, oys, oxe - oxs, oye - oys));
+                            hannBlendMaterial.SetVector("_TargetDims", new Vector4(outW, outH, 1.0f / outW, 1.0f / outH));
+
+                            Graphics.Blit(_srTileRTLeft, leftOutputEyeTarget, hannBlendMaterial, 0);
+                            Graphics.Blit(_srTileRTRight, rightOutputEyeTarget, hannBlendMaterial, 0);
+                        }
+                        else
+                        {
+                            Graphics.CopyTexture(_srTileRTLeft, 0, 0, 0, 0, maxOutTile, maxOutTile, leftOutputEyeTarget, 0, 0, oxs, oys);
+                            Graphics.CopyTexture(_srTileRTRight, 0, 0, 0, 0, maxOutTile, maxOutTile, rightOutputEyeTarget, 0, 0, oxs, oys);
+                        }
+                    }
+                    finally
+                    {
+                        scaleTensor?.Dispose();
+                    }
                 }
             }
         }
@@ -178,10 +282,10 @@ namespace EdgeStereoINR.Sentis
         {
             _worker?.Dispose();
             _worker = null;
-            if (_tileRTLeft != null) _tileRTLeft.Release();
-            if (_tileRTRight != null) _tileRTRight.Release();
-            if (_srTileRTLeft != null) _srTileRTLeft.Release();
-            if (_srTileRTRight != null) _srTileRTRight.Release();
+            if (_tileRTLeft != null) { _tileRTLeft.Release(); _tileRTLeft = null; }
+            if (_tileRTRight != null) { _tileRTRight.Release(); _tileRTRight = null; }
+            if (_srTileRTLeft != null) { _srTileRTLeft.Release(); _srTileRTLeft = null; }
+            if (_srTileRTRight != null) { _srTileRTRight.Release(); _srTileRTRight = null; }
         }
     }
 }

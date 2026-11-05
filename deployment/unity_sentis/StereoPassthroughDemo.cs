@@ -81,12 +81,11 @@ namespace ActiveStereo.EdgeStereoINR
         {
             if (uniformStreamer != null && uniformStreamer.enabled)
             {
-                // Set uniform streamer scale
-                // uniformStreamer.ScaleFactor = scale;
+                uniformStreamer.scaleFactor = scale;
             }
             if (foveatedStreamer != null && foveatedStreamer.enabled)
             {
-                // Dynamic fovea scale update
+                // Dynamic foveation scales adaptively based on eccentricity
             }
         }
 

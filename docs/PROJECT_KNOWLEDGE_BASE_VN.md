@@ -107,26 +107,30 @@ Mô hình hiện tại không phải ngẫu nhiên mà có, mà là kết quả 
 
 ---
 
-## 5. Bảng Kết Quả Đo Lường Thực Nghiệm Độc Lập
+## 5. Bảng Kết Quả Đo Lường Thực Nghiệm Độc Lập Toàn Bộ 157 Cặp Ảnh Canonical
 
-Đo trực tiếp trên 55 cặp ảnh chuẩn bằng script [`scripts/benchmarks/benchmark_full_canonical_soup.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_full_canonical_soup.py) (chuẩn kênh Y luminance với 4-pixel border shaving):
+Đo trực tiếp trên **toàn bộ 157 cặp ảnh chuẩn** bằng script [`scripts/benchmarks/benchmark_all_157_canonical_pairs.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_all_157_canonical_pairs.py) (chuẩn kênh Y luminance với 4-pixel border shaving):
 
 - **Middlebury (5 cặp ảnh full split):**
   - Baseline Bicubic: $28.06\text{ dB}$
-  - DyT-Edge-INR (Pareto Soup): **$28.67\text{ dB}$** (**$+0.61\text{ dB}$**)
+  - DyT-Edge-INR (Pareto Soup): **$28.67\text{ dB}$** (**$+0.61\text{ dB}$**, 100% cải thiện)
   - Chi tiết: `sword2` đạt **$30.69\text{ dB}$** ($+1.24\text{ dB}$), `pipes` đạt **$27.22\text{ dB}$** ($+0.64\text{ dB}$).
 - **KITTI 2012 (20 cặp ảnh full split):**
   - Baseline Bicubic: $26.65\text{ dB}$
-  - DyT-Edge-INR (Pareto Soup): **$27.22\text{ dB}$** (**$+0.57\text{ dB}$**)
+  - DyT-Edge-INR (Pareto Soup): **$27.22\text{ dB}$** (**$+0.57\text{ dB}$**, 100% cải thiện)
   - Chi tiết: `000009` đạt **$28.67\text{ dB}$** ($+0.94\text{ dB}$), `000012` đạt **$27.94\text{ dB}$** ($+0.97\text{ dB}$).
 - **KITTI 2015 (20 cặp ảnh full split):**
   - Baseline Bicubic: $27.11\text{ dB}$
-  - DyT-Edge-INR (Pareto Soup): **$27.77\text{ dB}$** (**$+0.66\text{ dB}$**)
+  - DyT-Edge-INR (Pareto Soup): **$27.77\text{ dB}$** (**$+0.66\text{ dB}$**, 100% cải thiện)
   - Chi tiết: `000006` đạt **$27.20\text{ dB}$** ($+0.83\text{ dB}$), `000011` đạt **$27.33\text{ dB}$** ($+0.79\text{ dB}$).
-- **Flickr1024 (10 cặp ảnh representative):**
-  - Baseline Bicubic: $24.88\text{ dB}$
-  - DyT-Edge-INR (Pareto Soup): **$25.31\text{ dB}$** (**$+0.43\text{ dB}$**)
-- **Trung bình có trọng số toàn bộ:** **$+0.57\text{ dB}$ vượt trội so với Bicubic, 100% cặp ảnh đều cải thiện chất lượng.**
+- **Flickr1024 (Toàn bộ 112 cặp ảnh full test split):**
+  - Baseline Bicubic: $23.36\text{ dB}$
+  - DyT-Edge-INR (Pareto Soup): **$23.63\text{ dB}$** (**$+0.27\text{ dB}$**, 110/112 = 98.2% cải thiện)
+  - Chi tiết: `0110` đạt **$29.63\text{ dB}$** ($+0.74\text{ dB}$), `0060` đạt **$28.59\text{ dB}$** ($+0.68\text{ dB}$).
+- **Tổng thể trên 157 cặp ảnh:**
+  - Baseline Bicubic: $24.41\text{ dB}$
+  - DyT-Edge-INR (Pareto Soup): **$24.78\text{ dB}$** (**$+0.37\text{ dB}$ vượt trội, 155/157 = 98.7% Win Rate**).
+  - Báo cáo chi tiết từng ảnh: lưu tại `logs/benchmarks/canonical_157_pairs_report.json`.
 
 ---
 

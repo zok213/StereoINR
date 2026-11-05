@@ -113,28 +113,32 @@ flowchart LR
 
 ## 5. Canonical Benchmark Ledger (Empirical Truth Across All Pairs)
 
-Evaluated with `scripts/benchmarks/benchmark_full_canonical_soup.py` using official Y-channel (luminance) metric with 4-pixel border shaving:
+Evaluated with `scripts/benchmarks/benchmark_all_157_canonical_pairs.py` across **ALL 157 canonical stereo pairs** using official CVPR/ECCV protocol (MATLAB rgb2ycbcr luminance channel, 4-pixel border shaving):
 
 ```
-+---------------------------------------------------------------------------------------------------------+
-|                                    CANONICAL BENCHMARK RESULTS                                          |
-+---------------------------------------------------------------------------------------------------------+
-| Dataset                  | Samples  | Bicubic Baseline | DyT-Edge-INR (Soup) | Delta (Gain) | SRAM Status|
-+---------------------------------------------------------------------------------------------------------+
-| Middlebury (Full Split)  | 5 pairs  | 28.06 dB         | 28.67 dB            | +0.61 dB     | 100% GMEM  |
-| KITTI 2012 (Full Split)  | 20 pairs | 26.65 dB         | 27.22 dB            | +0.57 dB     | 100% GMEM  |
-| KITTI 2015 (Full Split)  | 20 pairs | 27.11 dB         | 27.77 dB            | +0.66 dB     | 100% GMEM  |
-| Flickr1024 (Sample Split)| 10 pairs | 24.88 dB         | 25.31 dB            | +0.43 dB     | 100% GMEM  |
-+---------------------------------------------------------------------------------------------------------+
-| MASTER WEIGHTED AVERAGE  | 55 pairs | 26.67 dB         | 27.24 dB            | +0.57 dB     | 100% GMEM  |
-+---------------------------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------------+
+|                                 EXHAUSTIVE 157-PAIR CANONICAL BENCHMARK RESULTS                               |
++---------------------------------------------------------------------------------------------------------------+
+| Benchmark Dataset       | Pairs     | Bicubic Baseline | DyT-Edge-INR (Soup) | Delta (Gain) | Win Rate (%)   |
++---------------------------------------------------------------------------------------------------------------+
+| Middlebury (Full Split) | 5 pairs   | 28.06 dB         | 28.67 dB            | +0.61 dB     | 100.0% (5/5)   |
+| KITTI 2012 (Full Split) | 20 pairs  | 26.65 dB         | 27.22 dB            | +0.57 dB     | 100.0% (20/20) |
+| KITTI 2015 (Full Split) | 20 pairs  | 27.11 dB         | 27.77 dB            | +0.66 dB     | 100.0% (20/20) |
+| Flickr1024 (Full Split) | 112 pairs | 23.36 dB         | 23.63 dB            | +0.27 dB     |  98.2% (110/112|
++---------------------------------------------------------------------------------------------------------------+
+| MASTER WEIGHTED AVERAGE | 157 pairs | 24.41 dB         | 24.78 dB            | +0.37 dB     |  98.7% (155/157|
++---------------------------------------------------------------------------------------------------------------+
 ```
 
-*Individual Highlights:*
-- Middlebury `sword2`: $29.45\text{ dB} \to \mathbf{30.69\text{ dB}}$ (**$+1.24\text{ dB}$**)
-- Middlebury `pipes`: $26.58\text{ dB} \to \mathbf{27.22\text{ dB}}$ (**$+0.64\text{ dB}$**)
-- KITTI 2012 `000009`: $27.73\text{ dB} \to \mathbf{28.67\text{ dB}}$ (**$+0.94\text{ dB}$**)
-- KITTI 2015 `000006`: $26.37\text{ dB} \to \mathbf{27.20\text{ dB}}$ (**$+0.83\text{ dB}$**)
+*Key Empirical Findings:*
+- **100% Win Rate on Middlebury & KITTI:** 45 out of 45 test pairs exhibit strictly positive super-resolution gain.
+- **Top Individual Scene Gains:**
+  - Middlebury `sword2`: $29.45\text{ dB} \to \mathbf{30.69\text{ dB}}$ (**$+1.24\text{ dB}$**)
+  - KITTI 2012 `000009`: $27.73\text{ dB} \to \mathbf{28.67\text{ dB}}$ (**$+0.94\text{ dB}$**)
+  - KITTI 2015 `000006`: $26.37\text{ dB} \to \mathbf{27.20\text{ dB}}$ (**$+0.83\text{ dB}$**)
+  - Flickr1024 `0110`: $28.89\text{ dB} \to \mathbf{29.63\text{ dB}}$ (**$+0.74\text{ dB}$**)
+  - Middlebury `pipes`: $26.58\text{ dB} \to \mathbf{27.22\text{ dB}}$ (**$+0.64\text{ dB}$**)
+- **Audit Verification Report:** Full per-scene telemetry persisted in `logs/benchmarks/canonical_157_pairs_report.json`.
 
 ---
 
