@@ -74,6 +74,8 @@ namespace ActiveStereo.EdgeStereoINR
         private RenderTexture _tileRTRight;
         private RenderTexture _srTileRTLeft;
         private RenderTexture _srTileRTRight;
+        private RenderTexture _tempResolveRTLeft;
+        private RenderTexture _tempResolveRTRight;
 
         void Awake()
         {
@@ -123,6 +125,16 @@ namespace ActiveStereo.EdgeStereoINR
             _srTileRTRight = new RenderTexture(outTileSize, outTileSize, 0, RenderTextureFormat.ARGBHalf);
             _srTileRTLeft.Create();
             _srTileRTRight.Create();
+
+            if (hannResolveMaterial != null && leftOutputEyeTarget != null)
+            {
+                int outW = leftOutputEyeTarget.width;
+                int outH = leftOutputEyeTarget.height;
+                _tempResolveRTLeft = new RenderTexture(outW, outH, 0, RenderTextureFormat.ARGBHalf);
+                _tempResolveRTRight = new RenderTexture(outW, outH, 0, RenderTextureFormat.ARGBHalf);
+                _tempResolveRTLeft.Create();
+                _tempResolveRTRight.Create();
+            }
 
             float peakSramKb = (48 * tileSize * tileSize * 4) / 1024f;
             Debug.Log($"[TiledStereoStreamer] Initialized with backend {backendType}. Peak Tile SRAM: {peakSramKb:F1} KB (GMEM Budget: 1024 KB).");
@@ -305,6 +317,16 @@ namespace ActiveStereo.EdgeStereoINR
                 scaleTensor?.Dispose();
             }
 
+            // 7. Optional Hann normalization pass: divide accumulated RGB by accumulated weight sum
+            if (hannResolveMaterial != null && _tempResolveRTLeft != null && _tempResolveRTRight != null)
+            {
+                Graphics.Blit(leftOutputEyeTarget, _tempResolveRTLeft, hannResolveMaterial);
+                Graphics.Blit(_tempResolveRTLeft, leftOutputEyeTarget);
+
+                Graphics.Blit(rightOutputEyeTarget, _tempResolveRTRight, hannResolveMaterial);
+                Graphics.Blit(_tempResolveRTRight, rightOutputEyeTarget);
+            }
+
             // Post-process temporal stabilization if attached
             if (_temporalFilter != null && _temporalFilter.isActiveAndEnabled)
             {
@@ -321,6 +343,8 @@ namespace ActiveStereo.EdgeStereoINR
             if (_tileRTRight != null) { _tileRTRight.Release(); _tileRTRight = null; }
             if (_srTileRTLeft != null) { _srTileRTLeft.Release(); _srTileRTLeft = null; }
             if (_srTileRTRight != null) { _srTileRTRight.Release(); _srTileRTRight = null; }
+            if (_tempResolveRTLeft != null) { _tempResolveRTLeft.Release(); _tempResolveRTLeft = null; }
+            if (_tempResolveRTRight != null) { _tempResolveRTRight.Release(); _tempResolveRTRight = null; }
         }
     }
 }

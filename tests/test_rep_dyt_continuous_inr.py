@@ -26,8 +26,9 @@ def test_continuous_repdyt():
     print(">>> TESTING CONTINUOUS REPDYT-EDGE-INR FULL SUITE")
     print("=" * 80)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Device: {device}")
+    device_name = os.environ.get('TEST_DEVICE', 'cpu')
+    device = torch.device('cuda' if device_name == 'cuda' and torch.cuda.is_available() else 'cpu')
+    print(f"Device: {device}", flush=True)
 
     torch.manual_seed(42)
     model = ContinuousRepDyTEdgeINR(width=48, num_blks=4).to(device).eval()
