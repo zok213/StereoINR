@@ -28,6 +28,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def safe_replicate_pad(x: torch.Tensor, pad: tuple[int, int, int, int]) -> torch.Tensor:
+    """Safe replicate padding that handles PyTorch CPU missing FP16 replication_pad2d kernel."""
+    if x.device.type == 'cpu' and x.dtype == torch.float16:
+        return F.pad(x.float(), pad, mode='replicate').half()
+    return F.pad(x, pad, mode='replicate')
+
+
 class OcclusionGatedWindowedSCAM(nn.Module):
     """
     Windowed Stereo Cross-Attention Module with Left-Right Consistency (LRC) Occlusion Gating.
@@ -67,16 +74,16 @@ class OcclusionGatedWindowedSCAM(nn.Module):
 
         for offset in range(self.min_disp, self.max_disp + 1):
             if offset > 0:
-                kr_s = F.pad(kr[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
-                vr_s = F.pad(vr[:, :, :, :-offset], (offset, 0, 0, 0), mode='replicate')
-                kl_s = F.pad(kl[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
-                vl_s = F.pad(vl[:, :, :, offset:], (0, offset, 0, 0), mode='replicate')
+                kr_s = safe_replicate_pad(kr[:, :, :, :-offset], (offset, 0, 0, 0))
+                vr_s = safe_replicate_pad(vr[:, :, :, :-offset], (offset, 0, 0, 0))
+                kl_s = safe_replicate_pad(kl[:, :, :, offset:], (0, offset, 0, 0))
+                vl_s = safe_replicate_pad(vl[:, :, :, offset:], (0, offset, 0, 0))
             elif offset < 0:
                 abs_off = abs(offset)
-                kr_s = F.pad(kr[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
-                vr_s = F.pad(vr[:, :, :, abs_off:], (0, abs_off, 0, 0), mode='replicate')
-                kl_s = F.pad(kl[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
-                vl_s = F.pad(vl[:, :, :, :-abs_off], (abs_off, 0, 0, 0), mode='replicate')
+                kr_s = safe_replicate_pad(kr[:, :, :, abs_off:], (0, abs_off, 0, 0))
+                vr_s = safe_replicate_pad(vr[:, :, :, abs_off:], (0, abs_off, 0, 0))
+                kl_s = safe_replicate_pad(kl[:, :, :, :-abs_off], (abs_off, 0, 0, 0))
+                vl_s = safe_replicate_pad(vl[:, :, :, :-abs_off], (abs_off, 0, 0, 0))
             else:
                 kr_s, vr_s = kr, vr
                 kl_s, vl_s = kl, vl

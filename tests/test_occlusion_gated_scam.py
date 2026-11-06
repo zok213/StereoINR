@@ -23,8 +23,9 @@ def test_og_scam_parity_and_gating():
     print(">>> Evaluating Left-Right Consistency (LRC) & Disparity Confidence")
     print("=" * 80)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Device: {device}\n")
+    device_name = os.environ.get('TEST_DEVICE', 'cpu')
+    device = torch.device('cuda' if device_name == 'cuda' and torch.cuda.is_available() else 'cpu')
+    print(f"Device: {device}\n", flush=True)
 
     torch.manual_seed(42)
     B, C, H, W = 1, 48, 64, 64

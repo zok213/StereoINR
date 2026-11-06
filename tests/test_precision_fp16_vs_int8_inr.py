@@ -28,8 +28,9 @@ def test_precision_tradeoffs():
     print(">>> Comparing FP32 vs Native FP16 vs Dynamic INT8 on Adreno 740 Architecture")
     print("=" * 85)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Test Device: {device}\n")
+    device_name = os.environ.get('TEST_DEVICE', 'cpu')
+    device = torch.device('cuda' if device_name == 'cuda' and torch.cuda.is_available() else 'cpu')
+    print(f"Test Device: {device}\n", flush=True)
 
     torch.manual_seed(42)
     B, C, H, W = 1, 3, 64, 64
