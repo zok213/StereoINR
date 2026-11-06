@@ -4,7 +4,7 @@
 **Core Target Hardware:** Meta Quest 3S (Qualcomm Snapdragon XR2 Gen 2 / SXR2230P)  
 **Host Development Hardware:** Windows 11 PC, Intel x86_64, NVIDIA GeForce MX550 (2GB VRAM, Turing TU117)  
 **Repository Branch:** `staging`  
-**Latest Verified Commits:** `d138a61` (Safe Replicate Pad & Full 6-Test Suite Pass), `072c114` (RepDyT Dirac Warmstart & Sentis Blit), `1783b6d` (Binocular Rivalry Benchmark)  
+**Latest Verified Commits:** `3b5fd05` (Epipolar Safeguard & 6DoF Rotational Warp), `d138a61` (Safe Replicate Pad & 6-Test Suite), `072c114` (RepDyT Dirac Warmstart)  
 **Date:** November 2026  
 
 ---
@@ -442,13 +442,14 @@ For real-world deployment on retail Meta Quest 3S headsets:
   - Notebook: [`train_quest3s_v10_repdyt_dual_t4.ipynb`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/kaggle_dual_t4_training/train_quest3s_v10_repdyt_dual_t4.ipynb) (693 KB)
 - **Vulkan Shaders:** [`deployment/vulkan/`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/vulkan/)
   - Compute Shader: [`edge_stereoinr.comp`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/vulkan/edge_stereoinr.comp)
-- **Unit Test Verification Suite (All 6 Tests [PASS]):** [`tests/`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/)
+- **Unit Test Verification Suite (All 7 Tests [PASS]):** [`tests/`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/)
   - [`test_rep_dyt_reparameterization_parity.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_reparameterization_parity.py): RepConv2d mathematical parity (Max Diff = 0.00e+00).
   - [`test_rep_dyt_continuous_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_continuous_inr.py): End-to-end deploy parity and continuous scales (Max Diff = 0.00e+00).
   - [`test_precision_fp16_vs_int8_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_precision_fp16_vs_int8_inr.py): FP16 (73.89 dB) vs INT8 (52.98 dB).
   - [`test_spatially_varying_foveated_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_spatially_varying_foveated_inr.py): 2D continuous gaze scale modulation.
   - [`test_occlusion_gated_scam.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_occlusion_gated_scam.py): Bidirectional LRC occlusion gating (26.9% boundary protection).
   - [`test_repdyt_warmstart_identity_subtraction.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_repdyt_warmstart_identity_subtraction.py): Dirac delta identity subtraction warm-start (Parity = 4.77e-07).
+  - [`test_epipolar_fallback_safeguard.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_epipolar_fallback_safeguard.py): Peak sharpness & automatic monocular fallback under vertical drift (45x cross-fusion suppression).
 - **Empirical Benchmarks:** [`scripts/benchmarks/`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/)
   - Middlebury Head-to-Head: [`benchmark_empirical_head_to_head_middlebury.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_empirical_head_to_head_middlebury.py)
   - Temporal Anti-Flicker: [`benchmark_temporal_stability.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_temporal_stability.py)

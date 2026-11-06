@@ -181,7 +181,7 @@ Mô hình hiện tại không phải ngẫu nhiên mà có, mà là kết quả 
 
 ## 6. Hướng Dẫn Vận Hành & Triển Khai (Runbook)
 
-### 6.1. Chạy toàn bộ 6 bộ kiểm tra đơn vị (Unit Tests):
+### 6.1. Chạy toàn bộ 7 bộ kiểm tra đơn vị (Unit Tests):
 ```bash
 python -u tests/test_occlusion_gated_scam.py
 python -u tests/test_precision_fp16_vs_int8_inr.py
@@ -189,7 +189,8 @@ python -u tests/test_rep_dyt_continuous_inr.py
 python -u tests/test_rep_dyt_reparameterization_parity.py
 python -u tests/test_spatially_varying_foveated_inr.py
 python -u tests/test_repdyt_warmstart_identity_subtraction.py
-# Tất cả 6 bộ test đạt 100% [PASS]
+python -u tests/test_epipolar_fallback_safeguard.py
+# Tất cả 7 bộ test đạt 100% [PASS]
 ```
 
 ### 6.2. Kiểm tra tính tương đương số học PyTorch vs ONNX:
