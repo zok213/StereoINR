@@ -24,6 +24,13 @@ namespace ActiveStereo.EdgeStereoINR
         [Tooltip("Color discrepancy threshold triggering disocclusion reset (ghosting rejection)")]
         public float disocclusionThreshold = 0.15f;
 
+        [Header("6DoF Rotational Warp (Ghosting Prevention)")]
+        [Tooltip("Applies IMU/Head rotation warp to history texture before blending")]
+        public bool enableRotationalWarp = true;
+        [Tooltip("Optional reference to CenterEyeAnchor transform (auto-finds Camera.main if null)")]
+        public Transform headTrackingTransform;
+        private Quaternion _lastHeadRotation = Quaternion.identity;
+
         [Header("Shader References")]
         public Material temporalBlendMaterial;
 
@@ -96,6 +103,26 @@ namespace ActiveStereo.EdgeStereoINR
 
             temporalBlendMaterial.SetFloat("_BlendFactor", blendFactor);
             temporalBlendMaterial.SetFloat("_DisocclusionThreshold", disocclusionThreshold);
+
+            Vector2 deltaRotUV = Vector2.zero;
+            if (enableRotationalWarp)
+            {
+                Transform trackingT = headTrackingTransform != null ? headTrackingTransform : (Camera.main != null ? Camera.main.transform : null);
+                if (trackingT != null)
+                {
+                    Quaternion currentRot = trackingT.rotation;
+                    if (!_isFirstFrame)
+                    {
+                        Quaternion deltaRot = Quaternion.Inverse(_lastHeadRotation) * currentRot;
+                        Vector3 euler = deltaRot.eulerAngles;
+                        float yaw = (euler.y > 180f) ? euler.y - 360f : euler.y;
+                        float pitch = (euler.x > 180f) ? euler.x - 360f : euler.x;
+                        deltaRotUV = new Vector2(yaw / 110.0f, -pitch / 96.0f);
+                    }
+                    _lastHeadRotation = currentRot;
+                }
+            }
+            temporalBlendMaterial.SetVector("_DeltaRotation", new Vector4(deltaRotUV.x, deltaRotUV.y, 0, 0));
 
             // Left Eye Temporal Pass
             temporalBlendMaterial.SetTexture("_HistoryTex", _historyRTLeft);

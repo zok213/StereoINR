@@ -27,6 +27,7 @@ Shader "EdgeStereoINR/TemporalBlendShader"
             sampler2D _MainTex;
             sampler2D _HistoryTex;
             sampler2D _MotionTex;
+            float4 _DeltaRotation;
             float _BlendFactor;
             float _DisocclusionThreshold;
 
@@ -35,8 +36,8 @@ Shader "EdgeStereoINR/TemporalBlendShader"
                 // Current sharp neural super-resolution tile
                 fixed4 current = tex2D(_MainTex, i.uv);
 
-                // Sample motion displacement (RG channels in [-0.5, 0.5])
-                float2 motion = (tex2D(_MotionTex, i.uv).rg - 0.5f) * 0.1f;
+                // Sample motion displacement + 6DoF head rotational warp
+                float2 motion = (tex2D(_MotionTex, i.uv).rg - 0.5f) * 0.1f + _DeltaRotation.xy;
                 float2 historyUV = clamp(i.uv - motion, 0.001f, 0.999f);
 
                 // Sample reprojected history

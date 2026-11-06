@@ -48,13 +48,16 @@ class OcclusionGatedWindowedSCAM(nn.Module):
         self.sigma_occ = sigma_occ
         self.scale = channels ** -0.5
 
-        # Standard 1x1 convolutions for Q, K, V
+        # Standard 1x1 convolutions for Q, K, V initialized with Dirac delta for identity feature alignment
         self.q_l = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
         self.k_r = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
         self.v_r = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
         self.q_r = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
         self.k_l = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
         self.v_l = nn.Conv2d(channels, channels, kernel_size=1, bias=False)
+
+        for conv in [self.q_l, self.k_r, self.v_r, self.q_r, self.k_l, self.v_l]:
+            nn.init.dirac_(conv.weight)
 
         self.beta = nn.Parameter(torch.zeros(1, channels, 1, 1))
         self.gamma = nn.Parameter(torch.zeros(1, channels, 1, 1))
@@ -131,11 +134,22 @@ class OcclusionGatedWindowedSCAM(nn.Module):
         lrc_error_l = torch.abs(disp_l2r + disp_r_in_l)
         lrc_error_r = torch.abs(disp_r2l_mag - disp_l_in_r)
 
-        # 4. Bidirectional Occlusion Confidence Masks in [0, 1]
-        m_occ_l = torch.exp(- (lrc_error_l ** 2) / (2.0 * self.sigma_occ ** 2))
-        m_occ_r = torch.exp(- (lrc_error_r ** 2) / (2.0 * self.sigma_occ ** 2))
+        # 4a. Matching peak sharpness: detects peaked disparity distribution vs flat decorrelated noise
+        k_disp = self.max_disp - self.min_disp + 1
+        uniform_baseline = 1.0 / k_disp
+        max_w_l = weights_l2r.max(dim=1, keepdim=True)[0]
+        max_w_r = weights_r2l.max(dim=1, keepdim=True)[0]
+        peak_sharpness_l = torch.clamp((max_w_l - uniform_baseline) / (1.0 - uniform_baseline), 0.0, 1.0) ** 2
+        peak_sharpness_r = torch.clamp((max_w_r - uniform_baseline) / (1.0 - uniform_baseline), 0.0, 1.0) ** 2
 
-        # 5. Gated fusion: Occluded regions fall back safely to identity without spurious cross-view bleeding
+        # 4b. Bidirectional Occlusion Confidence Masks in [0, 1]
+        m_lrc_l = torch.exp(- (lrc_error_l ** 2) / (2.0 * self.sigma_occ ** 2))
+        m_lrc_r = torch.exp(- (lrc_error_r ** 2) / (2.0 * self.sigma_occ ** 2))
+
+        m_occ_l = m_lrc_l * peak_sharpness_l
+        m_occ_r = m_lrc_r * peak_sharpness_r
+
+        # 5. Gated fusion: Occluded / misaligned regions fall back safely to identity without spurious bleeding
         out_l = x_l + (f_r2l * m_occ_l) * self.beta
         out_r = x_r + (f_l2r * m_occ_r) * self.gamma
 
