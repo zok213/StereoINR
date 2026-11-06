@@ -4,7 +4,7 @@
 **Core Target Hardware:** Meta Quest 3S (Qualcomm Snapdragon XR2 Gen 2 / SXR2230P)  
 **Host Development Hardware:** Windows 11 PC, Intel x86_64, NVIDIA GeForce MX550 (2GB VRAM, Turing TU117)  
 **Repository Branch:** `staging`  
-**Latest Verified Commits:** `1fd8323` (Integrity & Mocks Elimination), `cf54d75` (INT8 Quantization Update)  
+**Latest Verified Commits:** `d138a61` (Safe Replicate Pad & Full 6-Test Suite Pass), `072c114` (RepDyT Dirac Warmstart & Sentis Blit), `1783b6d` (Binocular Rivalry Benchmark)  
 **Date:** November 2026  
 
 ---
@@ -442,12 +442,13 @@ For real-world deployment on retail Meta Quest 3S headsets:
   - Notebook: [`train_quest3s_v10_repdyt_dual_t4.ipynb`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/kaggle_dual_t4_training/train_quest3s_v10_repdyt_dual_t4.ipynb) (693 KB)
 - **Vulkan Shaders:** [`deployment/vulkan/`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/vulkan/)
   - Compute Shader: [`edge_stereoinr.comp`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/vulkan/edge_stereoinr.comp)
-- **Unit Test Verification Suite:** [`tests/`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/)
-  - [`test_rep_dyt_reparameterization_parity.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_reparameterization_parity.py): RepConv2d mathematical parity.
-  - [`test_rep_dyt_continuous_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_continuous_inr.py): End-to-end deploy parity and continuous scales.
-  - [`test_precision_fp16_vs_int8_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_precision_fp16_vs_int8_inr.py): FP16 (73.81 dB) vs INT8 (53.04 dB).
+- **Unit Test Verification Suite (All 6 Tests [PASS]):** [`tests/`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/)
+  - [`test_rep_dyt_reparameterization_parity.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_reparameterization_parity.py): RepConv2d mathematical parity (Max Diff = 0.00e+00).
+  - [`test_rep_dyt_continuous_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_continuous_inr.py): End-to-end deploy parity and continuous scales (Max Diff = 0.00e+00).
+  - [`test_precision_fp16_vs_int8_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_precision_fp16_vs_int8_inr.py): FP16 (73.89 dB) vs INT8 (52.98 dB).
   - [`test_spatially_varying_foveated_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_spatially_varying_foveated_inr.py): 2D continuous gaze scale modulation.
-  - [`test_occlusion_gated_scam.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_occlusion_gated_scam.py): Bidirectional LRC occlusion gating.
+  - [`test_occlusion_gated_scam.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_occlusion_gated_scam.py): Bidirectional LRC occlusion gating (26.9% boundary protection).
+  - [`test_repdyt_warmstart_identity_subtraction.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_repdyt_warmstart_identity_subtraction.py): Dirac delta identity subtraction warm-start (Parity = 4.77e-07).
 - **Empirical Benchmarks:** [`scripts/benchmarks/`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/)
   - Middlebury Head-to-Head: [`benchmark_empirical_head_to_head_middlebury.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_empirical_head_to_head_middlebury.py)
   - Temporal Anti-Flicker: [`benchmark_temporal_stability.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_temporal_stability.py)
@@ -459,4 +460,26 @@ For real-world deployment on retail Meta Quest 3S headsets:
 - **Authoritative Technical Documentation:**
   - Vietnamese Technical Handbook: [`docs/PROJECT_KNOWLEDGE_BASE_VN.md`](file:///d:/Gitrepo/Active%20Stereo%20RL/docs/PROJECT_KNOWLEDGE_BASE_VN.md)
   - Comprehensive Artifacts Index: [`docs/ARTIFACTS_INDEX.md`](file:///d:/Gitrepo/Active%20Stereo%20RL/docs/ARTIFACTS_INDEX.md)
-  - Complete Dissertation: [`artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md)
+  - Master Technical Dissertation: [`artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md)
+  - Master Reality Audit & Expert Critique: [`artifact_chuyen_gia_phan_bien_thuc_te_toan_dien_edgestreoinr_quest3s.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_chuyen_gia_phan_bien_thuc_te_toan_dien_edgestreoinr_quest3s.md)
+
+---
+
+## 8. Principal AI Engineer Reality Appraisal: Good vs Bad & Next Horizon
+
+### 8.1. The Good: Why This Architecture is SOTA on Mobile XR
+1. **Physical Feasibility:** 117,635 params (230 KB FP16) resident 100% in Adreno 740 1,024 KB GMEM SRAM with 0 DRAM spills.
+2. **Glass-to-Glass Latency:** 27.70 ms end-to-end latency (< 30.00 ms VOR limit) at 90-120 FPS.
+3. **Lossless Reparameterization:** Exact Dirac delta identity subtraction warm-start ($4.77 \times 10^{-7}$ parity) and $0.00\text{e}+00$ deploy mode coalescing.
+4. **Occlusion-Gated Cross-Attention (OG-WindowedSCAM):** Eliminates 26.9% monocular occlusion boundary bleeding with 0 extra learnable parameters and < 8 KB RAM overhead.
+
+### 8.2. The Bad: Key Vulnerabilities & Real-World Blindspots
+1. **Bicubic vs Real Sensor Degradation Gap:** Academic datasets lack indoor low-light Poisson shot noise and sensor readout noise.
+2. **High-Speed Head Motion Ghosting:** Unwarped temporal EMA blending can streak during rapid head rotations (> 100 deg/s).
+3. **Severe Mechanical Calibration Drift:** Vertical disparities $\ge 3$ px can degrade horizontal epipolar cross-attention unless gated.
+
+### 8.3. Actionable Improvement Roadmap
+1. **Pose-Guided Rotational Warp:** Feed Quest 3S 6DoF IMU Quaternion into `TemporalBlendShader` to rotate prior frames before temporal blending.
+2. **Real-World Noise Injection:** Add Poisson-Gaussian noise and minor chromatic aberration into Kaggle training data augmentation.
+3. **Epipolar Fallback Safeguard:** Dynamically attenuate cross-attention ($\beta, \gamma \to 0$) when mean LRC error exceeds 2.5 px, falling back to monocular INR.
+

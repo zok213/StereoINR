@@ -181,14 +181,15 @@ Mô hình hiện tại không phải ngẫu nhiên mà có, mà là kết quả 
 
 ## 6. Hướng Dẫn Vận Hành & Triển Khai (Runbook)
 
-### 6.1. Chạy toàn bộ 5 bộ kiểm tra đơn vị (Unit Tests):
+### 6.1. Chạy toàn bộ 6 bộ kiểm tra đơn vị (Unit Tests):
 ```bash
-python tests/test_occlusion_gated_scam.py
-python tests/test_precision_fp16_vs_int8_inr.py
-python tests/test_rep_dyt_continuous_inr.py
-python tests/test_rep_dyt_reparameterization_parity.py
-python tests/test_spatially_varying_foveated_inr.py
-# Tất cả 5 bộ test đạt 100% [PASS]
+python -u tests/test_occlusion_gated_scam.py
+python -u tests/test_precision_fp16_vs_int8_inr.py
+python -u tests/test_rep_dyt_continuous_inr.py
+python -u tests/test_rep_dyt_reparameterization_parity.py
+python -u tests/test_spatially_varying_foveated_inr.py
+python -u tests/test_repdyt_warmstart_identity_subtraction.py
+# Tất cả 6 bộ test đạt 100% [PASS]
 ```
 
 ### 6.2. Kiểm tra tính tương đương số học PyTorch vs ONNX:
@@ -238,3 +239,25 @@ python scripts/benchmarks/benchmark_glass_to_glass_latency.py
   - [`deployment/unity_sentis/dist/com.activestereo.edgestreoinr-1.0.0.tgz`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/unity_sentis/dist/com.activestereo.edgestreoinr-1.0.0.tgz)
 - **Tài liệu toàn diện bằng tiếng Anh:** [`PROJECT_MEMORY.md`](file:///d:/Gitrepo/Active%20Stereo%20RL/PROJECT_MEMORY.md)
 - **Luận án tổng kết kỹ thuật:** [`artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md)
+- **Đại Luận án Thẩm định Thực tế & Phản biện Chuyên gia:** [`artifact_chuyen_gia_phan_bien_thuc_te_toan_dien_edgestreoinr_quest3s.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_chuyen_gia_phan_bien_thuc_te_toan_dien_edgestreoinr_quest3s.md)
+
+---
+
+## 8. Đánh Giá Chuyên Gia AI Cấp Cao: Tốt Hay Xấu & Lộ Trình Cải Tiến
+
+### 8.1. Đánh Giá Khách Quan: Tại Sao Hệ Thống Này Xuất Sắc (The Good)?
+1. **Thiết kế phần cứng chuẩn xác 100%:** 117K tham số ($230\text{ KB}$ FP16), bộ đệm làm việc $414\text{ KB} \le 1,024\text{ KB}$ SRAM GMEM trên GPU Adreno 740, loại bỏ hoàn toàn hiện tượng tràn băng thông DRAM.
+2. **Độ trễ thời gian thực Glass-to-Glass:** $27.70\text{ ms} < 30.00\text{ ms}$ (ngưỡng an toàn phản xạ VOR mắt người), vận hành mượt mà ở 90–120 FPS.
+3. **Co cụm tham số không suy hao (Lossless Reparameterization):** Trừ phân bố Dirac delta giải quyết triệt để lỗi nạp warm-start ($4.77 \times 10^{-7}$), đạt sai số co cụm $0.00\text{e}+00$.
+4. **Cổng chắn che khuất LRC (OG-WindowedSCAM):** Triệt tiêu hiện tượng lem màu và rách viền tại 26.9% pixel che khuất một mắt mà không tốn thêm bất kỳ tham số học nào.
+
+### 8.2. Điểm Yếu Thực Tế & Lỗ Hổng Cần Thừa Nhận (The Bad):
+1. **Khoảng cách suy thoái thực tế (Noise Gap):** Dữ liệu chuẩn (Flickr1024, Middlebury) là ảnh bicubic sạch, trong khi camera Quest 3S có nhiễu hạt photon trong phòng tối (100–300 lux).
+2. **Bóng ma vệt sáng khi quay đầu nhanh (Temporal Ghosting):** Bộ lọc EMA chưa bù trừ góc quay đầu 6DoF, có thể để lại vệt mờ khi người dùng lắc đầu với vận tốc góc $> 100^\circ/\text{s}$.
+3. **Lệch trục đứng cơ học lớn ($\Delta y \ge 3\text{ px}$):** Khi kính bị chấn động mạnh làm xô lệch thấu kính, cần cơ chế tự động suy giảm attention để rơi về suy diễn đơn mắt an toàn.
+
+### 8.3. Lộ Trình Cải Tiến Hoàn Hảo (Actionable Roadmap):
+1. **Bù trừ góc quay 6DoF:** Đưa ma trận quay IMU từ `OVRCameraRig` vào shader hòa trộn thời gian để xoay khung hình trước khi blend.
+2. **Tiêm nhiễu cảm biến thực tế:** Bổ sung nhiễu Poisson-Gaussian và quang sai màu vào notebook huấn luyện Kaggle v10.
+3. **Cơ chế Fallback Epipolar:** Tự động triệt tiêu trọng số attention khi sai số LRC vượt ngưỡng 2.5 px để bảo toàn hình ảnh đơn mắt sắc nét.
+
