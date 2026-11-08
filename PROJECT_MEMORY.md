@@ -442,7 +442,7 @@ For real-world deployment on retail Meta Quest 3S headsets:
   - Notebook: [`train_quest3s_v10_repdyt_dual_t4.ipynb`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/kaggle_dual_t4_training/train_quest3s_v10_repdyt_dual_t4.ipynb) (693 KB)
 - **Vulkan Shaders:** [`deployment/vulkan/`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/vulkan/)
   - Compute Shader: [`edge_stereoinr.comp`](file:///d:/Gitrepo/Active%20Stereo%20RL/deployment/vulkan/edge_stereoinr.comp)
-- **Unit Test Verification Suite (All 8 Tests [PASS]):** [`tests/`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/)
+- **Unit Test Verification Suite (All 9 Tests [PASS]):** [`tests/`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/)
   - [`test_rep_dyt_reparameterization_parity.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_reparameterization_parity.py): RepConv2d mathematical parity (Max Diff = 0.00e+00).
   - [`test_rep_dyt_continuous_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_rep_dyt_continuous_inr.py): End-to-end deploy parity and continuous scales (Max Diff = 0.00e+00).
   - [`test_precision_fp16_vs_int8_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_precision_fp16_vs_int8_inr.py): FP16 (73.89 dB) vs INT8 (52.98 dB).
@@ -451,7 +451,9 @@ For real-world deployment on retail Meta Quest 3S headsets:
   - [`test_repdyt_warmstart_identity_subtraction.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_repdyt_warmstart_identity_subtraction.py): Dirac delta identity subtraction warm-start (Parity = 4.77e-07).
   - [`test_epipolar_fallback_safeguard.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_epipolar_fallback_safeguard.py): Peak sharpness & automatic monocular fallback under vertical drift (45x cross-fusion suppression).
   - [`test_few_frame_temporal_inr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_few_frame_temporal_inr.py): Multi-frame burst accumulation (N=2, N=3) & 131K deploy parity.
+  - [`test_stereo_fsrcnn.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/tests/test_stereo_fsrcnn.py): Monocular FSRCNN, Stereo-FSRCNN, and Stereo-ESPCN verification (30K params).
 - **Empirical Benchmarks:** [`scripts/benchmarks/`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/)
+  - Stereo-FSRCNN vs INR: [`benchmark_stereo_fsrcnn_vs_stereoinr.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_stereo_fsrcnn_vs_stereoinr.py)
   - Multi-Paradigm Few-Frame vs 90 FPS: [`benchmark_few_frame_vs_90fps_paradigms.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_few_frame_vs_90fps_paradigms.py)
   - Middlebury Head-to-Head: [`benchmark_empirical_head_to_head_middlebury.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_empirical_head_to_head_middlebury.py)
   - Temporal Anti-Flicker: [`benchmark_temporal_stability.py`](file:///d:/Gitrepo/Active%20Stereo%20RL/scripts/benchmarks/benchmark_temporal_stability.py)
@@ -466,6 +468,7 @@ For real-world deployment on retail Meta Quest 3S headsets:
   - Master Technical Dissertation: [`artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_dai_luan_an_ky_thuat_dyt_repdyt_quest3s_v10_hoan_chinh.md)
   - Master Reality Audit & Expert Critique: [`artifact_chuyen_gia_phan_bien_thuc_te_toan_dien_edgestreoinr_quest3s.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_chuyen_gia_phan_bien_thuc_te_toan_dien_edgestreoinr_quest3s.md)
   - Few-Frame vs 90 FPS Investigation: [`artifact_nghien_cuu_chuyen_sau_few_frame_vs_90fps_passthrough_quest3s.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_nghien_cuu_chuyen_sau_few_frame_vs_90fps_passthrough_quest3s.md)
+  - FSRCNN & Stereo SR Comprehensive Survey: [`artifact_phan_bien_fsrcnn_va_dai_khao_sat_tat_ca_model_stereo_sr_quest3s.md`](file:///C:/Users/Admin/.gemini/antigravity/brain/0d24f9ec-9bf1-44ec-8eeb-1a1952048fb8/artifact_phan_bien_fsrcnn_va_dai_khao_sat_tat_ca_model_stereo_sr_quest3s.md)
 
 ---
 
@@ -499,5 +502,20 @@ For real-world deployment on retail Meta Quest 3S headsets:
 | **4. Asymmetric Eye-Interleaved** | 45 Hz/eye | 22.06 dB | 16.77 dB | 0.0199 (Lowest)| 1.30 W (-38%) | 4.52 hrs (+0.71h) |
 
 - **Conclusion:** Decoupling framerate (30 FPS Keyframe or 45 FPS Eye-Interleaved) is physically viable and dramatically boosts battery life (+26%). To avoid the Dynamic Hand Motion Trap, it must be paired with **Asynchronous Residual Inset** compositing.
+
+---
+
+## 10. Stereo-FSRCNN vs Monocular FSRCNN vs SOTA Stereo Super-Resolution Survey
+
+| Model | Venue | Type | Params | GMEM SRAM (Adreno 740) | Arbitrary Scale | Epipolar Stereo Fusion |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Monocular FSRCNN** | ECCV 2016 | Single-Image CNN | 24,683 | 32 KB (PASS) | Fixed 4x | None (Binocular Rivalry) |
+| **Stereo-FSRCNN** | 2026 (Ours) | Ultra-Fast Stereo CNN | 30,019 | 64 KB (PASS) | Fixed 4x | 1D Epipolar Cross-Attn |
+| **Stereo-ESPCN** | 2026 (Ours) | Sub-Pixel Stereo CNN | 28,720 | 48 KB (PASS) | Fixed 4x | 1D Epipolar Cross-Attn |
+| **DyT-Edge-INR** | 2026 (Ours) | Continuous Stereo INR | 117,635 | 414 KB (PASS) | Continuous [1.2, 4.0] | OG-WindowedSCAM (LRC) |
+| **NAFSSR-T** | CVPR 2022 | Stereo CNN | 1,714,800 | 3,400 KB (FAIL - DRAM Spill) | Fixed 4x | SCAM |
+| **StereoINR** | arXiv 2025 | Continuous Stereo INR | 1,250,000 | 2,800 KB (FAIL - DRAM Spill) | Continuous | Cross-Attention |
+
+- **Key Takeaway:** FSRCNN cannot be applied naively in VR because monocular SISR generates discordant hallucinated high-frequency details across eyes (severe binocular rivalry). Stereo-FSRCNN (30K params) provides a viable ultra-lightweight discrete baseline (<0.3 ms), while DyT-Edge-INR (117K params) remains the optimal XR solution due to continuous foveated scaling and LRC occlusion gating.
 
 
