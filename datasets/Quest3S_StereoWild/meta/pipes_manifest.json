@@ -1,0 +1,20 @@
+{
+  "scene_name": "pipes",
+  "baseline_mm": 64.0,
+  "sensor_lux": 220.0,
+  "simulated_noise_model": "poisson_gaussian_quest3s",
+  "chromatic_aberration_radial_disp_px": 1.2,
+  "rolling_shutter_vertical_jitter_px": 1.0,
+  "hr_dimensions": [
+    484,
+    484
+  ],
+  "lr4x_dimensions": [
+    121,
+    121
+  ],
+  "lr2x_dimensions": [
+    242,
+    242
+  ]
+}

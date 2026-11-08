@@ -1,0 +1,82 @@
+[
+  {
+    "scene": "cloth2",
+    "scale": 4.0,
+    "psnr_bicubic": 23.959982223036885,
+    "psnr_quest_stereoinr": 23.959982223036885,
+    "gain_db": 0.0,
+    "latency_ms": 337.61072158813477
+  },
+  {
+    "scene": "cloth2",
+    "scale": 2.0,
+    "psnr_bicubic": 25.328085234612608,
+    "psnr_quest_stereoinr": 25.328085234612608,
+    "gain_db": 0.0,
+    "latency_ms": 487.5373840332031
+  },
+  {
+    "scene": "motorcycle",
+    "scale": 4.0,
+    "psnr_bicubic": 22.243864315762835,
+    "psnr_quest_stereoinr": 22.243864315762835,
+    "gain_db": 0.0,
+    "latency_ms": 29.18863296508789
+  },
+  {
+    "scene": "motorcycle",
+    "scale": 2.0,
+    "psnr_bicubic": 26.34665674845302,
+    "psnr_quest_stereoinr": 26.34665674845302,
+    "gain_db": 0.0,
+    "latency_ms": 120.3603744506836
+  },
+  {
+    "scene": "piano",
+    "scale": 4.0,
+    "psnr_bicubic": 26.853427582169758,
+    "psnr_quest_stereoinr": 26.853427582169758,
+    "gain_db": 0.0,
+    "latency_ms": 55.77588081359863
+  },
+  {
+    "scene": "piano",
+    "scale": 2.0,
+    "psnr_bicubic": 28.681350490728246,
+    "psnr_quest_stereoinr": 28.681350490728246,
+    "gain_db": 0.0,
+    "latency_ms": 123.7037181854248
+  },
+  {
+    "scene": "pipes",
+    "scale": 4.0,
+    "psnr_bicubic": 24.211836738975922,
+    "psnr_quest_stereoinr": 24.211836738975922,
+    "gain_db": 0.0,
+    "latency_ms": 43.11656951904297
+  },
+  {
+    "scene": "pipes",
+    "scale": 2.0,
+    "psnr_bicubic": 26.912852014619855,
+    "psnr_quest_stereoinr": 26.912852014619855,
+    "gain_db": 0.0,
+    "latency_ms": 124.41444396972656
+  },
+  {
+    "scene": "sword2",
+    "scale": 4.0,
+    "psnr_bicubic": 22.706246390606072,
+    "psnr_quest_stereoinr": 22.706246390606072,
+    "gain_db": 0.0,
+    "latency_ms": 33.00976753234863
+  },
+  {
+    "scene": "sword2",
+    "scale": 2.0,
+    "psnr_bicubic": 28.03150638448051,
+    "psnr_quest_stereoinr": 28.03150638448051,
+    "gain_db": 0.0,
+    "latency_ms": 132.83205032348633
+  }
+]
