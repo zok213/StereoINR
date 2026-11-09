@@ -1,47 +1,62 @@
 [
   {
     "scene": "cloth2",
-    "initial_psnr": 27.09,
-    "adapted_psnr": 27.09,
-    "delta_psnr": -0.0,
     "bicubic_psnr": 26.92,
-    "final_loss": 0.02059,
-    "adaptation_time_sec": 56.88
+    "init_psnr_fast": 27.09,
+    "adapted_psnr_fast": 27.09,
+    "gain_fast": -0.0,
+    "init_psnr_cont": 26.92,
+    "adapted_psnr_cont": 26.94,
+    "gain_cont": 0.02,
+    "final_loss": 0.01156,
+    "adaptation_time_sec": 64.88
   },
   {
     "scene": "motorcycle",
-    "initial_psnr": 22.21,
-    "adapted_psnr": 22.21,
-    "delta_psnr": 0.0,
     "bicubic_psnr": 21.99,
-    "final_loss": 0.0225,
-    "adaptation_time_sec": 66.86
+    "init_psnr_fast": 22.2,
+    "adapted_psnr_fast": 22.2,
+    "gain_fast": 0.0,
+    "init_psnr_cont": 22.07,
+    "adapted_psnr_cont": 22.08,
+    "gain_cont": 0.0,
+    "final_loss": 0.03837,
+    "adaptation_time_sec": 62.67
   },
   {
     "scene": "piano",
-    "initial_psnr": 27.65,
-    "adapted_psnr": 27.65,
-    "delta_psnr": 0.0,
     "bicubic_psnr": 27.45,
-    "final_loss": 0.02043,
-    "adaptation_time_sec": 58.88
+    "init_psnr_fast": 27.65,
+    "adapted_psnr_fast": 27.66,
+    "gain_fast": 0.01,
+    "init_psnr_cont": 27.47,
+    "adapted_psnr_cont": 27.47,
+    "gain_cont": 0.01,
+    "final_loss": 0.01669,
+    "adaptation_time_sec": 57.85
   },
   {
     "scene": "pipes",
-    "initial_psnr": 23.95,
-    "adapted_psnr": 23.95,
-    "delta_psnr": 0.0,
     "bicubic_psnr": 23.75,
-    "final_loss": 0.02261,
-    "adaptation_time_sec": 63.77
+    "init_psnr_fast": 23.95,
+    "adapted_psnr_fast": 23.97,
+    "gain_fast": 0.02,
+    "init_psnr_cont": 23.73,
+    "adapted_psnr_cont": 23.74,
+    "gain_cont": 0.01,
+    "final_loss": 0.02945,
+    "adaptation_time_sec": 73.4
   },
   {
     "scene": "sword2",
-    "initial_psnr": 25.79,
-    "adapted_psnr": 25.79,
-    "delta_psnr": -0.0,
     "bicubic_psnr": 25.66,
-    "final_loss": 0.02332,
-    "adaptation_time_sec": 57.13
+    "init_psnr_fast": 25.79,
+    "adapted_psnr_fast": 25.79,
+    "gain_fast": 0.0,
+    "init_psnr_cont": 25.52,
+    "adapted_psnr_cont": 25.53,
+    "gain_cont": 0.01,
+    "final_loss": 0.01226,
+    "adaptation_time_sec": 70.36
   }
 ]

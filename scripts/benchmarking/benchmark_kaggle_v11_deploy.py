@@ -23,7 +23,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-from src.edge_stereoinr.phase2_edge_inr.backbones.quest_stereo_inr import QuestStereoINR
+from scripts.deployment.export_v11_best_to_sentis import MasterQuestStereoINR
 
 
 def calculate_psnr(img1: np.ndarray, img2: np.ndarray) -> float:
@@ -60,13 +60,13 @@ def run_benchmark(model_path: str, dataset_dir: str = 'datasets/Quest3S_StereoWi
     print(f"[*] Compute Device: {device}")
 
     # Build model in deploy or train mode
-    model = QuestStereoINR(width=48, num_blocks=4).to(device)
+    model = MasterQuestStereoINR(channels=48, num_blocks=4).to(device)
     
     if os.path.exists(model_path):
         ckpt = torch.load(model_path, map_location=device, weights_only=False)
         state_dict = ckpt['model_state_dict'] if 'model_state_dict' in ckpt else ckpt
         # Check if already deployed
-        is_deployed = any('rep_conv' in k for k in state_dict.keys()) and not any('branch_3x3' in k for k in state_dict.keys())
+        is_deployed = any('fused_conv' in k for k in state_dict.keys()) or ('blocks.0.fused_conv.weight' in state_dict)
         if is_deployed:
             model.switch_to_deploy()
             model.load_state_dict(state_dict)
