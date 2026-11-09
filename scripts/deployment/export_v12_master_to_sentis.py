@@ -92,13 +92,22 @@ def export_v12_to_sentis():
     )
     print(f"    Exported FP32 ONNX ({os.path.getsize(onnx_fp32_path) / 1024:.1f} KB).")
 
-    # Convert to Native FP16 ONNX via onnxconverter_common
+    # Convert to Native FP16 ONNX via onnxconverter_common with spec-compliant op blocking
     try:
         import onnx
         from onnxconverter_common import float16
         print("[*] Converting ONNX to Native FP16 for Qualcomm Adreno 740 Tensor Core...")
         model_onnx = onnx.load(onnx_fp32_path)
-        model_fp16 = float16.convert_float_to_float16(model_onnx, keep_io_types=False)
+        # Block ops that require float32 scales/inputs per ONNX standard (Resize, Range, GridSample, ConstantOfShape)
+        model_fp16 = float16.convert_float_to_float16(
+            model_onnx,
+            keep_io_types=True,
+            op_block_list=['Resize', 'Range', 'GridSample', 'ConstantOfShape']
+        )
+        # Clear stale value_info so ONNX Runtime infers clean types without type mismatch
+        while len(model_fp16.graph.value_info) > 0:
+            model_fp16.graph.value_info.pop()
+
         onnx.save(model_fp16, onnx_fp16_path)
         shutil.copyfile(onnx_fp16_path, sentis_target_onnx)
         print(f"[+] Native FP16 ONNX Saved to: {sentis_target_onnx} ({os.path.getsize(sentis_target_onnx) / 1024:.1f} KB)")
@@ -106,18 +115,23 @@ def export_v12_to_sentis():
         print(f"[!] Warning: onnxconverter_common error ({e}), copying FP32 as fallback.")
         shutil.copyfile(onnx_fp32_path, sentis_target_onnx)
 
-    # Re-package UPM tarball
-    upm_tar = os.path.join(sentis_dist_dir, 'com.activestereo.edgestreoinr-1.0.0.tgz')
-    print(f"[*] Packing Unity Package Manager Tarball: {upm_tar}...")
-    package_dir = os.path.join(ROOT_DIR, 'deployment', 'unity_sentis')
-    with tarfile.open(upm_tar, "w:gz") as tar:
-        for f in ['package.json', 'README.md', 'QuestStereoINRSentisStreamer.cs', 'WallisEqualizerShader.shader']:
-            f_path = os.path.join(package_dir, f)
-            if os.path.exists(f_path):
-                tar.add(f_path, arcname=f"package/{f}")
-        # Add ONNX model
-        tar.add(sentis_target_onnx, arcname=f"package/{os.path.basename(sentis_target_onnx)}")
-    print(f"[+] UPM Package created successfully ({os.path.getsize(upm_tar) / 1024:.2f} KB).")
+    # Re-package UPM tarball using generate_unity_package builder
+    try:
+        from deployment.unity_sentis.generate_unity_package import build_upm_package
+        print("[*] Running full generate_unity_package builder...")
+        build_upm_package()
+    except Exception as e:
+        print(f"[!] Warning running build_upm_package: {e}")
+        upm_tar = os.path.join(sentis_dist_dir, 'com.activestereo.edgestreoinr-1.0.0.tgz')
+        print(f"[*] Packing fallback Unity Package Manager Tarball: {upm_tar}...")
+        package_dir = os.path.join(ROOT_DIR, 'deployment', 'unity_sentis')
+        with tarfile.open(upm_tar, "w:gz") as tar:
+            for f in os.listdir(package_dir):
+                if f != 'dist' and not f.endswith('.tgz') and not f.endswith('.py') and f != '__pycache__':
+                    f_path = os.path.join(package_dir, f)
+                    tar.add(f_path, arcname=f"package/{f}")
+            tar.add(sentis_target_onnx, arcname=f"package/{os.path.basename(sentis_target_onnx)}")
+        print(f"[+] Fallback UPM Package created successfully ({os.path.getsize(upm_tar) / 1024:.2f} KB).")
     print("=" * 80)
 
 

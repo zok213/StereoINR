@@ -1,0 +1,117 @@
+{
+  "timestamp": "2026-11-09T03:40:10Z",
+  "n_total": 27,
+  "n_pass": 27,
+  "n_fail": 0,
+  "status": "PASS",
+  "checks": {
+    "1_Pareto_Soup": {
+      "pass": true,
+      "detail": "OK | 117,635 params | 491.4 KB"
+    },
+    "1_v11_best": {
+      "pass": true,
+      "detail": "OK | 99,763 params | 414.5 KB"
+    },
+    "1_v11_deploy": {
+      "pass": true,
+      "detail": "OK | 99,379 params | 409.9 KB"
+    },
+    "1_v12_monotonic": {
+      "pass": true,
+      "detail": "OK | 125,043 params | 523.0 KB"
+    },
+    "1_wild_best": {
+      "pass": true,
+      "detail": "OK | 125,811 params | 1602.2 KB"
+    },
+    "1_continual_adapt": {
+      "pass": true,
+      "detail": "OK | 125,043 params | 522.8 KB"
+    },
+    "1_NAFRSSR_M": {
+      "pass": true,
+      "detail": "OK | 0 params | 1166.4 KB"
+    },
+    "2_v12_fast4x_fp32": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1752.9 KB | pass=True"
+    },
+    "2_v12_fast4x_fp16": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1576.7 KB | pass=True"
+    },
+    "3_upm_tarball": {
+      "pass": true,
+      "detail": "300.3 KB | 30 items | pkg_json=True cs=True onnx=True meta=True"
+    },
+    "4_dataset_manifest": {
+      "pass": true,
+      "detail": "5 scenes: ['cloth2', 'motorcycle', 'piano', 'pipes', 'sword2'] | keys_valid=True"
+    },
+    "5_soup_cloth2": {
+      "pass": true,
+      "detail": "Bicubic= 29.62 dB | Soup= 29.77 dB | Gain=+0.15 dB"
+    },
+    "5_soup_motorcycle": {
+      "pass": true,
+      "detail": "Bicubic= 24.82 dB | Soup= 25.31 dB | Gain=+0.49 dB"
+    },
+    "5_soup_piano": {
+      "pass": true,
+      "detail": "Bicubic= 29.82 dB | Soup= 30.37 dB | Gain=+0.55 dB"
+    },
+    "5_soup_pipes": {
+      "pass": true,
+      "detail": "Bicubic= 26.58 dB | Soup= 27.22 dB | Gain=+0.64 dB"
+    },
+    "5_soup_sword2": {
+      "pass": true,
+      "detail": "Bicubic= 29.45 dB | Soup= 30.69 dB | Gain=+1.24 dB"
+    },
+    "5_soup_average": {
+      "pass": true,
+      "detail": "Avg Bicubic= 28.06 dB | Avg Soup= 28.67 dB | Gain=+0.61 dB | 5/5 wins=True"
+    },
+    "6_v12_cloth2": {
+      "pass": true,
+      "detail": "Bicubic= 29.62 dB | v12= 29.97 dB | Gain=+0.35 dB"
+    },
+    "6_v12_motorcycle": {
+      "pass": true,
+      "detail": "Bicubic= 24.82 dB | v12= 25.41 dB | Gain=+0.59 dB"
+    },
+    "6_v12_piano": {
+      "pass": true,
+      "detail": "Bicubic= 29.82 dB | v12= 30.46 dB | Gain=+0.64 dB"
+    },
+    "6_v12_pipes": {
+      "pass": true,
+      "detail": "Bicubic= 26.58 dB | v12= 27.33 dB | Gain=+0.75 dB"
+    },
+    "6_v12_sword2": {
+      "pass": true,
+      "detail": "Bicubic= 29.45 dB | v12= 30.80 dB | Gain=+1.34 dB"
+    },
+    "6_v12_average": {
+      "pass": true,
+      "detail": "Avg Bicubic= 28.06 dB | Avg v12= 28.79 dB | Gain=+0.73 dB | Monotonic=True"
+    },
+    "7_deploy_parity": {
+      "pass": true,
+      "detail": "Max difference: 0.000000e+00 (Threshold: 1e-4)"
+    },
+    "8_zero_init_guarantee": {
+      "pass": true,
+      "detail": "Fresh output max diff from Bicubic: 0.00e+00 (0.0 = perfect identity guarantee)"
+    },
+    "9_onnx_runtime_parity": {
+      "pass": true,
+      "detail": "Max diff: 0.02830 | Mean diff: 0.000551 (Threshold: 0.05)"
+    },
+    "10_rep_dyt_block": {
+      "pass": true,
+      "detail": "diff=0.000000e+00 | branch_1x1_removed=True | fused_conv_active=True"
+    }
+  }
+}
