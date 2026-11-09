@@ -1,0 +1,72 @@
+[
+  {
+    "scene": "cloth2",
+    "hr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\cloth2_burst_L.png",
+    "hr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\cloth2_burst_R.png",
+    "lr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\cloth2_lr4_L.png",
+    "lr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\cloth2_lr4_R.png",
+    "disparity_map": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\cloth2_disp16.png",
+    "occlusion_mask": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\cloth2_occ.png",
+    "mean_disparity": 24.01,
+    "occlusion_percent": 5.55,
+    "burst_sharpness_gain_left": 49.24,
+    "burst_sharpness_gain_right": 47.85,
+    "resolution": "512x512"
+  },
+  {
+    "scene": "motorcycle",
+    "hr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\motorcycle_burst_L.png",
+    "hr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\motorcycle_burst_R.png",
+    "lr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\motorcycle_lr4_L.png",
+    "lr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\motorcycle_lr4_R.png",
+    "disparity_map": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\motorcycle_disp16.png",
+    "occlusion_mask": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\motorcycle_occ.png",
+    "mean_disparity": 24.15,
+    "occlusion_percent": 18.33,
+    "burst_sharpness_gain_left": 58.09,
+    "burst_sharpness_gain_right": 56.67,
+    "resolution": "496x496"
+  },
+  {
+    "scene": "piano",
+    "hr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\piano_burst_L.png",
+    "hr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\piano_burst_R.png",
+    "lr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\piano_lr4_L.png",
+    "lr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\piano_lr4_R.png",
+    "disparity_map": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\piano_disp16.png",
+    "occlusion_mask": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\piano_occ.png",
+    "mean_disparity": 23.97,
+    "occlusion_percent": 10.2,
+    "burst_sharpness_gain_left": 38.64,
+    "burst_sharpness_gain_right": 37.19,
+    "resolution": "480x480"
+  },
+  {
+    "scene": "pipes",
+    "hr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\pipes_burst_L.png",
+    "hr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\pipes_burst_R.png",
+    "lr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\pipes_lr4_L.png",
+    "lr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\pipes_lr4_R.png",
+    "disparity_map": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\pipes_disp16.png",
+    "occlusion_mask": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\pipes_occ.png",
+    "mean_disparity": 24.26,
+    "occlusion_percent": 21.21,
+    "burst_sharpness_gain_left": 45.05,
+    "burst_sharpness_gain_right": 43.06,
+    "resolution": "484x484"
+  },
+  {
+    "scene": "sword2",
+    "hr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\sword2_burst_L.png",
+    "hr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_burst_hr\\sword2_burst_R.png",
+    "lr_left": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\sword2_lr4_L.png",
+    "lr_right": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_lr_x4\\sword2_lr4_R.png",
+    "disparity_map": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\sword2_disp16.png",
+    "occlusion_mask": "D:\\Gitrepo\\Active Stereo RL\\datasets/Quest3S_StereoWild\\curated_annotations\\sword2_occ.png",
+    "mean_disparity": 23.96,
+    "occlusion_percent": 11.8,
+    "burst_sharpness_gain_left": 36.77,
+    "burst_sharpness_gain_right": 43.44,
+    "resolution": "500x500"
+  }
+]
