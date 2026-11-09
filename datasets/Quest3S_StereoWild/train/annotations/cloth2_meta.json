@@ -1,0 +1,10 @@
+{
+  "scene": "cloth2",
+  "mean_disparity_px": 24.04,
+  "max_disparity_px": 27.89,
+  "occlusion_percentage": 11.74,
+  "image_height": 512,
+  "image_width": 512,
+  "disparity_file": "cloth2_disp.png",
+  "occlusion_file": "cloth2_occ.png"
+}

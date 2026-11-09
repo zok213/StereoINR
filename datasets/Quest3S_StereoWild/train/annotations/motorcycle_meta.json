@@ -1,0 +1,10 @@
+{
+  "scene": "motorcycle",
+  "mean_disparity_px": 24.15,
+  "max_disparity_px": 29.37,
+  "occlusion_percentage": 22.58,
+  "image_height": 496,
+  "image_width": 496,
+  "disparity_file": "motorcycle_disp.png",
+  "occlusion_file": "motorcycle_occ.png"
+}

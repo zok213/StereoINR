@@ -1,0 +1,10 @@
+{
+  "scene": "sword2",
+  "mean_disparity_px": 23.99,
+  "max_disparity_px": 28.35,
+  "occlusion_percentage": 11.72,
+  "image_height": 500,
+  "image_width": 500,
+  "disparity_file": "sword2_disp.png",
+  "occlusion_file": "sword2_occ.png"
+}

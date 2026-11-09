@@ -1,0 +1,52 @@
+[
+  {
+    "scene": "cloth2",
+    "mean_disparity_px": 24.04,
+    "max_disparity_px": 27.89,
+    "occlusion_percentage": 11.74,
+    "image_height": 512,
+    "image_width": 512,
+    "disparity_file": "cloth2_disp.png",
+    "occlusion_file": "cloth2_occ.png"
+  },
+  {
+    "scene": "motorcycle",
+    "mean_disparity_px": 24.15,
+    "max_disparity_px": 29.37,
+    "occlusion_percentage": 22.58,
+    "image_height": 496,
+    "image_width": 496,
+    "disparity_file": "motorcycle_disp.png",
+    "occlusion_file": "motorcycle_occ.png"
+  },
+  {
+    "scene": "piano",
+    "mean_disparity_px": 24.04,
+    "max_disparity_px": 27.61,
+    "occlusion_percentage": 15.13,
+    "image_height": 480,
+    "image_width": 480,
+    "disparity_file": "piano_disp.png",
+    "occlusion_file": "piano_occ.png"
+  },
+  {
+    "scene": "pipes",
+    "mean_disparity_px": 24.18,
+    "max_disparity_px": 30.57,
+    "occlusion_percentage": 22.28,
+    "image_height": 484,
+    "image_width": 484,
+    "disparity_file": "pipes_disp.png",
+    "occlusion_file": "pipes_occ.png"
+  },
+  {
+    "scene": "sword2",
+    "mean_disparity_px": 23.99,
+    "max_disparity_px": 28.35,
+    "occlusion_percentage": 11.72,
+    "image_height": 500,
+    "image_width": 500,
+    "disparity_file": "sword2_disp.png",
+    "occlusion_file": "sword2_occ.png"
+  }
+]

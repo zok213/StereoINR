@@ -1,0 +1,10 @@
+{
+  "scene": "pipes",
+  "mean_disparity_px": 24.18,
+  "max_disparity_px": 30.57,
+  "occlusion_percentage": 22.28,
+  "image_height": 484,
+  "image_width": 484,
+  "disparity_file": "pipes_disp.png",
+  "occlusion_file": "pipes_occ.png"
+}

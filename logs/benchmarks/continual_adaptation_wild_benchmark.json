@@ -1,0 +1,47 @@
+[
+  {
+    "scene": "cloth2",
+    "initial_psnr": 27.09,
+    "adapted_psnr": 27.09,
+    "delta_psnr": -0.0,
+    "bicubic_psnr": 26.92,
+    "final_loss": 0.02059,
+    "adaptation_time_sec": 56.88
+  },
+  {
+    "scene": "motorcycle",
+    "initial_psnr": 22.21,
+    "adapted_psnr": 22.21,
+    "delta_psnr": 0.0,
+    "bicubic_psnr": 21.99,
+    "final_loss": 0.0225,
+    "adaptation_time_sec": 66.86
+  },
+  {
+    "scene": "piano",
+    "initial_psnr": 27.65,
+    "adapted_psnr": 27.65,
+    "delta_psnr": 0.0,
+    "bicubic_psnr": 27.45,
+    "final_loss": 0.02043,
+    "adaptation_time_sec": 58.88
+  },
+  {
+    "scene": "pipes",
+    "initial_psnr": 23.95,
+    "adapted_psnr": 23.95,
+    "delta_psnr": 0.0,
+    "bicubic_psnr": 23.75,
+    "final_loss": 0.02261,
+    "adaptation_time_sec": 63.77
+  },
+  {
+    "scene": "sword2",
+    "initial_psnr": 25.79,
+    "adapted_psnr": 25.79,
+    "delta_psnr": -0.0,
+    "bicubic_psnr": 25.66,
+    "final_loss": 0.02332,
+    "adaptation_time_sec": 57.13
+  }
+]
