@@ -58,17 +58,26 @@ class TestQuestStereoINR(unittest.TestCase):
     def test_reparameterization_parity(self):
         model = QuestStereoINR(in_channels=3, width=48, num_blocks=4).to(self.device).eval()
         with torch.no_grad():
-            train_out_l, train_out_r = model(self.img_l, self.img_r, scale=4.0)
+            train_out_l_fast, train_out_r_fast = model(self.img_l, self.img_r, scale=4.0)
+            train_out_l_cont, train_out_r_cont = model(self.img_l, self.img_r, scale=2.7, force_continuous=True)
 
         model.switch_to_deploy()
         with torch.no_grad():
-            deploy_out_l, deploy_out_r = model(self.img_l, self.img_r, scale=4.0)
+            deploy_out_l_fast, deploy_out_r_fast = model(self.img_l, self.img_r, scale=4.0)
+            deploy_out_l_cont, deploy_out_r_cont = model(self.img_l, self.img_r, scale=2.7, force_continuous=True)
 
-        max_diff_l = torch.max(torch.abs(train_out_l - deploy_out_l)).item()
-        max_diff_r = torch.max(torch.abs(train_out_r - deploy_out_r)).item()
-        print(f"[*] Deploy Reparameterization Parity Max Diff: L={max_diff_l:.2e}, R={max_diff_r:.2e}")
-        self.assertLess(max_diff_l, 1e-4)
-        self.assertLess(max_diff_r, 1e-4)
+        max_diff_l_fast = torch.max(torch.abs(train_out_l_fast - deploy_out_l_fast)).item()
+        max_diff_r_fast = torch.max(torch.abs(train_out_r_fast - deploy_out_r_fast)).item()
+        max_diff_l_cont = torch.max(torch.abs(train_out_l_cont - deploy_out_l_cont)).item()
+        max_diff_r_cont = torch.max(torch.abs(train_out_r_cont - deploy_out_r_cont)).item()
+
+        print(f"[*] Deploy Fast 4x Parity Max Diff:       L={max_diff_l_fast:.2e}, R={max_diff_r_fast:.2e}")
+        print(f"[*] Deploy Continuous 2.7x Parity Max Diff: L={max_diff_l_cont:.2e}, R={max_diff_r_cont:.2e}")
+
+        self.assertLess(max_diff_l_fast, 1e-4)
+        self.assertLess(max_diff_r_fast, 1e-4)
+        self.assertLess(max_diff_l_cont, 1e-4)
+        self.assertLess(max_diff_r_cont, 1e-4)
 
 
 if __name__ == '__main__':

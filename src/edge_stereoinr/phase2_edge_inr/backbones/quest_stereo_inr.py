@@ -149,25 +149,32 @@ class QuestStereoINR(nn.Module):
         residual = self.decode_head(combined)
         return residual
 
-    def forward(self, img_l: torch.Tensor, img_r: torch.Tensor, scale: float = 4.0):
+    def forward(self, img_l: torch.Tensor, img_r: torch.Tensor, scale: float = 4.0, force_continuous: bool = False):
         """
         Forward Pass:
         img_l, img_r: [B, 3, H, W]
         scale: arbitrary continuous zoom factor in [1.0, 4.0]
+        force_continuous: if True, forces continuous implicit coordinate query even at scale=4.0
         """
         B, C, H, W = img_l.shape
-        target_h = int(round(H * scale))
-        target_w = int(round(W * scale))
 
         fl, fr = self.extract_deep_features(img_l, img_r)
 
         # High-Speed 4x Integer Path (Fast fallback for fixed 4x passthrough)
-        if abs(scale - 4.0) < 1e-3 and target_h == H * 4 and target_w == W * 4:
+        if not force_continuous and abs(scale - 4.0) < 1e-3:
             bicubic_l = F.interpolate(img_l, scale_factor=4.0, mode='bicubic', align_corners=False)
             bicubic_r = F.interpolate(img_r, scale_factor=4.0, mode='bicubic', align_corners=False)
             sr_l = self.fast_up_4x(fl) + bicubic_l
             sr_r = self.fast_up_4x(fr) + bicubic_r
             return sr_l, sr_r
+
+        # Calculate target height and width (handling both static int and traced Tensor dimensions)
+        if isinstance(H, torch.Tensor):
+            target_h = int(H.item() * scale)
+            target_w = int(W.item() * scale)
+        else:
+            target_h = int(round(H * scale))
+            target_w = int(round(W * scale))
 
         # Continuous Arbitrary-Scale Path (StereoINR Paradigm)
         bicubic_l = F.interpolate(img_l, size=(target_h, target_w), mode='bicubic', align_corners=False)

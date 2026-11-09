@@ -110,23 +110,19 @@ class OcclusionGatedWindowedSCAM(nn.Module):
         disp_r2l_neg = torch.sum(weights_r2l * (-disp_vals), dim=1, keepdim=True)  # (B, 1, H, W)
         disp_r2l_mag = -disp_r2l_neg
 
-        # Common coordinate grid
-        grid_y, grid_x = torch.meshgrid(
-            torch.linspace(-1, 1, H, device=x_l.device),
-            torch.linspace(-1, 1, W, device=x_l.device),
-            indexing='ij'
-        )
-        grid_y = grid_y.unsqueeze(0).repeat(B, 1, 1)
+        # Common coordinate grid (100% Tracer & dynamic-axes safe)
+        grid_y = (torch.arange(H, device=x_l.device, dtype=x_l.dtype).view(1, H, 1) / max(float(H) - 1.0, 1e-5) * 2.0 - 1.0).expand(B, H, W)
+        grid_x = (torch.arange(W, device=x_l.device, dtype=x_l.dtype).view(1, 1, W) / max(float(W) - 1.0, 1e-5) * 2.0 - 1.0).expand(B, H, W)
 
         # 2a. Warp right disparity to left coordinate frame
-        norm_disp_l = (disp_l2r.squeeze(1) * 2.0) / x_l.shape[3]
-        grid_x_warped_l = grid_x.unsqueeze(0).repeat(B, 1, 1) - norm_disp_l
+        norm_disp_l = (disp_l2r.squeeze(1) * 2.0) / float(W)
+        grid_x_warped_l = grid_x - norm_disp_l
         grid_warped_l = torch.stack((grid_x_warped_l, grid_y), dim=3)
         disp_r_in_l = F.grid_sample(disp_r2l_neg, grid_warped_l, mode='bilinear', padding_mode='border', align_corners=True)
 
         # 2b. Warp left disparity to right coordinate frame
-        norm_disp_r = (disp_r2l_mag.squeeze(1) * 2.0) / x_l.shape[3]
-        grid_x_warped_r = grid_x.unsqueeze(0).repeat(B, 1, 1) + norm_disp_r
+        norm_disp_r = (disp_r2l_mag.squeeze(1) * 2.0) / float(W)
+        grid_x_warped_r = grid_x + norm_disp_r
         grid_warped_r = torch.stack((grid_x_warped_r, grid_y), dim=3)
         disp_l_in_r = F.grid_sample(disp_l2r, grid_warped_r, mode='bilinear', padding_mode='border', align_corners=True)
 

@@ -1,7 +1,7 @@
 {
   "id": "zok213/stereoinr-turbo-dual-t4",
   "title": "StereoINR Turbo Dual T4",
-  "code_file": "train_quest3s_v9_ifd_multidataset.ipynb",
+  "code_file": "train_quest3s_v11_quest_stereoinr_dual_t4.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": "true",
