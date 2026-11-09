@@ -1,0 +1,42 @@
+[
+  {
+    "scene": "cloth2",
+    "bicubic_psnr": 27.98,
+    "sr_psnr": 27.91,
+    "gain_db": -0.07,
+    "ssim": 0.9797,
+    "latency_ms": 2538.49
+  },
+  {
+    "scene": "motorcycle",
+    "bicubic_psnr": 23.31,
+    "sr_psnr": 23.22,
+    "gain_db": -0.08,
+    "ssim": 0.9529,
+    "latency_ms": 734.26
+  },
+  {
+    "scene": "piano",
+    "bicubic_psnr": 28.66,
+    "sr_psnr": 28.6,
+    "gain_db": -0.07,
+    "ssim": 0.9806,
+    "latency_ms": 708.15
+  },
+  {
+    "scene": "pipes",
+    "bicubic_psnr": 25.03,
+    "sr_psnr": 24.92,
+    "gain_db": -0.11,
+    "ssim": 0.9704,
+    "latency_ms": 409.02
+  },
+  {
+    "scene": "sword2",
+    "bicubic_psnr": 26.79,
+    "sr_psnr": 26.64,
+    "gain_db": -0.16,
+    "ssim": 0.9754,
+    "latency_ms": 386.69
+  }
+]
