@@ -60,14 +60,15 @@ def calc_ssim(img1: np.ndarray, img2: np.ndarray) -> float:
     return float(np.clip(ssim, 0.0, 1.0))
 
 
-def run_wild_benchmark():
+def run_wild_benchmark(dataset_dir: str = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("=" * 80)
     print(">>> BENCHMARKING QUEST_STEREO_INR ON REAL-WORLD SENSOR DATA (QUEST3S_STEREOWILD)")
     print(f"Device: {device}")
     print("=" * 80)
 
-    dataset_dir = os.path.join(ROOT_DIR, 'datasets', 'Quest3S_StereoWild')
+    if dataset_dir is None:
+        dataset_dir = os.path.join(ROOT_DIR, 'datasets', 'Quest3S_StereoWild')
     train_hr_dir = os.path.join(dataset_dir, 'train', 'hr')
     train_lr4x_dir = os.path.join(dataset_dir, 'train', 'lr_x4')
     train_lr2x_dir = os.path.join(dataset_dir, 'train', 'lr_x2')
@@ -79,13 +80,26 @@ def run_wild_benchmark():
     # Instantiate QuestStereoINR
     model = QuestStereoINR(in_channels=3, width=48, num_blocks=4).to(device)
     
-    # Load warm-start weights from Pareto Model Soup
-    soup_path = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_soup_best.pth')
-    if os.path.exists(soup_path):
-        ckpt = torch.load(soup_path, map_location=device, weights_only=False)
-        sd = ckpt['model_state_dict'] if 'model_state_dict' in ckpt else ckpt
-        model.load_state_dict(sd, strict=False)
-        print("[*] Successfully loaded pretrained Pareto Model Soup weights into QuestStereoINR.")
+    # Load weights from trained checkpoints
+    ckpt_paths = [
+        os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'quest_stereoinr_wild_best.pth'),
+        os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'quest_stereoinr_v12_monotonic_best.pth'),
+        os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_soup_best.pth')
+    ]
+    loaded = False
+    for p in ckpt_paths:
+        if os.path.exists(p):
+            try:
+                ckpt = torch.load(p, map_location=device, weights_only=False)
+                sd = ckpt['model_state_dict'] if (isinstance(ckpt, dict) and 'model_state_dict' in ckpt) else ckpt
+                res = model.load_state_dict(sd, strict=False)
+                print(f"[*] Successfully loaded weights from: {os.path.basename(p)} (Missing: {len(res.missing_keys)}, Unexpected: {len(res.unexpected_keys)})")
+                loaded = True
+                break
+            except Exception as e:
+                print(f"[!] Warning loading {p}: {e}")
+    if not loaded:
+        print("[!] Warning: Using initialized model.")
 
     model.switch_to_deploy()
     model.eval()

@@ -29,13 +29,13 @@ namespace ActiveStereo.EdgeStereoINR
         public bool autoProcessOnLateUpdate = true;
 
         [Header("Tiling Parameters (Adreno 740 SRAM Tuned)")]
-        [Range(32, 96)]
-        [Tooltip("Tile size in LR pixels. 64x64 requires 768 KB SRAM (< 1024 KB GMEM limit)")]
-        public int tileSize = 64;
+        [Range(32, 64)]
+        [Tooltip("Tile size in LR pixels. 42x42 requires ~1,013 KB live buffer (100% fits in 1,024 KB GMEM SRAM & 1.5 MB L2)")]
+        public int tileSize = 42;
 
-        [Range(4, 24)]
+        [Range(4, 16)]
         [Tooltip("Overlap between adjacent tiles for seamless Hann feathering")]
-        public int overlap = 12;
+        public int overlap = 8;
 
         [Range(1.2f, 4.0f)]
         [Tooltip("Super-Resolution Magnification Factor r in [1.2, 4.0]")]
@@ -136,8 +136,10 @@ namespace ActiveStereo.EdgeStereoINR
                 _tempResolveRTRight.Create();
             }
 
-            float peakSramKb = (48 * tileSize * tileSize * 4) / 1024f;
-            Debug.Log($"[TiledStereoStreamer] Initialized with backend {backendType}. Peak Tile SRAM: {peakSramKb:F1} KB (GMEM Budget: 1024 KB).");
+            // Live multi-channel activation footprint: (6 in + 2*48 C + 2*96 DW) * tile^2 * 2 bytes FP16
+            float peakLiveBytes = (6 + 2 * 48 + 2 * 96) * tileSize * tileSize * 2;
+            float peakLiveKb = peakLiveBytes / 1024f;
+            Debug.Log($"[TiledStereoStreamer] Initialized with backend {backendType}. Peak Live Activation: {peakLiveKb:F1} KB (Adreno 740 GMEM: 1024 KB, L2: 1536 KB).");
         }
 
         private void ResolveTensorNames()

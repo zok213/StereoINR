@@ -3,80 +3,80 @@
     "scene": "cloth2",
     "scale": 4.0,
     "psnr_bicubic": 23.959982223036885,
-    "psnr_quest_stereoinr": 23.959982223036885,
-    "gain_db": 0.0,
-    "latency_ms": 337.61072158813477
+    "psnr_quest_stereoinr": 23.983170768626252,
+    "gain_db": 0.023188545589366782,
+    "latency_ms": 2143.749475479126
   },
   {
     "scene": "cloth2",
     "scale": 2.0,
     "psnr_bicubic": 25.328085234612608,
-    "psnr_quest_stereoinr": 25.328085234612608,
-    "gain_db": 0.0,
-    "latency_ms": 487.5373840332031
+    "psnr_quest_stereoinr": 25.275076734116247,
+    "gain_db": -0.053008500496360966,
+    "latency_ms": 9375.651597976685
   },
   {
     "scene": "motorcycle",
     "scale": 4.0,
     "psnr_bicubic": 22.243864315762835,
-    "psnr_quest_stereoinr": 22.243864315762835,
-    "gain_db": 0.0,
-    "latency_ms": 29.18863296508789
+    "psnr_quest_stereoinr": 22.22913511880021,
+    "gain_db": -0.014729196962623092,
+    "latency_ms": 594.1164493560791
   },
   {
     "scene": "motorcycle",
     "scale": 2.0,
     "psnr_bicubic": 26.34665674845302,
-    "psnr_quest_stereoinr": 26.34665674845302,
-    "gain_db": 0.0,
-    "latency_ms": 120.3603744506836
+    "psnr_quest_stereoinr": 26.045559606592718,
+    "gain_db": -0.30109714186030345,
+    "latency_ms": 8423.866987228394
   },
   {
     "scene": "piano",
     "scale": 4.0,
     "psnr_bicubic": 26.853427582169758,
-    "psnr_quest_stereoinr": 26.853427582169758,
-    "gain_db": 0.0,
-    "latency_ms": 55.77588081359863
+    "psnr_quest_stereoinr": 26.970080511092704,
+    "gain_db": 0.11665292892294588,
+    "latency_ms": 567.5880908966064
   },
   {
     "scene": "piano",
     "scale": 2.0,
     "psnr_bicubic": 28.681350490728246,
-    "psnr_quest_stereoinr": 28.681350490728246,
-    "gain_db": 0.0,
-    "latency_ms": 123.7037181854248
+    "psnr_quest_stereoinr": 28.62646629882886,
+    "gain_db": -0.054884191899386536,
+    "latency_ms": 7901.382684707642
   },
   {
     "scene": "pipes",
     "scale": 4.0,
     "psnr_bicubic": 24.211836738975922,
-    "psnr_quest_stereoinr": 24.211836738975922,
-    "gain_db": 0.0,
-    "latency_ms": 43.11656951904297
+    "psnr_quest_stereoinr": 24.244703496312372,
+    "gain_db": 0.03286675733644984,
+    "latency_ms": 569.2026615142822
   },
   {
     "scene": "pipes",
     "scale": 2.0,
     "psnr_bicubic": 26.912852014619855,
-    "psnr_quest_stereoinr": 26.912852014619855,
-    "gain_db": 0.0,
-    "latency_ms": 124.41444396972656
+    "psnr_quest_stereoinr": 26.62244169320737,
+    "gain_db": -0.2904103214124838,
+    "latency_ms": 8003.928899765015
   },
   {
     "scene": "sword2",
     "scale": 4.0,
     "psnr_bicubic": 22.706246390606072,
-    "psnr_quest_stereoinr": 22.706246390606072,
-    "gain_db": 0.0,
-    "latency_ms": 33.00976753234863
+    "psnr_quest_stereoinr": 22.700361855463992,
+    "gain_db": -0.005884535142079983,
+    "latency_ms": 617.9003715515137
   },
   {
     "scene": "sword2",
     "scale": 2.0,
     "psnr_bicubic": 28.03150638448051,
-    "psnr_quest_stereoinr": 28.03150638448051,
-    "gain_db": 0.0,
-    "latency_ms": 132.83205032348633
+    "psnr_quest_stereoinr": 27.53774838423648,
+    "gain_db": -0.49375800024403205,
+    "latency_ms": 8564.22209739685
   }
 ]

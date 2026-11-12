@@ -130,6 +130,14 @@ import onnxruntime as ort
 ONNX_TARGETS = {
     "v12_fast4x_fp32": "weights/checkpoints/quest_stereoinr_v12_fast4x_deploy.onnx",
     "v12_fast4x_fp16": "deployment/unity_sentis/dist/quest_stereoinr_v12_fast4x_deploy_fp16.onnx",
+    "v13_fast4x_fp32": "weights/checkpoints/quest_stereoinr_v13_fast4x_deploy.onnx",
+    "v13_fast4x_fp16": "deployment/unity_sentis/dist/quest_stereoinr_v13_fast4x_deploy_fp16.onnx",
+    "v14_fast4x_fp32": "weights/checkpoints/quest_stereoinr_v14_fast4x_deploy.onnx",
+    "v14_fast4x_fp16": "deployment/unity_sentis/dist/quest_stereoinr_v14_fast4x_deploy_fp16.onnx",
+    "v14_nearhand_fp32": "weights/checkpoints/quest_stereoinr_v14_nearhand_fast4x_deploy.onnx",
+    "v14_nearhand_fp16": "deployment/unity_sentis/dist/quest_stereoinr_v14_nearhand_fast4x_deploy_fp16.onnx",
+    "v15_universal_fp32": "weights/checkpoints/quest_stereoinr_v15_universal_deploy.onnx",
+    "v15_universal_fp16": "deployment/unity_sentis/dist/quest_stereoinr_v15_universal_deploy_fp16.onnx",
 }
 
 for onnx_name, rel_path in ONNX_TARGETS.items():
@@ -407,6 +415,101 @@ try:
            f"diff={blk_diff:.6e} | branch_1x1_removed={has_no_branch} | fused_conv_active={has_fused_conv}")
 except Exception as e:
     record("10_rep_dyt_block", False, f"Block error: {e}")
+
+
+# ===========================================================================
+# [11] Adaptive Disparity Centering & Spatial Epipolar Range (v14)
+# ===========================================================================
+print("\n=== [11] Adaptive Disparity Centering & Spatial Epipolar Range (v14) ===")
+
+try:
+    v14_model = QuestStereoINR(in_channels=3, width=48, num_blocks=4, coord_dim=16).to(device)
+    ck = torch.load(v12_path, map_location=device, weights_only=False)
+    sd = ck.get("model_state_dict", ck.get("state_dict", ck))
+    if any("fused_conv" in k for k in sd.keys()):
+        v14_model.switch_to_deploy()
+    v14_model.load_state_dict(sd, strict=True)
+    v14_model.eval()
+
+    test_l = torch.rand(1, 3, 64, 64, device=device)
+    test_r = torch.rand(1, 3, 64, 64, device=device)
+
+    with torch.no_grad():
+        out_far_l, out_far_r = v14_model(test_l, test_r, scale=4.0, d_center=6)
+        out_near_l, out_near_r = v14_model(test_l, test_r, scale=4.0, d_center=26)
+
+    shape_far_ok = (out_far_l.shape == (1, 3, 256, 256))
+    shape_near_ok = (out_near_l.shape == (1, 3, 256, 256))
+    diff_far_near = (out_far_l - out_near_l).abs().max().item()
+    is_distinct = diff_far_near > 1e-4
+
+    fresh_v14 = QuestStereoINR(in_channels=3, width=48, num_blocks=4, coord_dim=16).to(device)
+    fresh_v14.eval()
+    with torch.no_grad():
+        fresh_far, _ = fresh_v14(test_l, test_r, scale=4.0, d_center=6)
+        fresh_near, _ = fresh_v14(test_l, test_r, scale=4.0, d_center=26)
+        bic_ref = F.interpolate(test_l, scale_factor=4.0, mode="bicubic", align_corners=False)
+
+    zero_far_diff = (fresh_far - bic_ref).abs().max().item()
+    zero_near_diff = (fresh_near - bic_ref).abs().max().item()
+    zero_preservation = (zero_far_diff < 1e-5) and (zero_near_diff < 1e-5)
+
+    v14_pass = shape_far_ok and shape_near_ok and is_distinct and zero_preservation
+    record("11_adaptive_disparity_centering", v14_pass,
+           f"shapes_ok={shape_far_ok and shape_near_ok} | far_vs_near_diff={diff_far_near:.5f} | zero_init_preservation={zero_preservation}")
+except Exception as e:
+    record("11_adaptive_disparity_centering", False, f"Adaptive disparity test error: {e}")
+
+
+# ===========================================================================
+# [12] Universal Non-Linear Epipolar Range & Continuity (v15)
+# ===========================================================================
+print("\n=== [12] Universal Non-Linear Epipolar Range & Continuity (v15) ===")
+
+try:
+    v15_model = QuestStereoINR(in_channels=3, width=48, num_blocks=4, coord_dim=16).to(device)
+    ck = torch.load(v12_path, map_location=device, weights_only=False)
+    sd = ck.get("model_state_dict", ck.get("state_dict", ck))
+    if any("fused_conv" in k for k in sd.keys()):
+        v15_model.switch_to_deploy()
+    v15_model.load_state_dict(sd, strict=True)
+    v15_model.eval()
+
+    # Verify universal grid values
+    expected_grid = [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 13, 17, 22, 28, 35]
+    actual_grid = [int(v) for v in v15_model.stereo_fusion.disp_vals.cpu().squeeze().tolist()]
+    grid_match = (actual_grid == expected_grid)
+
+    # Test single-model forward across near and far ranges
+    test_l = torch.rand(1, 3, 64, 64, device=device)
+    test_r = torch.rand(1, 3, 64, 64, device=device)
+    with torch.no_grad():
+        out_v15_l, out_v15_r = v15_model(test_l, test_r, scale=4.0)
+
+    shape_v15_ok = (out_v15_l.shape == (1, 3, 256, 256)) and (out_v15_r.shape == (1, 3, 256, 256))
+
+    # Test batched execution (B=21 foveal tiles)
+    batch_l = torch.rand(21, 3, 42, 42, device=device)
+    batch_r = torch.rand(21, 3, 42, 42, device=device)
+    with torch.no_grad():
+        batched_out_l, batched_out_r = v15_model(batch_l, batch_r, scale=4.0)
+    batch_shape_ok = (batched_out_l.shape == (21, 3, 168, 168)) and (batched_out_r.shape == (21, 3, 168, 168))
+
+    # Test zero-init Dirac preservation
+    fresh_v15 = QuestStereoINR(in_channels=3, width=48, num_blocks=4, coord_dim=16).to(device)
+    fresh_v15.eval()
+    with torch.no_grad():
+        fresh_sr_l, _ = fresh_v15(test_l, test_r, scale=4.0)
+        bic_ref = F.interpolate(test_l, scale_factor=4.0, mode="bicubic", align_corners=False)
+    zero_dirac_diff = (fresh_sr_l - bic_ref).abs().max().item()
+    zero_dirac_pass = (zero_dirac_diff < 1e-5)
+
+    v15_pass = grid_match and shape_v15_ok and batch_shape_ok and zero_dirac_pass
+    record("12_universal_epipolar_v15", v15_pass,
+           f"grid_match={grid_match} | shape_ok={shape_v15_ok} | batch_B21_ok={batch_shape_ok} | zero_dirac_diff={zero_dirac_diff:.2e}")
+except Exception as e:
+    record("12_universal_epipolar_v15", False, f"v15 test error: {e}")
+
 
 
 # ===========================================================================

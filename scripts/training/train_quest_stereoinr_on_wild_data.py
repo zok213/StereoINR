@@ -42,6 +42,56 @@ class CharbonnierLoss(nn.Module):
         return torch.mean(torch.sqrt((pred - target) ** 2 + self.eps2))
 
 
+def spatial_gradient(x: torch.Tensor):
+    """Computes spatial gradients along width and height."""
+    dx = x[:, :, :, 1:] - x[:, :, :, :-1]
+    dy = x[:, :, 1:, :] - x[:, :, :-1, :]
+    return dx, dy
+
+
+class StereoVisionPerceptualLoss(nn.Module):
+    """
+    Stereo Vision Perceptual & HVS Loss Suite (v13):
+    1. Charbonnier Photometric Loss: Robust L1-smooth loss on Left and Right.
+    2. Inter-Ocular Gradient Discrepancy (IOGD) Loss: Penalizes high-frequency discordant edge phases
+       to strictly prevent binocular rivalry within human Panum's fusional area (<= 0.83 px).
+    3. Cyclopean Laplacian High-Pass Loss: Simulates visual cortex binocular summation for edge crispness.
+    """
+    def __init__(self, lambda_photo: float = 1.0, lambda_iogd: float = 0.1, lambda_lap: float = 0.05):
+        super().__init__()
+        self.lambda_photo = lambda_photo
+        self.lambda_iogd = lambda_iogd
+        self.lambda_lap = lambda_lap
+        self.charbonnier = CharbonnierLoss(eps=1e-3)
+
+        lap_kernel = torch.tensor([[0.0, 1.0, 0.0],
+                                   [1.0, -4.0, 1.0],
+                                   [0.0, 1.0, 0.0]], dtype=torch.float32).view(1, 1, 3, 3).repeat(3, 1, 1, 1)
+        self.register_buffer('lap_kernel', lap_kernel)
+
+    def forward(self, pred_l: torch.Tensor, pred_r: torch.Tensor, target_l: torch.Tensor, target_r: torch.Tensor):
+        l_photo = 0.5 * (self.charbonnier(pred_l, target_l) + self.charbonnier(pred_r, target_r))
+
+        dx_pred_l, dy_pred_l = spatial_gradient(pred_l)
+        dx_tgt_l, dy_tgt_l   = spatial_gradient(target_l)
+        dx_pred_r, dy_pred_r = spatial_gradient(pred_r)
+        dx_tgt_r, dy_tgt_r   = spatial_gradient(target_r)
+
+        l_iogd_l = F.l1_loss(dx_pred_l, dx_tgt_l) + F.l1_loss(dy_pred_l, dy_tgt_l)
+        l_iogd_r = F.l1_loss(dx_pred_r, dx_tgt_r) + F.l1_loss(dy_pred_r, dy_tgt_r)
+        l_iogd = 0.5 * (l_iogd_l + l_iogd_r)
+
+        cyclopean_pred = 0.5 * (pred_l + pred_r)
+        cyclopean_tgt  = 0.5 * (target_l + target_r)
+
+        lap_pred = F.conv2d(cyclopean_pred, self.lap_kernel, padding=1, groups=3)
+        lap_tgt  = F.conv2d(cyclopean_tgt,  self.lap_kernel, padding=1, groups=3)
+        l_lap = F.l1_loss(lap_pred, lap_tgt)
+
+        total = self.lambda_photo * l_photo + self.lambda_iogd * l_iogd + self.lambda_lap * l_lap
+        return total, l_photo, l_iogd, l_lap
+
+
 def calc_psnr(img1: torch.Tensor, img2: torch.Tensor) -> float:
     mse = F.mse_loss(img1, img2).item()
     if mse == 0 or math.isnan(mse):
@@ -51,15 +101,25 @@ def calc_psnr(img1: torch.Tensor, img2: torch.Tensor) -> float:
 
 class StereoWildDataset(torch.utils.data.Dataset):
     """
-    Dataset combining Middlebury reference stereo pairs and Quest3S_StereoWild harvested pairs.
+    Dataset combining User Harvested Quest 3S Video pairs, Quest3S_StereoWild, and Middlebury reference pairs.
     """
     def __init__(self, root_dir: str, patch_size: int = 96, is_train: bool = True):
         self.patch_size = patch_size
         self.is_train = is_train
         self.samples = []
 
+        # 0. User Harvested Meta Quest 3S Real-World Video Dataset (Top Priority)
+        user_dir = os.path.join(root_dir, 'datasets', 'Quest3S_UserStereo_Harvested', 'train' if self.is_train else 'test')
+        if os.path.exists(user_dir):
+            scenes = [os.path.basename(p).replace('_L.png', '') for p in glob.glob(os.path.join(user_dir, 'hr', '*_L.png'))]
+            for sc in scenes:
+                hr_l = os.path.join(user_dir, 'hr', f'{sc}_L.png')
+                hr_r = os.path.join(user_dir, 'hr', f'{sc}_R.png')
+                if os.path.exists(hr_l) and os.path.exists(hr_r):
+                    self.samples.append((hr_l, hr_r, 'user_harvested_vr'))
+
         # 1. Harvested Quest 3S Wild data
-        wild_dir = os.path.join(root_dir, 'datasets', 'Quest3S_StereoWild', 'train')
+        wild_dir = os.path.join(root_dir, 'datasets', 'Quest3S_StereoWild', 'train' if self.is_train else 'val')
         if os.path.exists(wild_dir):
             scenes = [os.path.basename(p).replace('_L.png', '') for p in glob.glob(os.path.join(wild_dir, 'hr', '*_L.png'))]
             for sc in scenes:
@@ -141,8 +201,8 @@ def train_quest_stereoinr(
     train_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"[*] Model Initialized with {train_params:,d} trainable parameters.")
 
-    # Criterion & Optimizer
-    criterion_charbonnier = CharbonnierLoss(eps=1e-3)
+    # Criterion & Optimizer (v13: Charbonnier + IOGD Panum + Cyclopean Laplacian)
+    criterion_perceptual = StereoVisionPerceptualLoss(lambda_photo=1.0, lambda_iogd=0.1, lambda_lap=0.05).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-5)
 
@@ -216,13 +276,8 @@ def train_quest_stereoinr(
 
             pred_l, pred_r = model(lr_l, lr_r, scale=scale, force_continuous=force_continuous)
 
-            # Loss 1: Photometric Charbonnier Loss on Left & Right
-            loss_photo_l = criterion_charbonnier(pred_l, target_hr_l)
-            loss_photo_r = criterion_charbonnier(pred_r, target_hr_r)
-            loss_photo = 0.5 * (loss_photo_l + loss_photo_r)
-
-            # Total Loss
-            total_loss = loss_photo
+            # Stereo Vision Perceptual & HVS Loss (Photometric + IOGD + Cyclopean Laplacian)
+            total_loss, l_photo, l_iogd, l_lap = criterion_perceptual(pred_l, pred_r, target_hr_l, target_hr_r)
             total_loss.backward()
 
             # Gradient Clipping

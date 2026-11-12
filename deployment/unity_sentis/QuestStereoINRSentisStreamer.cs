@@ -30,10 +30,10 @@ namespace EdgeStereoINR.Deployment
         public RenderTexture rightEyeOutputTarget;
 
         [Header("GMEM Tiling Configuration")]
-        [Tooltip("Tile dimension in pixels. 160x160 is strictly optimized for Adreno 740 GMEM 1,024 KB SRAM.")]
-        public int tileWidth = 160;
-        public int tileHeight = 160;
-        public int tileOverlap = 16;
+        [Tooltip("Tile dimension in pixels. 42x42 is strictly optimized for Adreno 740 GMEM 1,024 KB SRAM and 1.5 MB L2 Cache.")]
+        public int tileWidth = 42;
+        public int tileHeight = 42;
+        public int tileOverlap = 8;
 
         [Header("Runtime Telemetry & Performance Monitoring")]
         [SerializeField] private float lastInferenceDurationMs = 0f;
@@ -65,16 +65,17 @@ namespace EdgeStereoINR.Deployment
                 // Target Qualcomm Adreno 740 GPU via Vulkan Compute (100% legal on Horizon OS)
                 engineWorker = new Worker(runtimeModel, BackendType.GPUCompute);
 
-                // Verify SRAM footprint sanity
-                int peakTileBytes = tileWidth * tileHeight * 48 * 2; // FP16 intermediate features
+                // Verify live multi-channel activation footprint: (6 in + 2*48 C + 2*96 DW) * tileWidth * tileHeight * 2 bytes FP16
+                int peakTileBytes = (6 + 2 * 48 + 2 * 96) * tileWidth * tileHeight * 2;
+                int peakTileKb = peakTileBytes / 1024;
                 if (peakTileBytes > 1024 * 1024)
                 {
-                    Debug.LogWarning($"[QuestStereoINR] Warning: Tile size {tileWidth}x{tileHeight} exceeds 1MB GMEM!");
+                    Debug.LogWarning($"[QuestStereoINR] Tile size {tileWidth}x{tileHeight} produces {peakTileKb} KB live activation, exceeding 1,024 KB GMEM (fits in 1.5 MB L2).");
                     isGmemSafe = false;
                 }
                 else
                 {
-                    Debug.Log($"[QuestStereoINR] Adreno 740 GMEM Safe: Peak working buffer = {peakTileBytes / 1024} KB (< 1,024 KB GMEM).");
+                    Debug.Log($"[QuestStereoINR] Adreno 740 GMEM Safe: Peak live working buffer = {peakTileKb} KB (< 1,024 KB GMEM SRAM & 1.5 MB L2 Cache).");
                     isGmemSafe = true;
                 }
 

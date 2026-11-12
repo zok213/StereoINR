@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-11-09T03:40:10Z",
-  "n_total": 27,
-  "n_pass": 27,
+  "timestamp": "2026-11-09T06:04:09Z",
+  "n_total": 37,
+  "n_pass": 37,
   "n_fail": 0,
   "status": "PASS",
   "checks": {
@@ -41,9 +41,41 @@
       "pass": true,
       "detail": "output=(1, 6, 128, 128) | size=1576.7 KB | pass=True"
     },
+    "2_v13_fast4x_fp32": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1251.7 KB | pass=True"
+    },
+    "2_v13_fast4x_fp16": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1076.9 KB | pass=True"
+    },
+    "2_v14_fast4x_fp32": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1251.7 KB | pass=True"
+    },
+    "2_v14_fast4x_fp16": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1076.9 KB | pass=True"
+    },
+    "2_v14_nearhand_fp32": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1275.0 KB | pass=True"
+    },
+    "2_v14_nearhand_fp16": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1100.2 KB | pass=True"
+    },
+    "2_v15_universal_fp32": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1268.1 KB | pass=True"
+    },
+    "2_v15_universal_fp16": {
+      "pass": true,
+      "detail": "output=(1, 6, 128, 128) | size=1093.6 KB | pass=True"
+    },
     "3_upm_tarball": {
       "pass": true,
-      "detail": "300.3 KB | 30 items | pkg_json=True cs=True onnx=True meta=True"
+      "detail": "1306.3 KB | 45 items | pkg_json=True cs=True onnx=True meta=True"
     },
     "4_dataset_manifest": {
       "pass": true,
@@ -107,11 +139,19 @@
     },
     "9_onnx_runtime_parity": {
       "pass": true,
-      "detail": "Max diff: 0.02830 | Mean diff: 0.000551 (Threshold: 0.05)"
+      "detail": "Max diff: 0.02057 | Mean diff: 0.000525 (Threshold: 0.05)"
     },
     "10_rep_dyt_block": {
       "pass": true,
       "detail": "diff=0.000000e+00 | branch_1x1_removed=True | fused_conv_active=True"
+    },
+    "11_adaptive_disparity_centering": {
+      "pass": true,
+      "detail": "shapes_ok=True | far_vs_near_diff=0.02022 | zero_init_preservation=True"
+    },
+    "12_universal_epipolar_v15": {
+      "pass": true,
+      "detail": "grid_match=True | shape_ok=True | batch_B21_ok=True | zero_dirac_diff=0.00e+00"
     }
   }
 }
