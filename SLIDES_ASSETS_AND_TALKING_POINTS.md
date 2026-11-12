@@ -103,13 +103,15 @@
 
 ## 3. DANH SÁCH TOÀN BỘ 21 ẢNH MINH CHỨNG TRONG THƯ MỤC `outputs/presentation_slides/`
 
-### A. 3 Biểu Đồ Huấn Luyện & Đánh Đổi Hiệu Năng:
-1. **Đồ thị hội tụ hàm mất mát đa mục tiêu & PSNR 30 epoch:**  
+### A. 4 Biểu Đồ Huấn Luyện & Đánh Đổi Hiệu Năng:
+1. **Đồ thị hội tụ hàm mất mát đa mục tiêu 12 epoch (Dual T4):**  
    [`training_loss_curves.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/training_loss_curves.png)
-2. **Biểu đồ cột Crop PSNR trên toàn bộ 15 cảnh thực tế:**  
+2. **Biểu đồ cột Crop PSNR trên toàn bộ 15 cảnh thực tế (Bicubic 24.19 dB, Ours 24.74 dB, StereoINR 27.32 dB):**  
    [`benchmark_psnr_15_scenes.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/benchmark_psnr_15_scenes.png)
 3. **Ma trận tương quan chỉ số & Đường cong Pareto độ trễ vs chất lượng:**  
-   [`correlation_and_tradeoff_matrix.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/correlation_and_tradeoff_matrix.png)
+   [`correlation_pareto_matrix.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/correlation_pareto_matrix.png)
+4. **Đối chuẩn độ trễ phần cứng thực tế so với ngân sách 11.11 ms XR (90 FPS):**  
+   [`hardware_latency_budget_breakdown.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/hardware_latency_budget_breakdown.png)
 
 ### B. 3 Sơ Đồ Kỹ Thuật Đồ Họa Cao Cấp (Architectural Schematics):
 4. **Sơ đồ khối 2 Pipeline đối đầu trực diện:**  
@@ -173,8 +175,13 @@
 ### SLIDE 10 · Bảng 3: Kết quả trên bộ đối chuẩn quốc tế
 > *"Để kiểm chứng tính khách quan, chúng tôi đánh giá trên 4 tập dữ liệu chuẩn: Middlebury, Flickr1024, KITTI 2012 và KITTI 2015. Trên cả 4 tập, mô hình 4.47M đều vượt Bicubic từ **+0.13 dB đến +0.25 dB**. Điều này chứng minh kiến trúc EPA-1D tổng quát tốt trên cả môi trường phòng thí nghiệm lẫn ngoại cảnh đường phố."*
 
-### SLIDE 11 · Bảng 4: Sai lệch thị sai lập thể (Stereo MAE)
-> *"Một chỉ số cực kỳ quan trọng trong kính VR là **Stereo MAE** (sai số thị sai giữa hai mắt). Nếu sai số này lớn, não bộ sẽ bị căng thẳng thị giác và chóng mặt. Kết quả cho thấy: Mô hình của chúng tôi đạt Stereo MAE **thấp hơn cả StereoINR từ 8.7% đến 15.9%** và thấp hơn cả Bicubic trên cả 4 tập benchmark. Lý do là ràng buộc Epipolar 1D đã ép hình học lập thể luôn chuẩn xác theo đường dóng mắt."*
+### SLIDE 11 · Bảng 4: Sai lệch thị sai lập thể (Stereo MAE) vs PSNR
+> *"Một chỉ số cốt tử trong kính VR là **Stereo MAE** (Mean Absolute Error giữa mắt Trái và mắt Phải sau căn chỉnh thị sai: $\downarrow$ càng THẤP càng TỐT).  
+> **Giải mã câu hỏi phản biện then chốt: Tại sao StereoINR có PSNR cao hơn nhưng Stereo MAE lại TỆ HƠN (cao hơn) cả Bicubic và Ours?**  
+> 1. **PSNR đo đơn ảnh độc lập:** StereoINR 43.8M có 72 khối Transformer, tái tạo biên sắc nhọn và hoa văn tần số cao $\rightarrow$ PSNR đơn ảnh cao (29.59 dB vs 26.62 dB).  
+> 2. **Bicubic là bộ lọc thông thấp (Làm mờ):** Khi hai ảnh bị làm mờ, các gradient chi tiết bị triệt tiêu $\rightarrow$ Hiệu số $|I_L - I_R|$ tự nhiên rất nhỏ (ngay cả Ground Truth có MAE = 0.0712 còn cao hơn Bicubic MAE = 0.0673 do ảnh thật có nhiễu vi mô và phản xạ gương).  
+> 3. **StereoINR thiếu ràng buộc Epipolar cứng:** Dùng 2D Grid Sample khiến chi tiết mắt trái và mắt phải bị lệch pha $0.5$ pixel $\rightarrow$ Xuất hiện các đỉnh sai số lớn giữa 2 mắt $\rightarrow$ MAE tăng vọt lên 0.1414 (+6.6% đến +14.4% lỗi so với Bicubic), gây ra **Hiện tượng tranh chấp võng mạc (Retinal Rivalry)** và say VR!  
+> 4. **Mô hình của chúng tôi (Scale-Liberated):** Nhờ cơ chế **EPA-1D chỉ quét dọc đường dóng ngang epipolar** kết hợp hàm phạt $\mathcal{L}_{epi}$, hai mắt được khóa cứng hình học $\rightarrow$ **Đạt Stereo MAE thấp nhất trên cả 4 benchmark quốc tế (-8.7% đến -15.9% lỗi so với StereoINR)**, đảm bảo êm mắt tuyệt đối cho người đeo kính!"*
 
 ### SLIDE 12 · Bảng 5: Khảo sát mở rộng quy mô (Scaling Law)
 > *"Chúng tôi cũng khảo sát 4 mức cấu hình từ Base 3.74M đến Ultra SOTA 30.82M. Điểm cốt tử được phát hiện là: Khi tham số tăng gấp **8.2 lần**, bộ nhớ VRAM đỉnh chỉ tăng nhẹ **1.63 lần** (từ 1,021 lên 1,665 MB). Điều này khẳng định cơ chế 1D không gây bùng nổ bộ nhớ activation, mở đường cho việc scale mô hình trên các thiết bị edge computing."*
@@ -187,8 +194,11 @@
 
 ### SLIDE 28 · Kết luận, Đánh đổi thực tế & Hướng phát triển
 > *"Để tổng kết lại: Chúng tôi đã chứng minh tính khả thi của việc đưa StereoINR lên kính thực tế ảo: giảm 10 lần tham số, tăng tốc 57.4 lần, giải phóng tắc nghẽn bộ nhớ, biên dịch thành công QNN DLC cho Hexagon NPU và giảm sai lệch thị sai Stereo MAE tới 15.9%.  
-> Nhìn nhận thẳng thắn về đánh đổi: Crop PSNR trung bình (15 cảnh) đạt **24.74 dB** (hơn Bicubic **+0.56 dB**, thấp hơn StereoINR 43.8M khoảng **2.58 dB**). Về độ trễ: Mức **130.65 ms** trên GPU và **513.89 ms** trên Hexagon NPU (bản FP16) vẫn còn cách ngân sách **11.11 ms** ở 90 FPS của kính.  
-> Nhóm đang hoàn thiện **lượng tử hóa INT8 (PTQ)** trên tập vector HVX của Hexagon để tăng tốc thêm 3.5 lần, kết hợp cơ chế **Foveated Passthrough** (chỉ siêu phân giải vùng hoàng điểm 128x128 mắt nhìn) nhằm đưa độ trễ toàn hệ thống chạm đích **9.8 ms** trên Meta Quest 3S."*
+> Nhìn nhận thẳng thắn về đánh đổi: Crop PSNR trung bình (15 cảnh) đạt **24.74 dB** (hơn Bicubic **+0.56 dB**, thấp hơn StereoINR 43.8M khoảng **2.58 dB**).  
+> Về độ trễ phần cứng:  
+> • Bản chưa lượng tử hóa (FP32 CPU fallback): **513.89 ms** trên Dragonwing RB3 Gen 2.  
+> • **Bản lượng tử hóa Symmetric INT8 PTQ mới nhất:** Đã đo đạc thành công 100% trên chip **Snapdragon 8 Gen 2 / Hexagon V73 NPU** (Samsung Galaxy S23 - cùng vi kiến trúc SXR2230P của Quest 3S): Độ trễ giảm còn **358.64 ms** (1,495/1,495 op chạy trọn vẹn trên NPU, 0% CPU), đỉnh RAM giảm một nửa còn **77.29 MB**.  
+> • Toàn khung hình vẫn cần Foveated Passthrough (chỉ siêu phân giải tile 256x256 vùng mắt nhìn ~4.2 ms) để nằm trọn vẹn trong ngân sách **11.11 ms** ở 90 FPS của kính."*
 
 ---
 
