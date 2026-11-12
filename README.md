@@ -4,7 +4,7 @@
 [![Target Hardware](https://img.shields.io/badge/Target%20XR-Meta%20Quest%203S%20%7C%20Snapdragon%20XR2%20Gen%202-8a2be2.svg)](https://www.qualcomm.com/products/mobile/snapdragon/xr-vr-ar/snapdragon-xr2-gen-2-platform)
 [![Qualcomm NPU](https://img.shields.io/badge/Qualcomm%20AI%20Hub-QNN%20DLC%20Compiled%20(Hexagon%20NPU)-0066cc.svg)](https://aihub.qualcomm.com/)
 [![Parameters](https://img.shields.io/badge/Model%20Scale-4.47M%20Params%20(Scale--Liberated)-success.svg)](#3-kiến-trúc--phương-pháp-tiếp-cận-không-tâng-bốc-phân-tích-thực-tế)
-[![Kaggle Dual T4](https://img.shields.io/badge/Dual%20Tesla%20T4-86.9s%20Training%20%7C%2057.4x%20Speedup-20beff.svg)](#5-kết-quả-đo-đạc-thực-nghiệm-trên-phần-cứng-hardware-benchmarks)
+[![Kaggle Dual T4](https://img.shields.io/badge/Dual%20Tesla%20T4-57.4x%20Speedup-20beff.svg)](#5-kết-quả-đo-đạc-thực-nghiệm-trên-phần-cứng-hardware-benchmarks)
 [![Speedup vs StereoINR](https://img.shields.io/badge/Speedup%20vs%20StereoINR%2043.8M-57.4x%20Faster-red.svg)](#5-kết-quả-đo-đạc-thực-nghiệm-trên-phần-cứng-hardware-benchmarks)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
 
@@ -194,7 +194,6 @@ Mỗi pha quỹ đạo được hiển thị bằng bảng tổng hợp 3 dòng 
 | **Độ Trễ Suy Luận (T4 GPU)** | $7,500.00\text{ ms}$ ($0.13\text{ FPS}$) | **$130.65\text{ ms}$ ($7.65\text{ FPS}$)** | **Nhanh hơn $57.4\times$!** |
 | **Bộ Nhớ Đỉnh (Peak VRAM)** | $1,840.0\text{ MB}$ | **$426.0\text{ MB}$** | **Tiết kiệm $4.3\times$ bộ nhớ** |
 | **Cơ Chế Truy Cập Bộ Nhớ** | Phân mảnh 2D Grid Sample | **100% Liên tục (EPA-1D Scanline)** | Khử triệt để hiện tượng nghẽn DRAM |
-| **Huấn Luyện Phân Tán Dual T4** | > 12 giờ | **$86.9\text{ giây}$ (~$1.45\text{ phút}$)** | Tốc độ hội tụ cực nhanh |
 
 ### 5.2. Đo Đạc Phần Cứng Vật Lý: Qualcomm AI Hub (Dragonwing RB3 Gen 2 Vision Kit - QCS6490 / NPU Hexagon)
 * **Hồ sơ đo đạc (Profile Job `jpr78m99g`):**

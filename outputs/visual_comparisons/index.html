@@ -19,8 +19,8 @@
     <header class="header-box py-4 mb-4 text-center">
         <div class="container">
             <h1 class="display-6 font-weight-bold text-primary">Qualitative Visual Comparison & Residual Heatmap Gallery</h1>
-            <p class="lead text-light mb-1">Scale-Liberated StereoINR (DyT-EdgeINR) vs Official StereoINR / NAFSSR Baseline</p>
-            <p class="small text-secondary">Datasets: Middlebury, Flickr1024, KITTI 2012, and Meta Quest 3S Harvested 8-Phase Trajectory</p>
+            <p class="lead text-light mb-1">Scale-Liberated StereoINR (4.47M) vs Official StereoINR (43.8M) Baseline</p>
+            <p class="small text-secondary">Middlebury, Flickr1024, KITTI 2012, and Meta Quest 3S Harvested 8-Phase Trajectory</p>
         </div>
     </header>
 
@@ -29,7 +29,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">Middlebury - cloth2</h5>
-                <span class="badge bg-success">Ours PSNR: 26.81 dB (+0.32 dB)</span>
+                <span class="badge bg-success">Ours Gain: +0.32 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_middlebury_cloth2.png" target="_blank">
@@ -38,25 +38,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>26.49 dB / 0.7394</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>26.49 dB / 25.94 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>22.89 dB / 0.6349</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">30.47 dB / 21.36 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">26.81 dB / 0.7508</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">26.81 dB / 26.35 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -68,7 +68,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">Middlebury - motorcycle</h5>
-                <span class="badge bg-success">Ours PSNR: 22.24 dB (+0.34 dB)</span>
+                <span class="badge bg-success">Ours Gain: +0.34 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_middlebury_motorcycle.png" target="_blank">
@@ -77,25 +77,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>21.90 dB / 0.7818</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>21.90 dB / 19.93 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>18.30 dB / 0.6802</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">30.47 dB / 16.42 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">22.24 dB / 0.8043</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">22.24 dB / 20.30 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -107,7 +107,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">Flickr1024 - 0001</h5>
-                <span class="badge bg-success">Ours PSNR: 17.39 dB (+0.08 dB)</span>
+                <span class="badge bg-success">Ours Gain: +0.08 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_flickr1024_0001.png" target="_blank">
@@ -116,64 +116,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>17.31 dB / 0.6381</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>17.31 dB / 17.19 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>14.88 dB / 0.5731</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">24.32 dB / 15.39 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">17.39 dB / 0.6548</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">17.39 dB / 17.54 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
-                            <strong>130.65 ms (57.4x Speedup)</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-
-        <div class="card mb-4 shadow-sm border-0">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 font-weight-bold">Flickr1024 - 0015</h5>
-                <span class="badge bg-success">Ours PSNR: 18.62 dB (+0.05 dB)</span>
-            </div>
-            <div class="card-body bg-light text-center">
-                <a href="comparison_flickr1024_0015.png" target="_blank">
-                    <img src="comparison_flickr1024_0015.png" class="img-fluid rounded border mb-3 shadow" style="max-height: 650px;" alt="Comparison Panel">
-                </a>
-                <div class="row text-center mt-2">
-                    <div class="col-md-3">
-                        <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>18.56 dB / 0.6076</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>16.18 dB / 0.5401</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">18.62 dB / 0.6261</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -185,7 +146,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">KITTI2012 - 000000</h5>
-                <span class="badge bg-success">Ours PSNR: 25.95 dB (+0.84 dB)</span>
+                <span class="badge bg-success">Ours Gain: +0.84 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_kitti2012_000000.png" target="_blank">
@@ -194,25 +155,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>25.10 dB / 0.8278</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>25.10 dB / 20.06 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>22.22 dB / 0.7574</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">27.14 dB / 17.80 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">25.95 dB / 0.8474</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">25.95 dB / 20.37 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -224,7 +185,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">Quest3S_Harvested - phase1_indoor_lab_vrui_anchor</h5>
-                <span class="badge bg-success">Ours PSNR: 25.83 dB (+1.40 dB)</span>
+                <span class="badge bg-success">Ours Gain: +1.40 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_quest3s_harvested_phase1_indoor_lab_vrui_anchor.png" target="_blank">
@@ -233,25 +194,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>24.43 dB / 0.8577</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>24.43 dB / 21.21 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>21.77 dB / 0.8189</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">26.85 dB / 18.88 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">25.83 dB / 0.8942</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">25.83 dB / 21.94 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -263,7 +224,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">Quest3S_Harvested - phase3_penrose_hall_atrium</h5>
-                <span class="badge bg-success">Ours PSNR: 27.54 dB (+0.87 dB)</span>
+                <span class="badge bg-success">Ours Gain: +0.87 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_quest3s_harvested_phase3_penrose_hall_atrium.png" target="_blank">
@@ -272,25 +233,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>26.68 dB / 0.8954</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>26.68 dB / 21.85 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>23.35 dB / 0.8510</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">26.85 dB / 18.81 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">27.54 dB / 0.9168</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">27.54 dB / 21.97 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -302,7 +263,7 @@
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">Quest3S_Harvested - phase5_outdoor_campus_brickwalk</h5>
-                <span class="badge bg-success">Ours PSNR: 28.40 dB (+0.38 dB)</span>
+                <span class="badge bg-success">Ours Gain: +0.38 dB Full Scene</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="comparison_quest3s_harvested_phase5_outdoor_campus_brickwalk.png" target="_blank">
@@ -311,25 +272,25 @@
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x</small>
-                            <strong>28.02 dB / 0.9059</strong>
+                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
+                            <strong>28.02 dB / 21.16 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">StereoINR Official (43.8M)</small>
-                            <strong>25.60 dB / 0.8749</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
+                            <strong class="text-primary">26.85 dB / 18.74 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">StereoINR-ScaleLiberated (4.47M) (Ours)</small>
-                            <strong class="text-success">28.40 dB / 0.9174</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
+                            <strong class="text-success">28.40 dB / 21.27 dB</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency</small>
+                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
