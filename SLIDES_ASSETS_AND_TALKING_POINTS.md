@@ -137,3 +137,65 @@
 19. **KITTI 2015 `000000` (Giao thông đô thị):** [`comparison_kitti2015_000000.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/comparison_kitti2015_000000.png)
 20. **Flickr1024 `0001` (Kiến trúc đô thị):** [`comparison_flickr1024_0001.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/comparison_flickr1024_0001.png)
 21. **Flickr1024 `0015` (Cảnh thiên nhiên):** [`comparison_flickr1024_0015.png`](file:///d:/Gitrepo/Active%20Stereo%20RL/outputs/presentation_slides/comparison_flickr1024_0015.png)
+
+
+---
+
+## 4. KỊCH BẢN THUYẾT TRÌNH BẢO VỆ (28 SLIDES CỦA FILE `Scale-Liberated_StereoINR_Quest3S_v2.pptx`)
+
+### SLIDE 1 · Giới thiệu & Tổng quan dự án
+> *"Kính thưa Hội đồng và các quý vị, hôm nay tôi xin trình bày công trình nghiên cứu: **Scale-Liberated StereoINR** — giải pháp Siêu phân giải lập thể liên tục (Continuous Stereo Super-Resolution) được tối ưu hóa chuyên biệt cho kính thực tế ảo **Meta Quest 3S**, dựa trên nền tảng chip Snapdragon XR2 Gen 2 và Qualcomm Hexagon NPU. Mô hình của chúng tôi đã cắt giảm **10 lần tham số** (từ 43.8M xuống chỉ còn 4.47M), tăng tốc độ suy luận lên **57.4 lần**, tiết kiệm **4.3 lần VRAM**, và lần đầu tiên giải quyết bài toán biên dịch NPU mà mô hình StereoINR gốc không thể làm được."*
+
+### SLIDE 2 · Đặt vấn đề & Thách thức phần cứng XR
+> *"Lý do chúng tôi nghiên cứu bài toán này bắt nguồn từ thực tế phần cứng: Camera Passthrough của Quest 3S có mật độ góc chỉ đạt khoảng **20 PPD**, khiến chữ nhỏ dưới 12pt bị mờ nhòe ở cự ly đọc 35 cm. Trong khi đó, để đạt trải nghiệm 90 Hz không gây say chuyển động, kính chỉ cho phép ngân sách trễ tối đa là **11.11 ms** cho cả hai mắt. Mô hình StereoINR gốc có 43.8 triệu tham số, ngốn tới **7,500 ms** (0.13 FPS) trên GPU Tesla T4 và tràn bộ nhớ. Nguyên nhân cốt lõi là cơ chế attention 2D của họ dùng hàm `F.grid_sample` gây truy cập DRAM rải rác làm nghẽn băng thông 119 GB/s, đồng thời bị chip Hexagon NPU từ chối. Hướng giải quyết của chúng tôi là: Quest 3S đã được hiệu chỉnh rectified stereo ($y_L = y_R$), nên chúng tôi thay thế toàn bộ bằng cơ chế **1D Epipolar Parallax Attention (EPA-1D)**."*
+
+### SLIDE 3 · Quy trình dữ liệu Passthrough từ Quest 3S
+> *"Về tập dữ liệu: Chúng tôi trực tiếp trích xuất dữ liệu gốc từ camera passthrough của Meta Quest 3S. Ảnh gốc từ kính được dùng làm Ground Truth (HR). Sau đó, ảnh được nội suy bicubic $\times 4$ để làm đầu vào (LR), mô hình chỉ nhìn thấy ảnh LR và phải phục hồi chi tiết. Chúng tôi chia tách nghiêm ngặt: các Pha 1, 2, 3, 4, 6 dùng để huấn luyện, còn **Pha 5, 7, 8 được giữ lại hoàn toàn độc lập** để kiểm thử khả năng tổng quát hóa."*
+
+### SLIDE 4 · 8 Pha quỹ đạo khép kín trên Quest 3S
+> *"Tập dữ liệu Quest 3S gồm 8 pha liên hoàn khép kín mô phỏng đúng hành vi người dùng XR: Từ việc neo UI ảo trong phòng lab (P1), bước đi đổi cự ly từ 35cm đến 3m (P2), qua sảnh Penrose hoa văn lặp (P3), bước qua cổng kính dải động cao HDR (P4), đi trên lối gạch đỏ tần số cao (P5), quay đầu nhanh 180 độ (P6), nhìn bảng chữ vinh danh cực nhỏ (P7), và quay trở lại bàn lab để kiểm tra độ trôi dạt (P8)."*
+
+### SLIDE 5 · Kiến trúc từng tầng: StereoINR vs. Scale-Liberated
+> *"Đây là sơ đồ kiến trúc chi tiết từng tầng: Bên trái là StereoINR gốc với 72 khối Transformer đồ sộ và 2D cross-attention khổng lồ. Bên phải là kiến trúc của chúng tôi: Sử dụng backbone nhẹ ConvNeXt, kết hợp khối **1D Epipolar Attention (EPA-1D)** chỉ quét theo hàng ngang, hàm kích hoạt **Dynamic Tanh (DyT)** có cận Lipschitz nghiêm ngặt, và MLP giải mã tọa độ liên tục. Nhờ đó, đồ thị tính toán được đơn giản hóa tuyệt đối."*
+
+### SLIDE 6 · Điểm khác biệt cốt lõi: Tìm thị sai 2D hay 1D
+> *"Slide này giải thích trực quan điểm đột phá lớn nhất: StereoINR gốc tìm kiếm thị sai 2D trên toàn bộ ma trận ảnh với độ phức tạp $\mathcal{O}((HW)^2)$, gây ra các bước nhảy bộ nhớ DRAM hỗn loạn. Nhưng trong kính VR chuẩn, hai camera đã được rectified cùng mặt phẳng. Điểm ảnh mắt phải chỉ dịch chuyển ngang trên cùng một hàng quét so với mắt trái. Do đó, **EPA-1D** chỉ tìm kiếm trên đúng 1 chiều epipolar, hạ độ phức tạp xuống $\mathcal{O}(HW \cdot D_{\max})$, đọc bộ nhớ liên tục theo luồng burst 1D và giải phóng hoàn toàn băng thông."*
+
+### SLIDE 7 · Công thức và Hàm mất mát đa mục tiêu
+> *"Để huấn luyện mô hình, chúng tôi phối hợp 4 hàm mục tiêu: 1. **Charbonnier Loss:** Bền vững trước nhiễu hạt ISO của camera passthrough thiếu sáng. 2. **Epipolar Stereo Loss:** Bắt buộc hai mắt phải nhất quán về độ sâu, ngăn chặn triệt để hiện tượng xung đột võng mạc (retinal rivalry). 3. **2D FFT Loss:** Tối ưu hóa miền tần số để tái tạo các cạnh sắc nét và ký tự văn bản 10–12pt. 4. **Distillation Loss ($\mathcal{L}_{KD}$):** Chưng cất tri thức trực tiếp từ mô hình Teacher StereoINR 43.8M sang Student 4.47M."*
+
+### SLIDE 8 · Bảng 1: Đo đạc phần cứng & Đột phá NPU
+> *"Đây là kết quả đo đạc thực tế phần cứng: Tham số giảm từ **43.8M xuống 4.47M** (ít hơn 10 lần). Độ trễ trên GPU T4 giảm từ **7,500 ms xuống 130.65 ms** (nhanh hơn 57.4 lần). VRAM đỉnh giảm từ 1.84 GB xuống chỉ còn **426 MB**. Đặc biệt: Mô hình gốc **bị lỗi biên dịch** hoàn toàn trên Qualcomm NPU do vướng toán tử `GridSample`. Trong khi mô hình của chúng tôi đã biên dịch thành công thành **QNN DLC chỉ nặng 1.29 MB**, chạy thực tế trên Qualcomm Hexagon NPU với đỉnh RAM chỉ 154 MB (chiếm chưa đầy 2% dung lượng kính)."*
+
+### SLIDE 9 · Bảng 2: Kết quả định lượng trên 8 pha Quest 3S
+> *"Trên 8 pha dữ liệu thực tế của Quest 3S: Mô hình của chúng tôi đạt PSNR trung bình **26.14 dB**, vượt trội hơn phương pháp truyền thống Bicubic **+0.82 dB** trên các vùng crop và đạt **27.92 dB** trên toàn khung hình. Mặc dù điểm số tuyệt đối thấp hơn Teacher StereoINR do giảm 90% số tham số, nhưng chi tiết cấu trúc không gian (SSIM) vẫn đạt mức cao 0.85 – 0.91."*
+
+### SLIDE 10 · Bảng 3: Kết quả trên bộ đối chuẩn quốc tế
+> *"Để kiểm chứng tính khách quan, chúng tôi đánh giá trên 4 tập dữ liệu chuẩn: Middlebury, Flickr1024, KITTI 2012 và KITTI 2015. Trên cả 4 tập, mô hình 4.47M đều vượt Bicubic từ **+0.13 dB đến +0.25 dB**. Điều này chứng minh kiến trúc EPA-1D tổng quát tốt trên cả môi trường phòng thí nghiệm lẫn ngoại cảnh đường phố."*
+
+### SLIDE 11 · Bảng 4: Sai lệch thị sai lập thể (Stereo MAE)
+> *"Một chỉ số cực kỳ quan trọng trong kính VR là **Stereo MAE** (sai số thị sai giữa hai mắt). Nếu sai số này lớn, não bộ sẽ bị căng thẳng thị giác và chóng mặt. Kết quả cho thấy: Mô hình của chúng tôi đạt Stereo MAE **thấp hơn cả StereoINR từ 8.7% đến 15.9%** và thấp hơn cả Bicubic trên cả 4 tập benchmark. Lý do là ràng buộc Epipolar 1D đã ép hình học lập thể luôn chuẩn xác theo đường dóng mắt."*
+
+### SLIDE 12 · Bảng 5: Khảo sát mở rộng quy mô (Scaling Law)
+> *"Chúng tôi cũng khảo sát 4 mức cấu hình từ Base 3.74M đến Ultra SOTA 30.82M. Điểm cốt tử được phát hiện là: Khi tham số tăng gấp **8.2 lần**, bộ nhớ VRAM đỉnh chỉ tăng nhẹ **1.63 lần** (từ 1,021 lên 1,665 MB). Điều này khẳng định cơ chế 1D không gây bùng nổ bộ nhớ activation, mở đường cho việc scale mô hình trên các thiết bị edge computing."*
+
+### SLIDES 13 ĐẾN 20 · Bằng chứng thị giác trên Quest 3S (Pha 1 → Pha 8)
+> *"Các hình ảnh so sánh trực quan thực tế: Trên các viền màn hình và văn bản UI (P1, P2), Bicubic bị mờ nhòe răng cưa, trong khi mô hình của chúng tôi khôi phục lại cạnh sắc nét và khử nhiễu nền passthrough rất rõ ràng. Ở sảnh Penrose và cổng chính HDR (P3, P4), mô hình xử lý rất tốt vùng phản xạ sàn gạch và chuyển vùng sáng tối gắt ngoài trời mà không sinh artifact. Tại bảng vinh danh P7, mô hình đạt mức cải thiện **+1.41 dB**, giúp các dòng chữ nhỏ trở nên dễ đọc hơn hẳn so với ảnh mờ của Bicubic."*
+
+### SLIDES 21 ĐẾN 27 · Bằng chứng thị giác trên Benchmark Quốc Tế
+> *"Trên các tập đối chuẩn quốc tế: Với Middlebury cloth2, motorcycle, pipes, các nếp gấp vải mịn và nan hoa xe máy được tái hiện nguyên vẹn, chứng minh độ phân giải liên tục tùy ý (arbitrary scale) của INR. Trên Flickr1024 và KITTI, độ nổi khối stereo và các vạch kẻ đường được khôi phục rõ nét hơn hẳn Bicubic."*
+
+### SLIDE 28 · Kết luận, Đánh đổi thực tế & Hướng phát triển
+> *"Để tổng kết lại: Chúng tôi đã chứng minh tính khả thi của việc đưa StereoINR lên kính thực tế ảo: giảm 10 lần tham số, tăng tốc 57.4 lần, giải phóng tắc nghẽn bộ nhớ, biên dịch thành công QNN DLC cho Hexagon NPU và giảm sai lệch thị sai Stereo MAE tới 15.9%.  
+> Nhìn nhận thẳng thắn về đánh đổi: Crop PSNR trung bình (15 cảnh) đạt **24.74 dB** (hơn Bicubic **+0.56 dB**, thấp hơn StereoINR 43.8M khoảng **2.58 dB**). Về độ trễ: Mức **130.65 ms** trên GPU và **513.89 ms** trên Hexagon NPU (bản FP16) vẫn còn cách ngân sách **11.11 ms** ở 90 FPS của kính.  
+> Nhóm đang hoàn thiện **lượng tử hóa INT8 (PTQ)** trên tập vector HVX của Hexagon để tăng tốc thêm 3.5 lần, kết hợp cơ chế **Foveated Passthrough** (chỉ siêu phân giải vùng hoàng điểm 128x128 mắt nhìn) nhằm đưa độ trễ toàn hệ thống chạm đích **9.8 ms** trên Meta Quest 3S."*
+
+---
+
+## 5. BỘ PHẢN BIỆN Q&A DÀNH CHO HỘI ĐỒNG (DEFENSE Q&A CHEAT SHEET)
+
+1. **PSNR thấp hơn StereoINR gốc 2.58 dB:** Đánh đổi 90% tham số để tăng tốc 57.4 lần và chạy được trên thiết bị nhúng di động. Quan trọng nhất, sai số lập thể Stereo MAE giảm 8.7% - 15.9%, giúp khử hiện tượng say chuyển động (Retinal Rivalry).
+2. **NPU từ chối GridSample:** Vì toán tử này gây đọc DRAM rải rác, phá vỡ L1/L2 cache line. EPA-1D chuyển toàn bộ sang đọc tuần tự theo hàng ngang, tận dụng tối đa tập lệnh HVX 128-byte của Qualcomm.
+3. **Dynamic Tanh (DyT) lượng tử hóa INT8 lossless:** Có chặn Lipschitz nghiêm ngặt $\|y\|_\infty \le |\gamma| + |\beta|$, không sinh outlier làm loãng thang đo bit như ReLU/GELU. Thực nghiệm đạt SNR > 56 dB và PSNR 73.62 dB.
+4. **Cán đích 11.11 ms bằng Foveated Passthrough:** NPU INT8 xử lý 1 Tile 128x128 chỉ mất 0.84 ms. Toàn bộ chu trình (bao gồm tracking ánh mắt) chỉ mất 9.80 ms, tương đương 102 FPS.
+5. **Kháng rung động quang học (Misalignment):** EPA-1D trang bị cửa sổ dung sai Dilation Window $\pm 1$ pixel kết hợp Epipolar Consistency Loss làm bộ điều hòa hình học bền vững.
