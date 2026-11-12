@@ -114,7 +114,7 @@ $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{Charbonnier}} + 0.25 \mathcal{
 * **$\mathcal{L}_{\text{Charbonnier}}$:** Bền vững trước nhiễu hạt cảm biến Passthrough trong điều kiện thiếu sáng.
 * **$\mathcal{L}_{\text{Epipolar}}$:** Triệt tiêu sai lệch thị sai giữa hai mắt, ngăn chặn hiện tượng Tranh chấp võng mạc (Retinal Rivalry).
 * **$\mathcal{L}_{\text{FFT}}$:** Đo sai số miền tần số 2D Fourier, phục hồi các xung tần số cao của chữ viết 10pt-12pt.
-* **$\mathcal{L}_{\text{KD}}$ (Knowledge Distillation):** Chưng cất tri thức trực tiếp từ mô hình Teacher chất lượng cao (NAFSSR-M / StereoINR) sang mô hình Scale-Liberated của chúng ta.
+* **$\mathcal{L}_{\text{KD}}$ (Knowledge Distillation):** Chưng cất tri thức trực tiếp từ mô hình Teacher chất lượng cao (StereoINR Official 43.8M) sang mô hình Scale-Liberated của chúng ta.
 
 ---
 

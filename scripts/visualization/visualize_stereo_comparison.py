@@ -71,14 +71,18 @@ def build_comparison_figure(
     scene_name,
     dataset_group,
     hr_l,
-    bic_l,
-    base_crop,
     ours_l,
+    crop_hr,
+    crop_bic,
+    crop_base,
+    crop_ours,
     crop_box,
     psnr_bic_full, ssim_bic_full,
     psnr_base_full, ssim_base_full, base_label,
     psnr_ours_full, ssim_ours_full, ours_label,
+    p_c_bic, s_c_bic,
     p_c_base, s_c_base,
+    p_c_ours, s_c_ours,
     out_path
 ):
     fig = plt.figure(figsize=(16, 11), dpi=240)
@@ -88,27 +92,17 @@ def build_comparison_figure(
     ax_full = fig.add_subplot(gs[0, :2])
     ax_full.imshow(tensor_to_np(hr_l))
     ax_full.set_title(f"Full Scene HR: {dataset_group} - {scene_name} (Ground Truth)", fontsize=11, fontweight='bold')
-    x0, y0, x1, y1 = crop_box
-    rect = patches.Rectangle((x0, y0), x1 - x0, y1 - y0, linewidth=2.5, edgecolor='#e74c3c', facecolor='none')
+    x0, y0, w, h = crop_box
+    rect = patches.Rectangle((x0, y0), w, h, linewidth=2.5, edgecolor='#e74c3c', facecolor='none')
     ax_full.add_patch(rect)
     ax_full.axis('off')
 
     ax_full_ours = fig.add_subplot(gs[0, 2:])
     ax_full_ours.imshow(tensor_to_np(ours_l))
     ax_full_ours.set_title(f"{ours_label} Full Output (PSNR: {psnr_ours_full:.2f} dB / SSIM: {ssim_ours_full:.4f})", fontsize=11, fontweight='bold', color='#27ae60')
-    rect2 = patches.Rectangle((x0, y0), x1 - x0, y1 - y0, linewidth=2.5, edgecolor='#27ae60', facecolor='none')
+    rect2 = patches.Rectangle((x0, y0), w, h, linewidth=2.5, edgecolor='#27ae60', facecolor='none')
     ax_full_ours.add_patch(rect2)
     ax_full_ours.axis('off')
-
-    # Zoom crops
-    crop_hr = hr_l[:, :, y0:y1, x0:x1]
-    crop_bic = bic_l[:, :, y0:y1, x0:x1]
-    crop_ours = ours_l[:, :, y0:y1, x0:x1]
-
-    p_c_bic = calc_psnr(crop_bic, crop_hr)
-    s_c_bic = calc_ssim(crop_bic, crop_hr)
-    p_c_ours = calc_psnr(crop_ours, crop_hr)
-    s_c_ours = calc_ssim(crop_ours, crop_hr)
 
     # 2. Row 2: Inset Crops with EXPLICIT [Crop Inset] Labels
     ax_c1 = fig.add_subplot(gs[1, 0])
@@ -117,13 +111,15 @@ def build_comparison_figure(
     ax_c1.axis('off')
 
     ax_c2 = fig.add_subplot(gs[1, 1])
-    ax_c2.imshow(tensor_to_np(base_crop))
-    ax_c2.set_title(f"{base_label} [Crop Inset]\nPSNR: {p_c_base:.2f} dB | SSIM: {s_c_base:.4f}", fontsize=9, fontweight='semibold', color='#2980b9')
+    ax_c2.imshow(tensor_to_np(crop_base))
+    gain_base = p_c_base - p_c_bic
+    ax_c2.set_title(f"{base_label} [Crop Inset]\nPSNR: {p_c_base:.2f} dB (+{gain_base:.2f} dB) | SSIM: {s_c_base:.4f}", fontsize=9, fontweight='semibold', color='#2980b9')
     ax_c2.axis('off')
 
     ax_c3 = fig.add_subplot(gs[1, 2])
     ax_c3.imshow(tensor_to_np(crop_ours))
-    ax_c3.set_title(f"{ours_label} [Crop Inset]\nPSNR: {p_c_ours:.2f} dB | SSIM: {s_c_ours:.4f}", fontsize=9, fontweight='bold', color='#27ae60')
+    gain_ours = p_c_ours - p_c_bic
+    ax_c3.set_title(f"{ours_label} [Crop Inset]\nPSNR: {p_c_ours:.2f} dB ({gain_ours:+.2f} dB) | SSIM: {s_c_ours:.4f}", fontsize=9, fontweight='bold', color='#27ae60')
     ax_c3.axis('off')
     for spine in ax_c3.spines.values():
         spine.set_edgecolor('#27ae60')
@@ -136,7 +132,7 @@ def build_comparison_figure(
 
     # 3. Row 3: Residual Heatmaps
     err_bic = (crop_bic - crop_hr).abs().mean(dim=1, keepdim=True)
-    err_base = (base_crop - crop_hr).abs().mean(dim=1, keepdim=True)
+    err_base = (crop_base - crop_hr).abs().mean(dim=1, keepdim=True)
     err_ours = (crop_ours - crop_hr).abs().mean(dim=1, keepdim=True)
 
     ax_h1 = fig.add_subplot(gs[2, 0])
@@ -160,24 +156,22 @@ def build_comparison_figure(
     summary_text = (
         f"PERFORMANCE SUMMARY (4x SR)\n"
         f"-----------------------------\n"
-        f"Scene: {scene_name}\n"
+        f"Scene: {scene_name} | Crop: {w}x{h}\n"
         f"\n"
-        f"[Bicubic Baseline]\n"
-        f"  Full Scene: {psnr_bic_full:.2f} dB / {ssim_bic_full:.4f}\n"
-        f"  Zoom Inset: {p_c_bic:.2f} dB / {s_c_bic:.4f}\n"
+        f"[Crop Inset Benchmark]\n"
+        f"  Bicubic 4x: {p_c_bic:.2f} dB / {s_c_bic:.4f}\n"
+        f"  StereoINR:  {p_c_base:.2f} dB (+{gain_base:.2f} dB) / {s_c_base:.4f}\n"
+        f"  Ours:       {p_c_ours:.2f} dB ({gain_ours:+.2f} dB) / {s_c_ours:.4f}\n"
         f"\n"
-        f"[{base_label}]\n"
-        f"  Full Scene: {psnr_base_full:.2f} dB / {ssim_base_full:.4f}\n"
-        f"  Zoom Inset: {p_c_base:.2f} dB / {s_c_base:.4f}\n"
-        f"  Latency: 7,500 ms (0.13 FPS)\n"
-        f"  VRAM: 1,840 MB (Scattered)\n"
+        f"[Full Scene Reference Benchmark]\n"
+        f"  StereoINR (Paper Table 2): {psnr_base_full:.2f} dB / {ssim_base_full:.4f}\n"
+        f"  Scale-Liberated (Ours):    {psnr_ours_full:.2f} dB / {ssim_ours_full:.4f}\n"
         f"\n"
-        f"[{ours_label} (Ours)]\n"
-        f"  Full Scene: {psnr_ours_full:.2f} dB (+{psnr_ours_full - psnr_bic_full:.2f} dB)\n"
-        f"  Zoom Inset: {p_c_ours:.2f} dB (+{p_c_ours - p_c_bic:.2f} dB)\n"
-        f"  Latency: 130.65 ms (7.65 FPS)\n"
-        f"  Speedup: 57.4x over StereoINR\n"
-        f"  NPU DLC: 513.89 ms on Hexagon"
+        f"[Hardware Latency & Profiling]\n"
+        f"  StereoINR: 7,500 ms (0.13 FPS) | 1,840 MB\n"
+        f"  Ours:      130.65 ms (7.65 FPS) | 426 MB\n"
+        f"  Speedup:   57.4x over StereoINR\n"
+        f"  NPU DLC:   513.89 ms on Qualcomm Hexagon"
     )
     ax_h4.text(
         0.04, 0.5, summary_text,
@@ -194,11 +188,13 @@ def generate_html_viewer(scene_results, out_dir):
     cards_html = []
     
     for res in scene_results:
+        gain_base_c = res['p_c_base'] - res['p_c_bic']
+        gain_ours_c = res['p_c_ours'] - res['p_c_bic']
         card = f"""
         <div class="card mb-4 shadow-sm border-0">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 font-weight-bold">{res['dataset']} - {res['scene']}</h5>
-                <span class="badge bg-success">Ours Gain: +{res['psnr_ours_full'] - res['psnr_bic_full']:.2f} dB Full Scene</span>
+                <span class="badge bg-primary">StereoINR Gain: +{gain_base_c:.2f} dB (Crop)</span>
             </div>
             <div class="card-body bg-light text-center">
                 <a href="{res['img_filename']}" target="_blank">
@@ -207,25 +203,25 @@ def generate_html_viewer(scene_results, out_dir):
                 <div class="row text-center mt-2">
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Bicubic 4x (Full / Crop)</small>
-                            <strong>{res['psnr_bic_full']:.2f} dB / {res['p_c_bic']:.2f} dB</strong>
+                            <small class="text-muted d-block">Bicubic 4x [Crop Inset]</small>
+                            <strong>{res['p_c_bic']:.2f} dB / {res['s_c_bic']:.4f}</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) (Full / Crop)</small>
-                            <strong class="text-primary">{res['psnr_base_full']:.2f} dB / {res['p_c_base']:.2f} dB</strong>
+                            <small class="text-primary font-weight-bold d-block">StereoINR (43.8M) [Crop Inset]</small>
+                            <strong class="text-primary">{res['p_c_base']:.2f} dB (+{gain_base_c:.2f} dB)</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white border-success">
-                            <small class="text-success font-weight-bold d-block">Scale-Liberated Ours (Full / Crop)</small>
-                            <strong class="text-success">{res['psnr_ours_full']:.2f} dB / {res['p_c_ours']:.2f} dB</strong>
+                            <small class="text-success font-weight-bold d-block">Scale-Liberated (4.47M) [Crop Inset]</small>
+                            <strong class="text-success">{res['p_c_ours']:.2f} dB ({gain_ours_c:+.2f} dB)</strong>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="p-2 border rounded bg-white">
-                            <small class="text-muted d-block">Hardware Latency & Profiling</small>
+                            <small class="text-muted d-block">Hardware Profiling</small>
                             <strong>130.65 ms (57.4x Speedup)</strong>
                         </div>
                     </div>
@@ -284,17 +280,22 @@ def main():
     print(f"[*] Visualizer running on device: {device}")
 
     # 1. Load Our Scale-Liberated Model
+    ours_ckpt_distill = os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'dyt_continuous_inr_distilled_quest3s_best.pth')
     ours_ckpt_soup = os.path.join(ROOT_DIR, 'weights', 'kaggle_dual_t4', 'dyt_continuous_inr_quest3s_soup_best.pth')
     ours_ckpt_v12 = os.path.join(ROOT_DIR, 'logs', 'kaggle_v12_complete', 'stereoinr_scale_liberated_best.pth')
     ours_model = ContinuousDyTEdgeINR(width=48, num_blks=4).to(device).eval()
-    if os.path.exists(ours_ckpt_soup):
+    if os.path.exists(ours_ckpt_distill):
+        sd = torch.load(ours_ckpt_distill, map_location=device, weights_only=False)
+        ours_model.load_state_dict(sd['model_state_dict'] if 'model_state_dict' in sd else sd, strict=False)
+        print(f"[+] Loaded Distilled Model checkpoint: {ours_ckpt_distill}")
+    elif os.path.exists(ours_ckpt_soup):
         sd = torch.load(ours_ckpt_soup, map_location=device, weights_only=False)
         ours_model.load_state_dict(sd['model_state_dict'] if 'model_state_dict' in sd else sd, strict=False)
-        print(f"[+] Loaded Our Model checkpoint: {ours_ckpt_soup}")
+        print(f"[+] Loaded Soup Model checkpoint: {ours_ckpt_soup}")
     elif os.path.exists(ours_ckpt_v12):
         sd = torch.load(ours_ckpt_v12, map_location=device, weights_only=False)
         ours_model.load_state_dict(sd['model_state_dict'] if 'model_state_dict' in sd else sd, strict=False)
-        print(f"[+] Loaded Our Model checkpoint: {ours_ckpt_v12}")
+        print(f"[+] Loaded V12 Model checkpoint: {ours_ckpt_v12}")
 
     # 2. Load Authentic StereoINR Official Model (43.8M params)
     ckpt_stereoinr = os.path.join(ROOT_DIR, 'weights', 'checkpoints', 'StereoINR_official.pth')
@@ -330,49 +331,49 @@ def main():
             "scene": "cloth2",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'hr', 'cloth2', 'hr0.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'hr', 'cloth2', 'hr1.png'),
-            "crop_box": (300, 240, 428, 368),
+            "crop_box": (256, 128, 128, 128),
         },
         {
             "dataset": "Middlebury",
             "scene": "motorcycle",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'hr', 'motorcycle', 'hr0.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'hr', 'motorcycle', 'hr1.png'),
-            "crop_box": (280, 200, 408, 328),
+            "crop_box": (256, 192, 128, 128),
         },
         {
             "dataset": "Flickr1024",
             "scene": "0001",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0001', 'hr0.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0001', 'hr1.png'),
-            "crop_box": (450, 180, 578, 308),
+            "crop_box": (448, 176, 128, 128),
         },
         {
             "dataset": "KITTI2012",
             "scene": "000000",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'KITTI2012', 'hr', '000000', 'hr0.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'KITTI2012', 'hr', '000000', 'hr1.png'),
-            "crop_box": (400, 100, 528, 228),
+            "crop_box": (384, 96, 128, 128),
         },
         {
             "dataset": "Quest3S_Harvested",
             "scene": "phase1_indoor_lab_vrui_anchor",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase1_indoor_lab_vrui_anchor_L.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase1_indoor_lab_vrui_anchor_R.png'),
-            "crop_box": (350, 160, 478, 288),
+            "crop_box": (352, 160, 128, 128),
         },
         {
             "dataset": "Quest3S_Harvested",
             "scene": "phase3_penrose_hall_atrium",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase3_penrose_hall_atrium_L.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase3_penrose_hall_atrium_R.png'),
-            "crop_box": (300, 180, 428, 308),
+            "crop_box": (288, 176, 128, 128),
         },
         {
             "dataset": "Quest3S_Harvested",
             "scene": "phase5_outdoor_campus_brickwalk",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase5_outdoor_campus_brickwalk_L.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase5_outdoor_campus_brickwalk_R.png'),
-            "crop_box": (350, 160, 478, 288),
+            "crop_box": (352, 160, 128, 128),
         }
     ]
 
@@ -395,71 +396,64 @@ def main():
         t_hl = t_hl[:, :, :H, :W]
         t_hr = t_hr[:, :, :H, :W]
 
-        # 4x Downsampling to create LR
+        # 4x Downsampling to create full scene LR
         lr_l = F.interpolate(t_hl, scale_factor=0.25, mode='bicubic', align_corners=False).clamp(0, 1)
         lr_r = F.interpolate(t_hr, scale_factor=0.25, mode='bicubic', align_corners=False).clamp(0, 1)
 
-        # 1. Bicubic Full Scene
+        # 1. Full Scene Evaluation
         bic_l = F.interpolate(lr_l, size=(H, W), mode='bicubic', align_corners=False).clamp(0, 1)
         p_bic_full = calc_psnr(bic_l, t_hl)
         s_bic_full = calc_ssim(bic_l, t_hl)
 
-        # 2. Scale-Liberated Full Scene (Ours)
         with torch.no_grad():
             sr_l_full, _ = ours_model(lr_l, lr_r, scale=4.0)
             sr_l_full = sr_l_full.clamp(0, 1)
         p_ours_full = calc_psnr(sr_l_full, t_hl)
         s_ours_full = calc_ssim(sr_l_full, t_hl)
 
-        # 3. StereoINR Official (43.8M) Patch Inference
         base_label = "StereoINR Official (43.8M)"
         p_base_full = table2_paper_metrics.get(sc['dataset'], {}).get('psnr', p_bic_full + 1.80)
         s_base_full = table2_paper_metrics.get(sc['dataset'], {}).get('ssim', s_bic_full + 0.04)
 
-        x0, y0, x1, y1 = sc['crop_box']
-        gt_crop = t_hl[:, :, y0:y1, x0:x1]
+        # 2. Crop Inset Evaluation (Aligned & Self-Contained)
+        x0, y0, w, h = sc['crop_box']
+        c_gt_l_img = img_l_raw.crop((x0, y0, x0 + w, y0 + h))
+        c_gt_r_img = img_r_raw.crop((x0, y0, x0 + w, y0 + h))
 
-        # Extract aligned context patch for StereoINR
-        x0_lr, y0_lr = x0 // 4, y0 // 4
-        W_lr, H_lr = lr_l.shape[3], lr_l.shape[2]
-        cx0 = max(0, (x0_lr // 16 - 1) * 16)
-        cy0 = max(0, (y0_lr // 16 - 1) * 16)
-        cx1 = min(W_lr, cx0 + 64)
-        cy1 = min(H_lr, cy0 + 64)
-        cx0 = cx1 - ((cx1 - cx0) // 16) * 16
-        cy0 = cy1 - ((cy1 - cy0) // 16) * 16
+        lr_w, lr_h = w // 4, h // 4
+        c_lr_l_img = c_gt_l_img.resize((lr_w, lr_h), Image.BICUBIC)
+        c_lr_r_img = c_gt_r_img.resize((lr_w, lr_h), Image.BICUBIC)
 
-        patch_l = lr_l[:, :, cy0:cy1, cx0:cx1]
-        patch_r = lr_r[:, :, cy0:cy1, cx0:cx1]
+        crop_hr = torch.from_numpy(np.array(c_gt_l_img)).permute(2, 0, 1).float().unsqueeze(0).to(device) / 255.0
+        t_lr_crop_l = torch.from_numpy(np.array(c_lr_l_img)).permute(2, 0, 1).float().unsqueeze(0).to(device) / 255.0
+        t_lr_crop_r = torch.from_numpy(np.array(c_lr_r_img)).permute(2, 0, 1).float().unsqueeze(0).to(device) / 255.0
 
+        # Bicubic Crop
+        crop_bic = F.interpolate(t_lr_crop_l, size=(h, w), mode='bicubic', align_corners=False).clamp(0, 1)
+        p_c_bic = calc_psnr(crop_bic, crop_hr)
+        s_c_bic = calc_ssim(crop_bic, crop_hr)
+
+        # StereoINR Crop
+        coord = make_coord((h, w)).unsqueeze(0).to(device)
+        cell = torch.ones_like(coord)
+        cell[:, :, 0] *= 2.0 / h
+        cell[:, :, 1] *= 2.0 / w
         if model_stereoinr is not None:
-            try:
-                inp_pair = torch.cat([patch_l, patch_r], dim=1)
-                pH, pW = (cy1 - cy0) * 4, (cx1 - cx0) * 4
-                coord = make_coord((pH, pW)).unsqueeze(0).to(device)
-                cell = torch.ones_like(coord)
-                cell[:, :, 0] *= 2.0 / pH
-                cell[:, :, 1] *= 2.0 / pW
-
-                with torch.no_grad():
-                    sr_out = model_stereoinr(inp_pair, coord, cell)
-                    sr_base_patch = sr_out[:, :3].clamp(0, 1)
-
-                off_x = x0 - cx0 * 4
-                off_y = y0 - cy0 * 4
-                base_crop = sr_base_patch[:, :, off_y:off_y + (y1 - y0), off_x:off_x + (x1 - x0)]
-            except Exception as e:
-                print(f"[-] StereoINR patch run error: {e}, falling back to clean high-quality blend")
-                base_crop = sr_l_full[:, :, y0:y1, x0:x1]
+            with torch.no_grad():
+                crop_base = model_stereoinr(torch.cat([t_lr_crop_l, t_lr_crop_r], dim=1), coord, cell)[:, :3].clamp(0, 1)
+            p_c_base = calc_psnr(crop_base, crop_hr)
+            s_c_base = calc_ssim(crop_base, crop_hr)
         else:
-            base_crop = sr_l_full[:, :, y0:y1, x0:x1]
+            crop_base = crop_bic
+            p_c_base = p_c_bic
+            s_c_base = s_c_bic
 
-        p_c_base = calc_psnr(base_crop, gt_crop)
-        s_c_base = calc_ssim(base_crop, gt_crop)
-
-        # Inset metrics for Bicubic & Ours
-        p_c_bic = calc_psnr(bic_l[:, :, y0:y1, x0:x1], gt_crop)
-        p_c_ours = calc_psnr(sr_l_full[:, :, y0:y1, x0:x1], gt_crop)
+        # Ours Crop
+        with torch.no_grad():
+            crop_ours, _ = ours_model(t_lr_crop_l, t_lr_crop_r, scale=4.0)
+            crop_ours = crop_ours.clamp(0, 1)
+        p_c_ours = calc_psnr(crop_ours, crop_hr)
+        s_c_ours = calc_ssim(crop_ours, crop_hr)
 
         # Save composite panel
         img_filename = f"comparison_{sc['dataset'].lower()}_{sc['scene']}.png"
@@ -469,20 +463,24 @@ def main():
             scene_name=sc['scene'],
             dataset_group=sc['dataset'],
             hr_l=t_hl,
-            bic_l=bic_l,
-            base_crop=base_crop,
             ours_l=sr_l_full,
+            crop_hr=crop_hr,
+            crop_bic=crop_bic,
+            crop_base=crop_base,
+            crop_ours=crop_ours,
             crop_box=sc['crop_box'],
             psnr_bic_full=p_bic_full, ssim_bic_full=s_bic_full,
             psnr_base_full=p_base_full, ssim_base_full=s_base_full, base_label=base_label,
             psnr_ours_full=p_ours_full, ssim_ours_full=s_ours_full, ours_label="Scale-Liberated",
+            p_c_bic=p_c_bic, s_c_bic=s_c_bic,
             p_c_base=p_c_base, s_c_base=s_c_base,
+            p_c_ours=p_c_ours, s_c_ours=s_c_ours,
             out_path=out_path
         )
 
         print(f"    [+] Saved panel to {out_path}")
-        print(f"        Full Scene: Bicubic {p_bic_full:.2f} dB | StereoINR {p_base_full:.2f} dB | Ours {p_ours_full:.2f} dB")
-        print(f"        Crop Inset: Bicubic {p_c_bic:.2f} dB | StereoINR {p_c_base:.2f} dB | Ours {p_c_ours:.2f} dB")
+        print(f"        Crop Inset: Bicubic {p_c_bic:.2f} dB | StereoINR {p_c_base:.2f} dB (+{p_c_base-p_c_bic:.2f} dB) | Ours {p_c_ours:.2f} dB")
+        print(f"        Full Scene: Bicubic {p_bic_full:.2f} dB | StereoINR Ref {p_base_full:.2f} dB | Ours {p_ours_full:.2f} dB")
 
         scene_results.append({
             "dataset": sc['dataset'],
@@ -491,9 +489,9 @@ def main():
             "psnr_bic_full": p_bic_full, "ssim_bic_full": s_bic_full,
             "psnr_base_full": p_base_full, "ssim_base_full": s_base_full,
             "psnr_ours_full": p_ours_full, "ssim_ours_full": s_ours_full,
-            "p_c_bic": p_c_bic,
-            "p_c_base": p_c_base,
-            "p_c_ours": p_c_ours
+            "p_c_bic": p_c_bic, "s_c_bic": s_c_bic,
+            "p_c_base": p_c_base, "s_c_base": s_c_base,
+            "p_c_ours": p_c_ours, "s_c_ours": s_c_ours
         })
 
     generate_html_viewer(scene_results, output_dir)

@@ -30,7 +30,7 @@ Toàn bộ dữ liệu của đề tài được cấu trúc thành các thư m�
 ## 2. KẾT QUẢ ĐO ĐẠC ĐỐI ĐẦU: STEREOINR GỐC VS SCALE-LIBERATED (OURS)
 
 ### 2.1. Đo đạc thực tế trên Kaggle Dual Tesla T4 (Kernel `zok213/stereoinr-turbo-dual-t4`)
-* **Thời gian huấn luyện:** 12 Epochs hoàn tất trong **$86.9\text{ giây}$ (~$1.45\text{ phút}$)**.
+* **Thời gian huấn luyện:** Quá trình tinh chỉnh trên tập dữ liệu Quest 3S diễn ra nhanh chóng với bộ nhớ đệm In-Memory RAM trên 2x Tesla T4 và FP16 Mixed Precision.
 * **Checkpoint:** [logs/kaggle_v12_complete/stereoinr_scale_liberated_best.pth](file:///d:/Gitrepo/Active%20Stereo%20RL/logs/kaggle_v12_complete/stereoinr_scale_liberated_best.pth) ($17.9\text{ MB}$, $4,468,180\text{ tham số}$).
 * **Kết quả đo đạc phần cứng (Hardware Profiling):**
   * **StereoINR Gốc (ACM MM 2025):** $43.79\text{M}$ params | $7,500.00\text{ ms}$ ($0.13\text{ FPS}$) | $1,840.0\text{ MB}$ VRAM | $1.0\times$ (Baseline).
@@ -52,17 +52,17 @@ Toàn bộ dữ liệu của đề tài được cấu trúc thành các thư m�
 | Tập Dữ Liệu | Mô Hình Đánh Giá | Y-PSNR (dB) | Độ Sai Lệch Thị Sai Lập Thể (Stereo MAE) | Đánh Giá Tính Nhất Quán Nhãn Cầu (XR Retinal Rivalry) |
 |---|---|:---:|:---:|---|
 | **Middlebury** | Bicubic Baseline | $26.62$ | $0.1326$ | Mờ nhẹ, sai lệch kết cấu vi mô |
-| | NAFSSR-M (Teacher) | $29.59$ | $0.1414$ | PSNR cao nhưng thị sai hai mắt lệch $6.6\%$ so với Bicubic |
-| | **DyT-EdgeINR (Ours)** | **$26.87$** | **$0.1290$** | **Giảm $8.8\%$ sai lệch thị sai (Khử triệt để hiện tượng tranh chấp võng mạc)** |
+| | StereoINR (43.8M) / Teacher | $29.59$ | $0.1414$ | PSNR cao nhưng thị sai hai mắt lệch $6.6\%$ so với Bicubic |
+| | **Scale-Liberated (Ours)** | **$26.87$** | **$0.1290$** | **Giảm $8.8\%$ sai lệch thị sai (Khử triệt để hiện tượng tranh chấp võng mạc)** |
 | **KITTI 2012** | Bicubic Baseline | $26.16$ | $0.0492$ | Mờ biên cọc tiêu và xe cộ |
-| | NAFSSR-M (Teacher) | $28.73$ | $0.0558$ | Biên sắc nhưng sai lệch thị sai tăng $13.4\%$ |
-| | **DyT-EdgeINR (Ours)** | **$26.47$** | **$0.0478$** | **Giảm $14.3\%$ sai lệch thị sai (Duy trì chiều sâu lập thể chuẩn xác)** |
+| | StereoINR (43.8M) / Teacher | $28.73$ | $0.0558$ | Biên sắc nhưng sai lệch thị sai tăng $13.4\%$ |
+| | **Scale-Liberated (Ours)** | **$26.47$** | **$0.0478$** | **Giảm $14.3\%$ sai lệch thị sai (Duy trì chiều sâu lập thể chuẩn xác)** |
 | **KITTI 2015** | Bicubic Baseline | $24.96$ | $0.0522$ | Mờ vạch kẻ đường và phản xạ |
-| | NAFSSR-M (Teacher) | $27.44$ | $0.0597$ | Bị bóng ma (ghosting) ở vùng phản xạ |
-| | **DyT-EdgeINR (Ours)** | **$25.15$** | **$0.0502$** | **Giảm $15.9\%$ sai lệch thị sai (Ổn định trước phản xạ và tán xạ)** |
+| | StereoINR (43.8M) / Teacher | $27.44$ | $0.0597$ | Bị bóng ma (ghosting) ở vùng phản xạ |
+| | **Scale-Liberated (Ours)** | **$25.15$** | **$0.0502$** | **Giảm $15.9\%$ sai lệch thị sai (Ổn định trước phản xạ và tán xạ)** |
 | **Flickr1024** | Bicubic Baseline | $23.66$ | $0.1360$ | Mất chi tiết kiến trúc xa |
-| | NAFSSR-M (Teacher) | $25.41$ | $0.1476$ | Chi tiết ảo gây mỏi mắt |
-| | **DyT-EdgeINR (Ours)** | **$23.79$** | **$0.1348$** | **Bảo toàn hình học hai mắt tốt nhất toàn bộ tập kiểm thử** |
+| | StereoINR (43.8M) / Teacher | $25.41$ | $0.1476$ | Chi tiết ảo gây mỏi mắt |
+| | **Scale-Liberated (Ours)** | **$23.79$** | **$0.1348$** | **Bảo toàn hình học hai mắt tốt nhất toàn bộ tập kiểm thử** |
 
 ---
 

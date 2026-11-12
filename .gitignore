@@ -41,3 +41,7 @@ external/**/*.pth.tar
 
 # Local scratch and debug scripts
 scratch/
+demo_results/
+deployment/kaggle_dual_t4_training/kaggle_live_output/
+logs/kaggle_status/
+weights/kaggle_dual_t4/v11_output/

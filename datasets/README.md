@@ -58,7 +58,7 @@ datasets/
 
 | Tên Bộ Dữ Liệu | Nguồn Dữ Liệu | Số Lượng Mẫu | Độ Phân Giải HR | Đặc Trưng Quang Học & Hình Học | Mục Đích Sử Dụng |
 |---|---|:---:|:---:|---|---|
-| **Flickr1024 (Test)** | Wang et al. (CVPR 2019) | $112\text{ cặp}$ | $1024 \times 512$ | Đa dạng cảnh tự nhiên, kiến trúc đô thị, nhiều vật thể xa gần | So sánh trực diện với StereoINR, NAFSSR, iPASSR |
+| **Flickr1024 (Test)** | Wang et al. (CVPR 2019) | $112\text{ cặp}$ | $1024 \times 512$ | Đa dạng cảnh tự nhiên, kiến trúc đô thị, nhiều vật thể xa gần | So sánh trực diện với StereoINR (ACM MM 2025) và các baseline |
 | **Middlebury (Test)** | Scharstein et al. | $5\text{ cặp}$ | $680 \times 440$ | Ánh sáng kiểm soát trong lab, kết cấu vi mô (vải, kim loại, bóng đổ) | Đánh giá khả năng khôi phục vân bề mặt cực hạn |
 | **KITTI 2012 (Test)** | Geiger et al. | $20\text{ cặp}$ | $1242 \times 375$ | Baseline camera lập thể rộng ($B=0.54\text{m}$), chuyển động xe ô tô | Đánh giá tính nhất quán thị sai khoảng cách xa |
 | **KITTI 2015 (Test)** | Menze et al. | $20\text{ cặp}$ | $1242 \times 375$ | Cảnh giao thông phức tạp, người đi bộ, phản xạ kính lái | Đánh giá độ chịu lỗi khi có bóng ma (Ghosting) |

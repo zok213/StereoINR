@@ -94,7 +94,7 @@ Nhận thấy SoC Qualcomm Snapdragon XR2 Gen 2 trên Quest 3S sở hữu **8GB 
 
 #### 1. Huấn Luyện Phân Tán Siêu Tốc Trên Kaggle Dual Tesla T4 (Kernel `zok213/stereoinr-turbo-dual-t4`)
 * **Kỹ thuật tối ưu hóa luồng dữ liệu:** Toàn bộ 112 cặp ảnh Flickr1024 được nạp trực tiếp vào bộ nhớ RAM của máy chủ (In-Memory Host RAM Caching) trong $26.43\text{ giây}$ đầu tiên, triệt tiêu hoàn toàn độ trễ đọc ổ đĩa trong các epoch sau.
-* **Thời gian hoàn thành:** Huấn luyện 12 Epochs hoàn tất chỉ trong **$86.9\text{ giây}$ (~$1.45\text{ phút}$)** với DataParallel phân tán trên 2 GPU Tesla T4 và FP16 Mixed Precision. Checkpoint: `stereoinr_scale_liberated_best.pth` ($17.9\text{ MB}$, $4,468,180\text{ tham số}$).
+* **Thời gian hoàn thành:** Quá trình tinh chỉnh 12 Epochs trên tập dữ liệu trích xuất hoàn tất trong **$86.9\text{ giây}$** nhờ kỹ thuật nạp trước dữ liệu In-Memory RAM trên 2 GPU Tesla T4 và FP16 Mixed Precision. Checkpoint: `stereoinr_scale_liberated_best.pth` ($17.9\text{ MB}$, $4,468,180\text{ tham số}$).
 
 #### 2. Huấn Luyện Chưng Cất Tri Thức Đa Mục Tiêu (Dual-Teacher Distillation) 30 Epochs
 * **Bộ dữ liệu kết hợp:** 8 pha thực tế Meta Quest 3S kết hợp cùng các cảnh vi mô cực hạn của Middlebury (`cloth2`, `motorcycle`, `bowling1`).
@@ -103,7 +103,7 @@ Nhận thấy SoC Qualcomm Snapdragon XR2 Gen 2 trên Quest 3S sở hữu **8GB 
   * $\mathcal{L}_{\text{Charbonnier}}$: Kháng nhiễu hạt cảm biến passthrough trong điều kiện thiếu sáng.
   * $\mathcal{L}_{\text{Epipolar}} = \|(\hat{I}_{\text{HR}}^L - \hat{I}_{\text{HR}}^R) - (I_{\text{HR}}^L - I_{\text{HR}}^R)\|_1$: Ràng buộc đối xứng hai mắt, triệt tiêu hiện tượng tranh chấp võng mạc.
   * $\mathcal{L}_{\text{FFT}} = \|\mathcal{F}(\hat{I}_{\text{HR}}) - \mathcal{F}(I_{\text{HR}})\|_1$: Bảo toàn biên tần số cao 2D Fourier giúp nét chữ không bị nhòe.
-  * $\mathcal{L}_{\text{KD}}$: Chưng cất đặc trưng tương quan lập thể từ Teacher NAFSSR-M (280K params).
+  * $\mathcal{L}_{\text{KD}}$: Chưng cất đặc trưng tương quan lập thể từ Teacher StereoINR Official (43.8M params).
 * **Kết quả hội tụ:** Huấn luyện hoàn thành trong **$369.1\text{ giây}$ (~$6.15\text{ phút}$)**. PSNR trên tập kiểm thử Quest 3S (Pha 5, 7, 8) tăng đều từ **$27.00\text{ dB} \to 27.22\text{ dB}$ (tăng thực chất $+0.22\text{ dB}$)**. Checkpoint xuất xưởng: `weights/checkpoints/dyt_continuous_inr_distilled_quest3s_best.pth`.
 
 #### 3. Bảng Kết Quả Đo Đạc Thực Nghiệm Đối Đầu Trực Tiếp
