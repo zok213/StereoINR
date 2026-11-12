@@ -1,0 +1,172 @@
+{
+  "summary": {
+    "mean_bicubic_psnr": 28.204992429883617,
+    "mean_tier2_psnr": 28.38889815650446,
+    "mean_gain_tier2": 0.1839057266208428,
+    "mean_tier3_psnr": 28.22152154739082,
+    "mean_gain_tier3": 0.016529117507204205,
+    "win_rate": "8/8"
+  },
+  "phases": [
+    {
+      "name": "phase1_indoor_lab_vrui_anchor",
+      "split": "train",
+      "desc": "Phòng Lab: Neo giao diện ảo Horizon OS nổi, bàn làm việc",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 25.756950013529192,
+        "ssim": 0.9733967483043671
+      },
+      "tier2_queststereoinr": {
+        "psnr": 25.955673616504363,
+        "ssim": 0.9743315279483795,
+        "gain": 0.19872360297517133
+      },
+      "tier3_qnn": {
+        "psnr": 25.77250518585707,
+        "ssim": 0.9734811186790466,
+        "gain": 0.015555172327879063
+      }
+    },
+    {
+      "name": "phase2_indoor_lab_desk_walk",
+      "split": "train",
+      "desc": "Lối đi phòng Lab: Di chuyển qua các bàn làm việc",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 29.67947688743979,
+        "ssim": 0.9591843485832214
+      },
+      "tier2_queststereoinr": {
+        "psnr": 29.881050666504777,
+        "ssim": 0.9604613482952118,
+        "gain": 0.20157377906498652
+      },
+      "tier3_qnn": {
+        "psnr": 29.699247199341045,
+        "ssim": 0.9593205749988556,
+        "gain": 0.019770311901254445
+      }
+    },
+    {
+      "name": "phase3_penrose_hall_atrium",
+      "split": "train",
+      "desc": "Sảnh đệm Penrose: Vách kính phản xạ và ánh sáng trần",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 27.89265030650367,
+        "ssim": 0.967952698469162
+      },
+      "tier2_queststereoinr": {
+        "psnr": 28.02247152611905,
+        "ssim": 0.9685295820236206,
+        "gain": 0.12982121961537985
+      },
+      "tier3_qnn": {
+        "psnr": 27.908063286186895,
+        "ssim": 0.9680174291133881,
+        "gain": 0.015412979683226524
+      }
+    },
+    {
+      "name": "phase4_main_gate_exit",
+      "split": "train",
+      "desc": "Sảnh chính: Bước ra cửa cổng lớn tòa nhà (HDR transition)",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 31.4436525532655,
+        "ssim": 0.9854938089847565
+      },
+      "tier2_queststereoinr": {
+        "psnr": 31.7056110296264,
+        "ssim": 0.9862754940986633,
+        "gain": 0.2619584763608991
+      },
+      "tier3_qnn": {
+        "psnr": 31.465971426976125,
+        "ssim": 0.985572338104248,
+        "gain": 0.022318873710624132
+      }
+    },
+    {
+      "name": "phase5_outdoor_campus_brickwalk",
+      "split": "test",
+      "desc": "Sân trường ngoài trời: Vân gạch tần số cao, ánh sáng tự nhiên",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 29.229636661910604,
+        "ssim": 0.9630616009235382
+      },
+      "tier2_queststereoinr": {
+        "psnr": 29.42582708621351,
+        "ssim": 0.964312732219696,
+        "gain": 0.19619042430290534
+      },
+      "tier3_qnn": {
+        "psnr": 29.243187739289997,
+        "ssim": 0.9631740748882294,
+        "gain": 0.013551077379393206
+      }
+    },
+    {
+      "name": "phase6_outdoor_patio_return",
+      "split": "train",
+      "desc": "Sân hiên ngoài trời: Quay đầu hướng về tòa nhà",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 28.102119759621893,
+        "ssim": 0.9528612196445465
+      },
+      "tier2_queststereoinr": {
+        "psnr": 28.2532893965138,
+        "ssim": 0.9536015391349792,
+        "gain": 0.15116963689190754
+      },
+      "tier3_qnn": {
+        "psnr": 28.11043315446284,
+        "ssim": 0.9529200196266174,
+        "gain": 0.008313394840946842
+      }
+    },
+    {
+      "name": "phase7_indoor_portal_awards",
+      "split": "test",
+      "desc": "Sảnh đón trong nhà: Tủ kính bằng khen, cúp danh dự",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 27.14710292564817,
+        "ssim": 0.9763529002666473
+      },
+      "tier2_queststereoinr": {
+        "psnr": 27.31985038805402,
+        "ssim": 0.9770702123641968,
+        "gain": 0.1727474624058516
+      },
+      "tier3_qnn": {
+        "psnr": 27.166119627647593,
+        "ssim": 0.9764467179775238,
+        "gain": 0.019016701999422736
+      }
+    },
+    {
+      "name": "phase8_return_lab_desk",
+      "split": "test",
+      "desc": "Trở về phòng Lab: Khép kín quỹ đạo XR SLAM (Loop Closure)",
+      "scale": 4.0,
+      "bicubic": {
+        "psnr": 26.38835033115012,
+        "ssim": 0.9765631556510925
+      },
+      "tier2_queststereoinr": {
+        "psnr": 26.54741154249979,
+        "ssim": 0.977198600769043,
+        "gain": 0.15906121134966966
+      },
+      "tier3_qnn": {
+        "psnr": 26.406644759365022,
+        "ssim": 0.9766507744789124,
+        "gain": 0.018294428214900904
+      }
+    }
+  ]
+}

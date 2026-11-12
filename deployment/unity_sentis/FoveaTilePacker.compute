@@ -1,0 +1,80 @@
+#pragma kernel PackFoveaTiles
+#pragma kernel UnpackFoveaTiles
+
+// Input/Output Textures
+Texture2D<float4> _LeftCameraFeed;
+Texture2D<float4> _RightCameraFeed;
+RWTexture2D<float4> _FoveaSRAccumulatorL;
+RWTexture2D<float4> _FoveaSRAccumulatorR;
+
+// Tile metadata buffer: xs, ys per tile
+struct TileCoord { int xs; int ys; };
+StructuredBuffer<TileCoord> _TileCoords;
+
+// Sentis Tensor Buffers: Planar NCHW [21, 6, 42, 42] and [21, 6, 168, 168]
+RWStructuredBuffer<half> _BatchInputBuffer;  // Shape: (21, 6, 42, 42)
+StructuredBuffer<half> _BatchOutputBuffer;   // Shape: (21, 6, 168, 168)
+
+#define TILE_SIZE 42
+#define SR_TILE_SIZE 168
+
+[numthreads(8, 8, 1)]
+void PackFoveaTiles(uint3 id : SV_DispatchThreadID)
+{
+    uint tx = id.x; // [0, 41]
+    uint ty = id.y; // [0, 41]
+    uint tileIdx = id.z; // [0, 20]
+
+    if (tx >= TILE_SIZE || ty >= TILE_SIZE || tileIdx >= 21) return;
+
+    TileCoord coord = _TileCoords[tileIdx];
+    int2 samplePos = int2(coord.xs + tx, coord.ys + ty);
+
+    float4 colL = _LeftCameraFeed[samplePos];
+    float4 colR = _RightCameraFeed[samplePos];
+
+    // Compute NCHW planar stride: tileIdx * (6 * 42 * 42) + c * (42 * 42) + ty * 42 + tx
+    uint tileStride = 6 * TILE_SIZE * TILE_SIZE;
+    uint planeStride = TILE_SIZE * TILE_SIZE;
+    uint pixelOffset = ty * TILE_SIZE + tx;
+    uint baseIdx = tileIdx * tileStride;
+
+    // Channels 0..2: Left RGB
+    _BatchInputBuffer[baseIdx + 0 * planeStride + pixelOffset] = (half)colL.r;
+    _BatchInputBuffer[baseIdx + 1 * planeStride + pixelOffset] = (half)colL.g;
+    _BatchInputBuffer[baseIdx + 2 * planeStride + pixelOffset] = (half)colL.b;
+
+    // Channels 3..5: Right RGB
+    _BatchInputBuffer[baseIdx + 3 * planeStride + pixelOffset] = (half)colR.r;
+    _BatchInputBuffer[baseIdx + 4 * planeStride + pixelOffset] = (half)colR.g;
+    _BatchInputBuffer[baseIdx + 5 * planeStride + pixelOffset] = (half)colR.b;
+}
+
+[numthreads(8, 8, 1)]
+void UnpackFoveaTiles(uint3 id : SV_DispatchThreadID)
+{
+    uint tx = id.x; // [0, 167]
+    uint ty = id.y; // [0, 167]
+    uint tileIdx = id.z; // [0, 20]
+
+    if (tx >= SR_TILE_SIZE || ty >= SR_TILE_SIZE || tileIdx >= 21) return;
+
+    TileCoord coord = _TileCoords[tileIdx];
+    int2 targetPos = int2(coord.xs * 4 + tx, coord.ys * 4 + ty);
+
+    uint tileStride = 6 * SR_TILE_SIZE * SR_TILE_SIZE;
+    uint planeStride = SR_TILE_SIZE * SR_TILE_SIZE;
+    uint pixelOffset = ty * SR_TILE_SIZE + tx;
+    uint baseIdx = tileIdx * tileStride;
+
+    half rL = _BatchOutputBuffer[baseIdx + 0 * planeStride + pixelOffset];
+    half gL = _BatchOutputBuffer[baseIdx + 1 * planeStride + pixelOffset];
+    half bL = _BatchOutputBuffer[baseIdx + 2 * planeStride + pixelOffset];
+
+    half rR = _BatchOutputBuffer[baseIdx + 3 * planeStride + pixelOffset];
+    half gR = _BatchOutputBuffer[baseIdx + 4 * planeStride + pixelOffset];
+    half bR = _BatchOutputBuffer[baseIdx + 5 * planeStride + pixelOffset];
+
+    _FoveaSRAccumulatorL[targetPos] = float4(rL, gL, bL, 1.0);
+    _FoveaSRAccumulatorR[targetPos] = float4(rR, gR, bR, 1.0);
+}
