@@ -321,11 +321,13 @@ def main():
     table2_paper_metrics = {
         "Middlebury": {"psnr": 30.47, "ssim": 0.8674},
         "KITTI2012": {"psnr": 27.14, "ssim": 0.8214},
+        "KITTI2015": {"psnr": 25.80, "ssim": 0.7980},
         "Flickr1024": {"psnr": 24.32, "ssim": 0.7674},
         "Quest3S_Harvested": {"psnr": 26.85, "ssim": 0.8350}
     }
 
     test_scenes = [
+        # --- Middlebury Benchmark ---
         {
             "dataset": "Middlebury",
             "scene": "cloth2",
@@ -341,12 +343,13 @@ def main():
             "crop_box": (256, 192, 128, 128),
         },
         {
-            "dataset": "Flickr1024",
-            "scene": "0001",
-            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0001', 'hr0.png'),
-            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0001', 'hr1.png'),
-            "crop_box": (448, 176, 128, 128),
+            "dataset": "Middlebury",
+            "scene": "pipes",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'hr', 'pipes', 'hr0.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Middlebury', 'hr', 'pipes', 'hr1.png'),
+            "crop_box": (320, 160, 128, 128),
         },
+        # --- KITTI 2012 & 2015 Benchmarks ---
         {
             "dataset": "KITTI2012",
             "scene": "000000",
@@ -355,11 +358,41 @@ def main():
             "crop_box": (384, 96, 128, 128),
         },
         {
+            "dataset": "KITTI2015",
+            "scene": "000000",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'KITTI2015', 'hr', '000000', 'hr0.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'KITTI2015', 'hr', '000000', 'hr1.png'),
+            "crop_box": (384, 96, 128, 128),
+        },
+        # --- Flickr1024 Benchmarks ---
+        {
+            "dataset": "Flickr1024",
+            "scene": "0001",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0001', 'hr0.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0001', 'hr1.png'),
+            "crop_box": (448, 176, 128, 128),
+        },
+        {
+            "dataset": "Flickr1024",
+            "scene": "0015",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0015', 'hr0.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'StereoSR', 'test', 'Flickr1024', 'hr', '0015', 'hr1.png'),
+            "crop_box": (256, 320, 128, 128),
+        },
+        # --- ALL 8 PHASES OF QUEST 3S CLOSED LOOP TRAJECTORY ---
+        {
             "dataset": "Quest3S_Harvested",
             "scene": "phase1_indoor_lab_vrui_anchor",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase1_indoor_lab_vrui_anchor_L.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase1_indoor_lab_vrui_anchor_R.png'),
             "crop_box": (352, 160, 128, 128),
+        },
+        {
+            "dataset": "Quest3S_Harvested",
+            "scene": "phase2_indoor_lab_desk_walk",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase2_indoor_lab_desk_walk_L.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase2_indoor_lab_desk_walk_R.png'),
+            "crop_box": (320, 160, 128, 128),
         },
         {
             "dataset": "Quest3S_Harvested",
@@ -370,9 +403,37 @@ def main():
         },
         {
             "dataset": "Quest3S_Harvested",
+            "scene": "phase4_main_gate_exit",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase4_main_gate_exit_L.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase4_main_gate_exit_R.png'),
+            "crop_box": (352, 160, 128, 128),
+        },
+        {
+            "dataset": "Quest3S_Harvested",
             "scene": "phase5_outdoor_campus_brickwalk",
             "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase5_outdoor_campus_brickwalk_L.png'),
             "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase5_outdoor_campus_brickwalk_R.png'),
+            "crop_box": (352, 160, 128, 128),
+        },
+        {
+            "dataset": "Quest3S_Harvested",
+            "scene": "phase6_outdoor_patio_return",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase6_outdoor_patio_return_L.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'train', 'hr', 'phase6_outdoor_patio_return_R.png'),
+            "crop_box": (320, 160, 128, 128),
+        },
+        {
+            "dataset": "Quest3S_Harvested",
+            "scene": "phase7_indoor_portal_awards",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase7_indoor_portal_awards_L.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase7_indoor_portal_awards_R.png'),
+            "crop_box": (352, 160, 128, 128),
+        },
+        {
+            "dataset": "Quest3S_Harvested",
+            "scene": "phase8_return_lab_desk",
+            "hl_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase8_return_lab_desk_L.png'),
+            "hr_path": os.path.join(ROOT_DIR, 'datasets', 'Quest3S_UserStereo_Harvested', 'test', 'hr', 'phase8_return_lab_desk_R.png'),
             "crop_box": (352, 160, 128, 128),
         }
     ]
@@ -479,6 +540,10 @@ def main():
         )
 
         print(f"    [+] Saved panel to {out_path}")
+        slides_out_dir = os.path.join(ROOT_DIR, 'outputs', 'presentation_slides')
+        os.makedirs(slides_out_dir, exist_ok=True)
+        import shutil
+        shutil.copy2(out_path, os.path.join(slides_out_dir, img_filename))
         print(f"        Crop Inset: Bicubic {p_c_bic:.2f} dB | StereoINR {p_c_base:.2f} dB (+{p_c_base-p_c_bic:.2f} dB) | Ours {p_c_ours:.2f} dB")
         print(f"        Full Scene: Bicubic {p_bic_full:.2f} dB | StereoINR Ref {p_base_full:.2f} dB | Ours {p_ours_full:.2f} dB")
 

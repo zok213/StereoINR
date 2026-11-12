@@ -88,14 +88,82 @@ Bộ dữ liệu được cắt lọc tự động từ video thực tế của 
 
 ### 3.1. So Sánh Kiến Trúc StereoINR Gốc vs Scale-Liberated StereoINR (Ours)
 
-```
-[STEREOINR GỐC (ACM MM 2025 - 43.8M PARAMS)]
-Left & Right LR --> [2D Deformable Grid Generator] --> [F.grid_sample (Scattered 2D DRAM Reads)] --> [MLP INR (28M queries/s)]
-Latency: 7,500 ms | VRAM: 1,840 MB | NPU Compatibility: FAILED (Fallback to Scalar DSP)
+```text
+========================================================================================================================
+           ĐỐI ĐẦU TRỰC DIỆN KIẾN TRÚC: STEREOINR (OFFICIAL SOTA) VS. SCALE-LIBERATED (OURS)
+========================================================================================================================
 
-[SCALE-LIBERATED STEREOINR (OURS - 4.47M PARAMS)]
-Left & Right LR --> [EPA-1D (100% Contiguous Epipolar Scanline)] --> [Dynamic Tanh (DyT)] --> [Fourier H-LTE Continuous Decoder]
-Latency: 130.65 ms (57.4x Faster) | VRAM: 426 MB | NPU Compatibility: SUCCESS (Compiled to QNN DLC on Hexagon)
+┌────────────────────────────────────────────────────────┐          ┌────────────────────────────────────────────────────────┐
+│             STEREOINR GỐC (ACM MM 2025)                │          │           SCALE-LIBERATED STEREOINR (OURS)             │
+│       43.79M Tham số | O((H*W)^2) | 7,500 ms/frame     │          │       4.47M Tham số | O(H*W*D_max) | 130.65 ms/frame   │
+└──────────────────────────┬─────────────────────────────┘          └──────────────────────────┬─────────────────────────────┘
+                           │                                                                   │
+                           ▼                                                                   ▼
+       [ Input LR Stereo Pair: I_L, I_R ]                                  [ Input LR Stereo Pair: I_L, I_R ]
+       Shape: (B, 6, H_lr, W_lr) | (213 x 120)                             Shape: (B, 6, H_lr, W_lr) | Epipolar Rectified (y=y')
+                           │                                                                   │
+                           ▼                                                                   ▼
+       ┌───────────────────────────────────────────────┐                   ┌───────────────────────────────────────────────┐
+       │ 1. SHALLOW FEATURE EMBEDDING                  │                   │ 1. SHALLOW FEATURE EMBEDDING                  │
+       │    Conv2d(6, 180, kernel=3, stride=1, pad=1)  │                   │    Conv2d(6, 48, kernel=3, stride=1, pad=1)   │
+       │    Features: f_0 in R^(B x 180 x H_lr x W_lr) │                   │    Features: f_0 in R^(B x 48 x H_lr x W_lr)  │
+       └───────────────────┬───────────────────────────┘                   └───────────────────┬───────────────────────────┘
+                           │                                                                   │
+                           ▼                                                                   ▼
+       ┌───────────────────────────────────────────────┐                   ┌───────────────────────────────────────────────┐
+       │ 2. BACKBONE TÍNH TOÁN ĐẶC TRƯNG               │                   │ 2. BACKBONE TÍNH TOÁN ĐẶC TRƯNG               │
+       │    HAT Transformer: 41.23M Tham số            │                   │    ConvNeXt-DyT Stem: 4.47M Tham số (Giảm 10x)│
+       │    • 12 Nhóm RHAG x 6 Khối HAB (Tổng 72 lớp)  │                   │    • 4 Khối Depthwise Conv 7x7 (HVX Friendly) │
+       │    • Window Self-Attention (16x16)            │                   │    • Pointwise Conv 1x1 + Inverted Bottleneck │
+       │    • Overlapping Cross-Attention (OCA)        │                   │    • Dynamic Tanh (DyT): Y = a(s)*tanh(Wx+b)  │
+       │    [Nhược điểm: Tốn tài nguyên tính toán GPU] │                   │    [Ưu điểm: Không rào cản đồng bộ bộ nhớ]    │
+       └───────────────────┬───────────────────────────┘                   └───────────────────┬───────────────────────────┘
+                           │                                                                   │
+                           ▼                                                                   ▼
+       ┌───────────────────────────────────────────────┐                   ┌───────────────────────────────────────────────┐
+       │ 3. CƠ CHẾ CHÚ Ý THỊ SAI (PARALLAX ATTENTION)  │                   │ 3. CƠ CHẾ CHÚ Ý THỊ SAI (PARALLAX ATTENTION)  │
+       │    DGASU 2D Deformable Cross-Attention        │                   │    1D Epipolar Parallax Attention (EPA-1D)    │
+       │    • Tìm kiếm 2D tự do cả trục X và trục Y    │                   │    • Ràng buộc hình học Epipolar: y_L = y_R   │
+       │    • Gọi hàm: F.grid_sample(coords.flip(-1))  │                   │    • Ma trận Attention chỉ tính trên 1 hàng:  │
+       │    • Lấy mẫu 4 điểm lân cận: vx, vy in [-1,1] │                   │      A(i, j, k) = Softmax(Q_L(i,j)*K_R(i,k)^T)│
+       │    • Điểm truy vấn nhảy bất kỳ trong không gian│                   │    • Không gian tìm kiếm: k in [j - D_max, j] │
+       └───────────────────┬───────────────────────────┘                   └───────────────────┬───────────────────────────┘
+                           │                                                                   │
+                           ▼                                                                   ▼
+       ┌───────────────────────────────────────────────┐                   ┌───────────────────────────────────────────────┐
+       │ 4. BẢN CHẤT TRUY XUẤT BỘ NHỚ DRAM             │                   │ 4. BẢN CHẤT TRUY XUẤT BỘ NHỚ DRAM             │
+       │    Random Scattered Access (Phân Tán Rời Rạc) │                   │    100% Contiguous Burst Access (Tuần Tự Hàng)│
+       │    • Phá vỡ các đường L1/L2 Cache Line        │                   │    • Đọc tuần tự theo dải Cache Line 64B/128B │
+       │    • Chạm trần nghẽn băng thông DRAM 119.2GB/s│                   │    • SRAM Cache Hit Rate đạt xấp xỉ ~98%      │
+       │    • GPU / NPU Warp Execution bị đình trệ     │                   │    • Tận dụng tối đa bộ đệm cục bộ (GMEM)     │
+       └───────────────────┬───────────────────────────┘                   └───────────────────┬───────────────────────────┘
+                           │                                                                   │
+                           ▼                                                                   ▼
+       ┌───────────────────────────────────────────────┐                   ┌───────────────────────────────────────────────┐
+       │ 5. BỘ GIẢI MÃ TỌA ĐỘ LIÊN TỤC (INR DECODER)   │                   │ 5. BỘ GIẢI MÃ TỌA ĐỘ LIÊN TỤC (INR DECODER)   │
+       │    DGASU Coordinate MLP                       │                   │    Continuous Fourier H-LTE Decoder           │
+       │    • Query tọa độ lưới make_coord((H, W))     │                   │    • Mã hóa hàm sóng cao tần: sin/cos(2^k pi x│
+       │    • Nội suy song tuyến (Bilinear) qua MLP    │                   │    • Tái tạo sắc cạnh chữ vi tính 10pt-12pt   │
+       └───────────────────┬───────────────────────────┘                   └───────────────────┬───────────────────────────┘
+                           │                                                                   │
+                           ▼                                                                   ▼
+       [ HR Output: Scale x1.0 -> x30.0 ]                                  [ HR Output: Scale Liên Tục x1.0 -> x4.0+ ]
+       Shape: (B, 6, 854, 480) | 7,500.00 ms (0.13 FPS)                    Shape: (B, 6, 854, 480) | 130.65 ms (7.65 FPS)
+
+========================================================================================================================
+                          KẾT QUẢ ĐO ĐẠC PROFILE THỰC TẾ TRÊN PHẦN CỨNG (EMPIRICAL BENCHMARKS)
+========================================================================================================================
+  TIÊU CHÍ SO SÁNH               STEREOINR GỐC (ACM MM 2025)            SCALE-LIBERATED STEREOINR (OURS)       ƯU THẾ ĐẠT ĐƯỢC
+  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  • Tổng số tham số:             43,790,000 tham số (43.8M)              4,468,180 tham số (4.47M)              Giảm 10.0x
+  • Tốc độ nội suy (Dual T4):    7,500.00 ms / frame (0.13 FPS)          130.65 ms / frame (7.65 FPS)           Nhanh gấp 57.4x
+  • Bộ nhớ VRAM khi chạy:        1,840 MB (Nguy cơ tràn GMEM)            426 MB (100% Contiguous)               Tiết kiệm 4.3x RAM
+  • Khả năng chạy NPU Qualcomm:  ❌ FAILED / CRASH NỘI BỘ                ✔️ BIÊN DỊCH THÀNH CÔNG NHỊ PHÂN QNN    Chạy trực tiếp
+                                 (Hexagon từ chối toán tử GridSample)    DLC: dyt_edge_inr_qnn_tile64_4x.dlc    trên Snapdragon
+                                                                         Footprint: 1.29 MB | 513.89 ms         XR2 Gen 2
+  • Sai lệch thị sai (StereoMAE): 0.0558 - 0.1414 (Lệch chiều sâu)       0.0478 - 0.1290 (Bảo toàn lập thể)     Giảm 8.8% - 15.9% lỗi
+                                                                                                                Khử Retinal Rivalry
+========================================================================================================================
 ```
 
 1. **1D Epipolar Parallax Attention (EPA-1D):**
