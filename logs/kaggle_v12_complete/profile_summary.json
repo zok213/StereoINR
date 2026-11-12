@@ -1,0 +1,8 @@
+{
+  "model_name": "StereoINR-ScaleLiberated",
+  "parameters": 4468180,
+  "latency_ms": 130.65,
+  "throughput_fps": 7.65,
+  "peak_vram_mb": 426.02,
+  "speedup_vs_stereoinr": 57.4
+}

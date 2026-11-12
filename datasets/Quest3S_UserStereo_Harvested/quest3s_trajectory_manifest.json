@@ -1,0 +1,178 @@
+[
+  {
+    "name": "phase1_indoor_lab_vrui_anchor",
+    "split": "train",
+    "timestamp_sec": 5.000846852936759,
+    "frame_idx": 300,
+    "description": "Phòng Lab: Neo giao diện ảo Horizon OS nổi, bàn làm việc",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 6.898468017578125
+    },
+    "occlusion_ratio_pct": 11.497853239656518,
+    "mean_luminance": 129.08002130497007
+  },
+  {
+    "name": "phase2_indoor_lab_desk_walk",
+    "split": "train",
+    "timestamp_sec": 25.00423426468379,
+    "frame_idx": 1500,
+    "description": "Lối đi phòng Lab: Di chuyển qua các bàn làm việc",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 9.151578903198242
+    },
+    "occlusion_ratio_pct": 6.550302498048399,
+    "mean_luminance": 103.51177384205049
+  },
+  {
+    "name": "phase3_penrose_hall_atrium",
+    "split": "train",
+    "timestamp_sec": 50.00846852936758,
+    "frame_idx": 3000,
+    "description": "Sảnh đệm Penrose: Vách kính phản xạ và ánh sáng trần",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 11.454524993896484
+    },
+    "occlusion_ratio_pct": 10.285421545667447,
+    "mean_luminance": 110.7565760798855
+  },
+  {
+    "name": "phase4_main_gate_exit",
+    "split": "train",
+    "timestamp_sec": 75.01270279405138,
+    "frame_idx": 4500,
+    "description": "Sảnh chính: Bước ra cửa cổng lớn tòa nhà (HDR transition)",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 12.072309494018555
+    },
+    "occlusion_ratio_pct": 5.475214676034349,
+    "mean_luminance": 93.93862704918033
+  },
+  {
+    "name": "phase5_outdoor_campus_brickwalk",
+    "split": "test",
+    "timestamp_sec": 95.0160902057984,
+    "frame_idx": 5700,
+    "description": "Sân trường ngoài trời: Vân gạch tần số cao, ánh sáng tự nhiên",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 10.70726203918457
+    },
+    "occlusion_ratio_pct": 5.491803278688525,
+    "mean_luminance": 83.99398988420505
+  },
+  {
+    "name": "phase6_outdoor_patio_return",
+    "split": "train",
+    "timestamp_sec": 115.01947761754545,
+    "frame_idx": 6900,
+    "description": "Sân hiên ngoài trời: Quay đầu hướng về tòa nhà",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 7.8202338218688965
+    },
+    "occlusion_ratio_pct": 9.055669398907105,
+    "mean_luminance": 110.21820436507936
+  },
+  {
+    "name": "phase7_indoor_portal_awards",
+    "split": "test",
+    "timestamp_sec": 135.0228650292925,
+    "frame_idx": 8100,
+    "description": "Sảnh đón trong nhà: Tủ kính bằng khen, cúp danh dự",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 7.2812066078186035
+    },
+    "occlusion_ratio_pct": 10.964578454332553,
+    "mean_luminance": 113.15985720791049
+  },
+  {
+    "name": "phase8_return_lab_desk",
+    "split": "test",
+    "timestamp_sec": 145.02455873516598,
+    "frame_idx": 8700,
+    "description": "Trở về phòng Lab: Khép kín quỹ đạo XR SLAM (Loop Closure)",
+    "dimensions": {
+      "H": 480,
+      "W": 854,
+      "lr4_H": 120,
+      "lr4_W": 213,
+      "lr2_H": 240,
+      "lr2_W": 427
+    },
+    "disparity_stats": {
+      "min_px": 2.0,
+      "max_px": 26.0,
+      "mean_px": 8.241602897644043
+    },
+    "occlusion_ratio_pct": 11.433206479313036,
+    "mean_luminance": 128.6136595758522
+  }
+]

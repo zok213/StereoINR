@@ -1,0 +1,74 @@
+[
+  {
+    "scene": "scene01_indoor_vrui",
+    "split": "train",
+    "description": "Indoor Lab with VR UI windows & high contrast",
+    "hr_res": "854x480",
+    "lr4_res": "213x120",
+    "lr2_res": "427x240",
+    "min_disp_px": 12.60269832611084,
+    "max_disp_px": 20.287792205810547,
+    "mean_disp_px": 17.243162155151367,
+    "occlusion_ratio": 0.11497852951288223
+  },
+  {
+    "scene": "scene02_indoor_desk",
+    "split": "train",
+    "description": "Indoor Office Desk with laptop & person",
+    "hr_res": "854x480",
+    "lr4_res": "213x120",
+    "lr2_res": "427x240",
+    "min_disp_px": 12.462818145751953,
+    "max_disp_px": 20.679889678955078,
+    "mean_disp_px": 17.313493728637695,
+    "occlusion_ratio": 0.07043081521987915
+  },
+  {
+    "scene": "scene03_indoor_corridor",
+    "split": "train",
+    "description": "Indoor Office corridor & glass reflection",
+    "hr_res": "854x480",
+    "lr4_res": "213x120",
+    "lr2_res": "427x240",
+    "min_disp_px": 12.22612190246582,
+    "max_disp_px": 19.99258804321289,
+    "mean_disp_px": 17.3527774810791,
+    "occlusion_ratio": 0.05291276425123215
+  },
+  {
+    "scene": "scene04_outdoor_patio",
+    "split": "train",
+    "description": "Outdoor courtyard patio & trees",
+    "hr_res": "854x480",
+    "lr4_res": "213x120",
+    "lr2_res": "427x240",
+    "min_disp_px": 13.646745681762695,
+    "max_disp_px": 20.553882598876953,
+    "mean_disp_px": 17.346702575683594,
+    "occlusion_ratio": 0.08595579862594604
+  },
+  {
+    "scene": "scene05_outdoor_brickwalk",
+    "split": "test",
+    "description": "Outdoor brick pavement & university building",
+    "hr_res": "854x480",
+    "lr4_res": "213x120",
+    "lr2_res": "427x240",
+    "min_disp_px": 13.70164966583252,
+    "max_disp_px": 19.60828399658203,
+    "mean_disp_px": 17.327882766723633,
+    "occlusion_ratio": 0.11556645482778549
+  },
+  {
+    "scene": "scene06_indoor_awards",
+    "split": "test",
+    "description": "Indoor bookshelf & awards certificate display",
+    "hr_res": "854x480",
+    "lr4_res": "213x120",
+    "lr2_res": "427x240",
+    "min_disp_px": 13.06717300415039,
+    "max_disp_px": 20.859148025512695,
+    "mean_disp_px": 17.312896728515625,
+    "occlusion_ratio": 0.11433206498622894
+  }
+]
