@@ -131,10 +131,17 @@ Nhận thấy SoC Qualcomm Snapdragon XR2 Gen 2 trên Quest 3S sở hữu **8GB 
 
 ### PHẦN 4: KẾT QUẢ PROFILING & GIỚI HẠN THỰC TẾ TRÊN KÍNH VR
 
-#### 1. Kết Quả Đo Đạc Thực Tế Trên Qualcomm AI Hub (Dragonwing RB3 Gen 2 Vision Kit - QCS6490 / NPU Hexagon)
-* **Mô hình của chúng ta (Scale-Liberated):**
-  * Profile Job `jpr78m99g`: **SUCCESS** — Thời gian giải mã liên tục: $513.89\text{ ms}$; Đỉnh RAM: **$154.03\text{ MB}$** (chỉ chiếm $1.9\%$ tổng 8GB RAM kính).
-  * Compile Job `j5wr2073p`: **SUCCESS** — Biên dịch thành công file nhị phân phần cứng QNN DLC: `weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc` ($1,299,720\text{ bytes}$).
+#### 1. Kết Quả Đo Đạc Thực Tế Trên Qualcomm AI Hub (Phần Cứng Vật Lý)
+* **Bản Chưa Lượng Tử Hóa FP32 (Job `jpr78m99g` trên Dragonwing RB3 Gen 2 - QCS6490):**
+  * Thời gian suy luận: **$513.89\text{ ms}$**; Đỉnh RAM: **$154.03\text{ MB}$**.
+  * *Phân tích log:* Chạy chế độ unquantized nên 100% toán tử rơi vào CPU fallback (`compute_unit: 'CPU'`), chưa kích hoạt phần cứng NPU.
+* **Bản Lượng Tử Hóa Symmetric INT8 PTQ (Job `jglq2zl8p` trên Samsung Galaxy S23 - Snapdragon 8 Gen 2 / Hexagon V73 HTP):**
+  * *Thiết bị kiểm thử:* Cùng vi kiến trúc NPU Hexagon với Snapdragon XR2 Gen 2 trên Meta Quest 3S.
+  * *Phân bổ phần cứng:* **1,495 / 1,495 toán tử (100%) thực thi trọn vẹn trên NPU Hexagon** (0% CPU fallback!).
+  * *Thời gian suy luận NPU INT8:* **$358.64\text{ ms}$** (giảm $30.2\%$ so với mức $513.89\text{ ms}$).
+  * *Đỉnh RAM thực thi:* **$77.29\text{ MB}$** (giảm $50\%$, chỉ chiếm chưa đầy $1\%$ tổng 8GB RAM của kính).
+* **Biên dịch nhị phân phần cứng (Compile Job `j5wr2073p` & `j5qdrdzng`):**
+  * Biên dịch thành công file nhị phân QNN DLC: `weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc` ($1,299,720\text{ bytes}$).
 * **Mô hình StereoINR gốc (`stereoinr_vr_2x.onnx` - Job `jpxz69015`):**
   * Kết quả: **FAILED (`An internal error occurred`)**.
   * *Nguyên nhân kỹ thuật:* Trình biên dịch Qualcomm Neural Processing Engine (QNN) từ chối đồ thị tính toán chứa toán tử `GridSample` 2D và cơ chế trích xuất tọa độ biến dạng động, do không thể ánh xạ lên các vector thanh ghi của Hexagon NPU.
@@ -151,9 +158,9 @@ Một kỹ sư AI chuyên nghiệp phải nhìn nhận trung thực các rào c�
    * Nếu GPU Adreno 740 chạy liên tục ở mức công suất cao, thiết bị sẽ chạm ngưỡng nhiệt độ giới hạn ($45^\circ\text{C}$), dẫn đến hiện tượng hạ xung nhịp bảo vệ nhiệt (Thermal Throttling) và sụt pin nhanh chóng.
 3. **Bài toán số học của ngân sách $11.11\text{ ms}$ cho kính $90\text{ Hz}$:**
    * Màn hình Quest 3S có độ phân giải $1832 \times 1920$ mỗi mắt (tổng cộng $\sim 7\text{ triệu điểm ảnh}$ cho 2 mắt).
-   * Mặc dù mô hình Scale-Liberated của chúng ta đã nhanh gấp $57.4\times$ so với StereoINR, độ trễ suy luận toàn khung hình vẫn vượt quá mức $11.11\text{ ms}$. Chạy brute-force toàn bộ khung hình là không khả thi trên GPU di động.
+   * Mặc dù mô hình Scale-Liberated của chúng ta đã nhanh gấp $57.4\times$ so với StereoINR trên T4 ($130.65\text{ ms}$) và đạt $358.64\text{ ms}$ trên NPU INT8, độ trễ suy luận toàn khung hình vẫn vượt quá mức $11.11\text{ ms}$. Chạy brute-force toàn bộ khung hình là không khả thi trên GPU/NPU di động.
 
 #### 3. Lộ Trình Triển Khai Thực Tế Trong Sản Phẩm (Engineering Roadmap)
 Để đưa công trình này vào ứng dụng thương mại thực tế trên kính VR, phương án khả thi duy nhất là kết hợp 2 kỹ thuật then chốt:
-* **Foveated Tiling (Kết xuất tập trung tâm nhìn):** Mắt người chỉ nhìn rõ chữ viết trong góc thị trường hẹp $12^\circ$ ở trung tâm (vùng fovea). Thay vì chạy cả khung hình $1832 \times 1920$, hệ thống chỉ cắt một mẩu tile nhỏ **$256 \times 256$ điểm ảnh** tại vị trí người dùng đang nhìn để xử lý siêu phân giải, vùng ngoại vi giữ nguyên ảnh passthrough gốc. Độ trễ cho một tile $256 \times 256$ chỉ tốn $\sim 4.2\text{ ms}$, nằm trọn vẹn trong ngân sách $11.11\text{ ms}$!
+* **Foveated Tiling (Kết xuất tập trung tâm nhìn):** Mắt người chỉ nhìn rõ chữ viết trong góc thị trường hẹp $12^\circ$ ở trung tâm (vùng fovea). Thay vì chạy cả khung hình $1832 \times 1920$, hệ thống chỉ cắt một mẩu tile nhỏ **$256 \times 256$ điểm ảnh** tại vị trí người dùng đang nhìn để xử lý siêu phân giải, vùng ngoại vi giữ nguyên ảnh passthrough gốc. Độ trễ cho một tile $256 \times 256$ chỉ tốn **$\sim 4.2\text{ ms}$**, nằm trọn vẹn trong ngân sách $11.11\text{ ms}$!
 * **SpaceWarp / Motion Reprojection:** Chạy mô hình nơ-ron ở tần số quét $30\text{ FPS}$ hoặc $45\text{ FPS}$, sau đó sử dụng vector chuyển động (Motion Vectors) của kính để nội suy khung hình lên $90\text{ FPS}$, giảm tải $50\% - 66\%$ công suất tiêu thụ của GPU.

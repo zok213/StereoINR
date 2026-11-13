@@ -36,14 +36,17 @@ Toàn bộ dữ liệu của đề tài được cấu trúc thành các thư m�
   * **StereoINR Gốc (ACM MM 2025):** $43.79\text{M}$ params | $7,500.00\text{ ms}$ ($0.13\text{ FPS}$) | $1,840.0\text{ MB}$ VRAM | $1.0\times$ (Baseline).
   * **Scale-Liberated StereoINR (Ours):** $4.47\text{M}$ params | **$130.65\text{ ms}$ ($7.65\text{ FPS}$)** | **$426.0\text{ MB}$ VRAM** | **$57.4\times$ Faster! Giảm $4.3\times$ bộ nhớ!**
 
-### 2.2. Đo đạc trên Phần Cứng Vật Lý: Qualcomm AI Hub (Dragonwing RB3 Gen 2 Vision Kit - QCS6490 / NPU Hexagon)
-* **Hồ sơ đo đạc (Profile Job `jpr78m99g`):**
-  * Trạng thái: `SUCCESS` (Thành công 100%).
-  * Thời gian suy luận ước tính: $513.89\text{ ms}$ cho toàn bộ pipeline giải mã liên tục 4x tile.
-  * Bộ nhớ suy luận đỉnh: $154.03\text{ MB}$ (Chỉ chiếm $1.9\%$ dung lượng 8GB LPDDR5).
-* **Biên dịch nhị phân phần cứng (Compile Job `j5wr2073p`):**
-  * Trạng thái: `SUCCESS` -> Model ID `mn7lx6633`.
-  * Binary xuất xưởng: [weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc](file:///d:/Gitrepo/Active%20Stereo%20RL/weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc) ($1,299,720\text{ bytes}$).
+### 2.2. Đo đạc trên Phần Cứng Vật Lý Qualcomm AI Hub (NPU Hexagon HTP)
+* **Bản Chưa Lượng Tử Hóa FP32 (Job `jpr78m99g` trên Dragonwing RB3 Gen 2 - QCS6490):**
+  * Thời gian suy luận: **$513.89\text{ ms}$**; Đỉnh RAM: **$154.03\text{ MB}$**.
+  * Chạy chế độ unquantized nên 100% toán tử rơi vào CPU fallback (`compute_unit: 'CPU'`).
+* **Bản Lượng Tử Hóa Symmetric INT8 PTQ (Job `jglq2zl8p` trên Samsung Galaxy S23 - Snapdragon 8 Gen 2 / Hexagon V73 HTP):**
+  * Thiết bị kiểm thử: Cùng vi kiến trúc NPU Hexagon với Snapdragon XR2 Gen 2 trên Meta Quest 3S.
+  * Phân bổ phần cứng: **1,495 / 1,495 toán tử (100%) thực thi trọn vẹn trên NPU Hexagon** (0% CPU fallback!).
+  * Thời gian suy luận NPU INT8: **$358.64\text{ ms}$** (giảm $30.2\%$ so với mức $513.89\text{ ms}$).
+  * Đỉnh RAM thực thi: **$77.29\text{ MB}$** (giảm một nửa, chỉ chiếm chưa đầy $1\%$ tổng 8GB RAM kính).
+* **Biên dịch nhị phân phần cứng (Compile Job `j5wr2073p` & `j5qdrdzng`):**
+  * Binary xuất xưởng: [`weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc`](file:///d:/Gitrepo/Active%20Stereo%20RL/weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc) ($1,299,720\text{ bytes}$).
 
 ---
 
