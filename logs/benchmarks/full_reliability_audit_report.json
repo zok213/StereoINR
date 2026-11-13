@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-09T06:04:09Z",
+  "timestamp": "2026-11-13T10:39:23Z",
   "n_total": 37,
   "n_pass": 37,
   "n_fail": 0,
@@ -23,7 +23,7 @@
     },
     "1_wild_best": {
       "pass": true,
-      "detail": "OK | 125,811 params | 1602.2 KB"
+      "detail": "OK | 125,973 params | 1604.8 KB"
     },
     "1_continual_adapt": {
       "pass": true,
@@ -75,7 +75,7 @@
     },
     "3_upm_tarball": {
       "pass": true,
-      "detail": "1306.3 KB | 45 items | pkg_json=True cs=True onnx=True meta=True"
+      "detail": "1305.8 KB | 44 items | pkg_json=True cs=True onnx=True meta=True"
     },
     "4_dataset_manifest": {
       "pass": true,
@@ -139,7 +139,7 @@
     },
     "9_onnx_runtime_parity": {
       "pass": true,
-      "detail": "Max diff: 0.02057 | Mean diff: 0.000525 (Threshold: 0.05)"
+      "detail": "Max diff: 0.01964 | Mean diff: 0.000446 (Threshold: 0.05)"
     },
     "10_rep_dyt_block": {
       "pass": true,
@@ -147,7 +147,7 @@
     },
     "11_adaptive_disparity_centering": {
       "pass": true,
-      "detail": "shapes_ok=True | far_vs_near_diff=0.02022 | zero_init_preservation=True"
+      "detail": "shapes_ok=True | far_vs_near_diff=0.02678 | zero_init_preservation=True"
     },
     "12_universal_epipolar_v15": {
       "pass": true,

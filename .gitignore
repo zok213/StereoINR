@@ -24,6 +24,7 @@ ENV/
 *.swo
 .DS_Store
 Thumbs.db
+.agents/
 
 # Large dataset raw zips (keep datasets/ structure, ignore raw archives)
 datasets/**/*.zip

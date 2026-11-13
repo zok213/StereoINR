@@ -13,7 +13,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedSCAM, DynamicTanh
+from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_nafrssr import WindowedSCAM
+from src.edge_stereoinr.phase2_edge_inr.backbones.stereoinr_scale_liberated import DynamicTanh
 from src.edge_stereoinr.phase2_edge_inr.backbones.og_windowed_scam import OcclusionGatedWindowedSCAM
 from src.edge_stereoinr.phase2_edge_inr.backbones.dyt_continuous_scale_inr import DyTScaleAdapter
 from src.edge_stereoinr.phase2_edge_inr.backbones.rep_dyt_block import RepDyTNAFBlock
