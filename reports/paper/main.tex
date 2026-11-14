@@ -27,18 +27,20 @@ Stereo Super-Resolution, Implicit Neural Representation (INR), Epipolar Attentio
 \end{IEEEkeywords}
 
 \section{Introduction}
-Video see-through (passthrough) is fundamental to Mixed Reality (MR) experiences on standalone headsets such as the Meta Quest~3S. However, its optical sensor subsampling yields an effective resolution of approximately 20 Pixels Per Degree (PPD). While sufficient for macro-scale spatial orientation, this acuity blurs fine text ($<$12~pt) at typical desk reading distances ($\sim$35~cm), causing visual strain. Super-resolving the binocular passthrough stream in real time offers a software solution, but standalone headsets operating at 90~Hz impose an uncompromising 11.11~ms budget for capture, super-resolution, compositing, and time-warp display. Crucially, any geometric disparity inconsistency between the two reconstructed views induces retinal rivalry and cybersickness.
+Video see-through (passthrough) is fundamental to Mixed Reality (MR) experiences on standalone headsets such as the Meta Quest~3S \cite{quest3_optics}. However, optical sensor subsampling yields an effective resolution of approximately 20 Pixels Per Degree (PPD). While sufficient for macro-scale spatial orientation, this acuity blurs fine text ($<$12~pt) at typical desk reading distances ($\sim$35~cm), causing visual strain. Super-resolving the binocular passthrough stream in real time offers an attractive software solution, but standalone headsets operating at 90~Hz impose an uncompromising 11.11~ms budget for capture, super-resolution, compositing, and time-warp display \cite{vst_latency, motion_to_photon}. Crucially, any geometric disparity inconsistency between the two reconstructed views induces retinal rivalry, visual fatigue, and cybersickness \cite{retinal_rivalry, binocular_fusion, simulator_sickness}.
 
 StereoINR \cite{stereoinr} achieves arbitrary-scale super-resolution by combining a 72-layer HAT transformer backbone \cite{hat} with an implicit coordinate decoder \cite{liif}. In our benchmark measurements, its 43.79M-parameter architecture requires 7{,}500~ms per frame on an NVIDIA Tesla~T4 GPU and is rejected by the Qualcomm Hexagon NPU compiler due to unconstrained 2D deformable sampling (\texttt{grid\_sample}). 
 
-In rectified binocular camera rigs, epipolar geometry dictates that matching points share identical vertical coordinates ($y_L = y_R$). Exploiting this physical constraint, unconstrained 2D sampling is mathematically redundant. We introduce \ours{}, a mobile-oriented continuous stereo INR framework specifically designed for standalone VR architectures.
+In calibrated, rectified binocular camera rigs, epipolar geometry dictates that matching points share identical vertical coordinates ($y_L = y_R$). Exploiting this physical constraint, unconstrained 2D sampling is mathematically redundant. We introduce \ours{}, a mobile-oriented continuous stereo INR framework specifically designed for standalone VR architectures.
 
 \textbf{Contributions.} (i) An edge-optimized architecture featuring 1D Epipolar Parallax Attention (EPA-1D), a Lipschitz-bounded ConvNeXt--DyT backbone, and a continuous Fourier decoder (4.47M parameters). (ii) An empirical evaluation on dual Tesla~T4 server GPUs and Qualcomm Snapdragon hardware profiling, demonstrating 100\% native NPU operator compilation and 4.20~ms foveated inference. (iii) A 15-scene benchmark evaluating Crop PSNR, SSIM, and Stereo Disparity MAE against Bicubic and the StereoINR teacher, documenting both superior binocular consistency and the $-2.58$~dB monocular PSNR deficit with rigorous academic humility.
 
 \section{Related Work}
-\textbf{Stereo Super-Resolution.} PASSRnet \cite{passr} pioneered parallax-attention along epipolar lines. NAFSSR \cite{nafssr} demonstrated that simple convolutional channel-attention architectures perform strongly. StereoINR \cite{stereoinr} extended stereo SR to arbitrary continuous scales via implicit neural representations \cite{liif}. Our EPA-1D builds upon the epipolar correspondence principle of \cite{passr}, integrating it into a continuous INR decoder constrained to a causal horizontal disparity window.
+\textbf{Stereo Super-Resolution.} Stereo super-resolution was initially addressed using parallax priors \cite{stereosr}. PASSRnet \cite{passr} pioneered parallax-attention along epipolar lines, which was subsequently advanced by iPASSR \cite{ipassr} and cross-view feedback networks \cite{ssrdefnet}. NAFSSR \cite{nafssr} demonstrated that simple convolutional channel-attention architectures perform strongly. StereoINR \cite{stereoinr} extended stereo SR to arbitrary continuous scales via implicit neural representations \cite{liif}. Our EPA-1D builds upon the epipolar correspondence principle of \cite{passr}, integrating it into a continuous INR decoder constrained to a causal horizontal disparity window.
 
-\textbf{Efficient Edge Backbones.} ConvNeXt \cite{convnext} utilizes $7{\times}7$ depthwise convolutions that map efficiently to SIMD/vector hardware. Dynamic Tanh (DyT) \cite{dyt} removes memory-bandwidth-heavy normalization layers via a parameterized, bounded non-linearity, facilitating post-training quantization.
+\textbf{Implicit Neural Representations.} Continuous image representations model coordinates as continuous fields. LIIF \cite{liif} demonstrated arbitrary upsampling via local implicit functions, while SIREN \cite{siren} introduced periodic sinusoidal activations. LTE \cite{lte} and UltraSR \cite{ultrasr} further captured rich high-frequency textures via Fourier-domain coordinate features.
+
+\textbf{Efficient Edge Backbones.} ConvNeXt \cite{convnext} utilizes $7{\times}7$ depthwise convolutions that map efficiently to vector hardware, while NAFNet \cite{nafnet} and MobileNetV3 \cite{mobilenetv3} demonstrate high throughput on constrained platforms. Dynamic Tanh (DyT) \cite{dyt} removes memory-bandwidth-heavy normalization layers via a parameterized, bounded non-linearity, facilitating post-training quantization \cite{ptq}.
 
 \section{Methodology}
 
@@ -123,9 +125,9 @@ To eliminate normalization layers that cause memory stalls on mobile DSPs, we em
 \begin{equation}
 \mathrm{DyT}(x, s) = \tanh\!\big(\alpha(s)\,x\big)\odot\gamma(s) + \beta(s),\quad s \in [1, 4],
 \end{equation}
-where $s$ denotes the magnification scale factor. Because $|\tanh(\cdot)| \le 1$, the activation is strictly bounded by $\|\mathrm{DyT}\|_\infty \le |\gamma| + |\beta|$. This Lipschitz property eliminates extreme outliers, enabling stable Symmetric INT8 Post-Training Quantization (PTQ).
+where $s$ denotes the magnification scale factor. Because $|\tanh(\cdot)| \le 1$, the activation is strictly bounded by $\|\mathrm{DyT}\|_\infty \le |\gamma| + |\beta|$. This Lipschitz property eliminates extreme outliers, enabling stable Symmetric INT8 Post-Training Quantization (PTQ) \cite{ptq}.
 
-Continuous coordinate decoding is formulated via Fourier Harmonic LTE:
+Continuous coordinate decoding is formulated via Fourier Harmonic LTE \cite{lte, ultrasr}:
 \begin{equation}
 \mathbf{f}_{\text{coord}} = \big[\sin(2^k \pi \delta x),\, \cos(2^k \pi \delta x),\, \sin(2^k \pi \delta y),\, \cos(2^k \pi \delta y)\big]_{k=0}^{K-1},
 \end{equation}
@@ -136,7 +138,7 @@ The multi-objective loss is defined as:
 \begin{equation}
 \mathcal{L} = \mathcal{L}_{\mathrm{Charb}} + 0.25\,\mathcal{L}_{\mathrm{warp}} + 0.10\,\mathcal{L}_{\mathrm{FFT}} + 0.35\,\mathcal{L}_{\mathrm{KD}},
 \end{equation}
-where $\mathcal{L}_{\mathrm{Charb}}$ is the spatial Charbonnier loss \cite{lapsrn}, $\mathcal{L}_{\mathrm{warp}}$ is photometric epipolar warping loss with bidirectional occlusion masking, $\mathcal{L}_{\mathrm{FFT}}$ enforces frequency-domain consistency, and $\mathcal{L}_{\mathrm{KD}}$ provides feature distillation from the StereoINR teacher.
+where $\mathcal{L}_{\mathrm{Charb}}$ is the spatial Charbonnier loss \cite{lapsrn}, $\mathcal{L}_{\mathrm{warp}}$ is photometric epipolar warping loss with bidirectional occlusion masking, $\mathcal{L}_{\mathrm{FFT}}$ enforces frequency-domain consistency \cite{ffl}, and $\mathcal{L}_{\mathrm{KD}}$ provides feature distillation from the StereoINR teacher \cite{kd}. Structural similarity is monitored via SSIM \cite{ssim}.
 
 \section{Meta Quest 3S Trajectory Dataset}
 To benchmark passthrough super-resolution under real-world VR conditions, an experimental subject wearing a Meta Quest~3S recorded a closed-loop trajectory (indoor lab $\to$ atrium $\to$ exit gate $\to$ outdoor walkway $\to$ return to lab). The raw RGB stream (147.96~s, 8{,}876 frames at 60~FPS) was partitioned into eight distinct spatial phases. Each phase provides rectified High-Resolution (HR) ground-truth pairs, $\times 4$ Bicubic Low-Resolution (LR) pairs, 16-bit sub-pixel disparity maps, and occlusion masks. Phases 1--4 and 6 serve for training, while Phases 5, 7, and 8 are held out as a strict generalization test split.
@@ -467,23 +469,14 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 \label{fig:foveated}
 \end{figure*}
 
-\textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders.
+\textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware \cite{qnn_sdk}, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders \cite{sentis}.
 
-\textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) remain essential future work.
+\textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} remain essential future work.
 
 \section{Conclusion}
 We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention and employing a Lipschitz-bounded ConvNeXt--DyT backbone, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs, and reduces stereo disparity error by 8.7--15.9\% over the teacher model, suppressing retinal rivalry. Although real-time operation currently requires foveated tiling, this work establishes a viable geometric path for mobile stereo implicit neural representations.
 
-\begin{thebibliography}{99}
-\bibitem{stereoinr} H.~Zhang, Y.~Wang, C.~Dong, and X.~Sheng, ``StereoINR: Continuous stereo image super-resolution via implicit neural representations,'' in \emph{Proc. ACM Multimedia (ACM MM)}, 2025.
-\bibitem{passr} L.~Wang, Y.~Wang, Z.~Wang, Z.~Liang, and W.~An, ``Learning parallax attention for stereo image super-resolution,'' in \emph{Proc. CVPR}, 2019.
-\bibitem{nafssr} X.~Chu, L.~Chen, and W.~Yu, ``NAFSSR: Stereo image super-resolution using NAFNet,'' in \emph{Proc. CVPR Workshops}, 2022.
-\bibitem{hat} X.~Chen, X.~Wang, J.~Zhou, Y.~Qiao, and C.~Dong, ``Activating more pixels in image super-resolution transformer,'' in \emph{Proc. CVPR}, 2023.
-\bibitem{liif} Y.~Chen, S.~Liu, and X.~Wang, ``Learning continuous image representation with local implicit image function,'' in \emph{Proc. CVPR}, 2021.
-\bibitem{convnext} Z.~Liu, H.~Mao, C.-Y.~Wu, C.~Feichtenhofer, T.~Darrell, and S.~Xie, ``A ConvNet for the 2020s,'' in \emph{Proc. CVPR}, 2022.
-\bibitem{dyt} J.~Zhu, M.~Lian, L.~Ding, and Z.~Cheng, ``Transformers without normalization,'' in \emph{Proc. CVPR}, 2025.
-\bibitem{lapsrn} W.-S.~Lai, J.-B.~Huang, N.~Ahuja, and M.-H.~Yang, ``Deep Laplacian pyramid networks for fast and accurate super-resolution,'' in \emph{Proc. CVPR}, 2017.
-\bibitem{kd} G.~Hinton, O.~Vinyals, and J.~Dean, ``Distilling the knowledge in a neural network,'' \emph{arXiv:1503.02531}, 2015.
-\end{thebibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
 
 \end{document}
