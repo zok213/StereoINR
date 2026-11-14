@@ -71,7 +71,50 @@ In calibrated, rectified binocular cameras, a pixel at coordinate $(i, j)$ in th
 \begin{equation}
 A_{ijk} = \mathrm{softmax}_k\!\left(\frac{Q_L(i,j)\,K_R(i,k)^{\top}}{\sqrt{d_k}}\right),\quad k \in [j-D_{\max},\,j].
 \end{equation}
-This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to $\mathcal{O}(HWD_{\max})$. Memory reads along a scanline are strictly contiguous, eliminating the DRAM cache misses caused by 2D \texttt{grid\_sample}.
+This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to $\mathcal{O}(HWD_{\max})$. Memory reads along a scanline are strictly contiguous, eliminating the DRAM cache thrashing caused by 2D \texttt{grid\_sample}.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[>={Stealth[length=2mm]}, font=\small]
+% (a) StereoINR: scattered 2D sampling over a 6x6 feature grid
+\begin{scope}
+\node[font=\small\bfseries] at (1.5,3.4) {(a) StereoINR: unconstrained 2D deformable sampling};
+\foreach \i in {0,...,5} \foreach \j in {0,...,5}
+    \draw[gray!50] (\i*0.5,\j*0.5) rectangle (\i*0.5+0.5,\j*0.5+0.5);
+\draw[red!70!black, thick, ->] (0.25,0.25) -- (2.25,1.75);
+\draw[red!70!black, thick, ->] (2.75,0.25) -- (0.75,2.25);
+\draw[red!70!black, thick, ->] (0.25,2.75) -- (2.75,2.25);
+\draw[red!70!black, thick, ->] (1.25,0.75) -- (2.75,2.75);
+\draw[red!70!black, thick, ->] (2.25,2.75) -- (0.25,0.75);
+\node[font=\scriptsize, text=red!60!black, align=center] at (1.5,-0.5)
+    {Random DRAM strides, scattered row crossings\\(non-contiguous reads)};
+\end{scope}
+
+% (b) Ours: EPA-1D contiguous scanline bursts
+\begin{scope}[shift={(7,0)}]
+\node[font=\small\bfseries] at (1.5,3.4) {(b) Ours: EPA-1D scanline attention};
+\foreach \i in {0,...,7} \draw[gray!50] (\i*0.375,2.2) rectangle (\i*0.375+0.375,2.575);
+\draw[green!40!black, ultra thick, ->] (0.05,1.9) -- (1.45,1.9);
+\draw[green!40!black, ultra thick, ->] (1.55,1.9) -- (2.95,1.9);
+\draw[green!40!black, ultra thick, ->] (0.05,1.35) -- (2.95,1.35);
+\node[font=\scriptsize, text=green!40!black, align=center] at (1.5,0.6)
+    {Contiguous 1D burst reads along the epipolar scanline};
+\end{scope}
+
+% Comparison table
+\node at (4.25,-2.2) {%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Property} & \textbf{StereoINR (official)} & \textbf{Ours (EPA-1D)} \\
+\midrule
+Memory access pattern & Scattered 2D & Contiguous 1D \\
+Qualcomm Hexagon NPU & Compilation rejected (\texttt{GridSample}) & 100\% native NPU (1,495/1,495 ops, 0\% CPU fallback) \\
+\bottomrule
+\end{tabular}};
+\end{tikzpicture}
+\caption{Memory-access and operator-level comparison. Panels (a) and (b) are schematics of the access patterns; the embedded table summarizes measured compilation outcomes on Qualcomm Hexagon NPU.}
+\label{fig:memaccess}
+\end{figure*}
 
 \subsection{Dynamic Tanh and Continuous Fourier Decoder}
 To eliminate normalization layers that cause memory stalls on mobile DSPs, we employ Dynamic Tanh (DyT) \cite{dyt}:
@@ -126,7 +169,72 @@ Peak NPU Memory & 1{,}840~MB & \textbf{77.29~MB} ($<$1\% RAM) \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ parameter reduction, 57.4$\times$ faster GPU latency, and 4.3$\times$ lower memory footprint. While full-frame inference (513.89~ms FP32, 358.64~ms INT8) exceeds the 11.11~ms budget, our \textbf{Foveated Passthrough Pipeline} (processing a central $256 \times 256$ foveal patch on the Hexagon NPU) executes in \textbf{4.20~ms}, yielding an end-to-end Glass-to-Glass latency of \textbf{6.16~ms} (162.3 FPS), well within the 90~Hz deadline.
+Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ parameter reduction, 57.4$\times$ faster GPU latency, and 4.3$\times$ lower memory footprint. While full-frame inference (513.89~ms FP32, 358.64~ms INT8) exceeds the 11.11~ms budget, our \textbf{Foveated Passthrough Pipeline} (processing a central $256 \times 256$ foveal patch on the Hexagon NPU) executes in \textbf{4.20~ms}, yielding an end-to-end Glass-to-Glass latency of \textbf{6.16~ms} (162.3 FPS), well within the 90~Hz deadline. As visualized in Fig.~\ref{fig:pareto} and Fig.~\ref{fig:latency}, foveated execution is required to satisfy the 11.11~ms budget on standalone hardware. The NPU FP32 latency point uses the measured 513.89~ms runtime from Qualcomm AI Hub and assumes numerical PSNR equivalence to the workstation FP32 baseline prior to quantization.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth, height=5.5cm,
+    xmode=log, xmin=0.5, xmax=10000, ymin=21, ymax=29.5,
+    xtick={1,10,100,1000,10000}, xticklabels={1,10,100,1000,$10^4$},
+    xlabel={Inference latency (ms, log scale)},
+    ylabel={Crop PSNR (dB)},
+    ymajorgrids, grid style={dashed, gray!30},
+]
+\fill[blue!8] (axis cs:0.5,21) rectangle (axis cs:11.11,29.5);
+\draw[dashed, very thick, red!60!black] (axis cs:11.11,21) -- (axis cs:11.11,29.5);
+
+\addplot[only marks, mark=*, mark size=2.5pt, gray!60!black]
+    coordinates {(0.80,24.19)};
+\addplot[only marks, mark=square*, mark size=2.6pt, blue!60!black]
+    coordinates {(130.65,24.74) (513.89,24.74)};
+\addplot[only marks, mark=triangle*, mark size=3.2pt, red!60!black]
+    coordinates {(7500,27.32)};
+
+\node[font=\scriptsize, anchor=west] at (axis cs:0.95,24.19) {Bicubic $4\times$};
+\node[font=\scriptsize, anchor=south] at (axis cs:130.65,25.05) {Ours, dual T4 (130.65\,ms)};
+\node[font=\scriptsize, anchor=north] at (axis cs:513.89,24.35) {Ours, Hexagon NPU FP32 (513.89\,ms)};
+\node[font=\scriptsize, anchor=east] at (axis cs:6000,27.32) {StereoINR 43.8M (7{,}500\,ms)};
+\node[font=\scriptsize, anchor=west, red!60!black] at (axis cs:11.5,28.6) {90\,Hz VR budget (11.11\,ms)};
+\node[font=\tiny, anchor=west, align=left, blue!60!black] at (axis cs:0.6,22.0) {Feasible\\real-time\\regime};
+\end{axis}
+\end{tikzpicture}
+\caption{Quality--latency trade-off on the 15-scene crop benchmark ($\times 4$, $128\times128$ crops; mean Crop PSNR). StereoINR reaches higher PSNR (27.32\,dB) but takes 7{,}500\,ms ($675\times$ budget). Our full-frame model reduces latency by $57.4\times$ (130.65\,ms on dual T4) and requires foveation to meet the 90\,Hz constraint.}
+\label{fig:pareto}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    xbar, xmode=log, xmin=1, xmax=30000,
+    width=\columnwidth, height=5.2cm, bar width=6pt,
+    ytick={0,1,2,3},
+    yticklabels={Foveated tile $256{\times}256$ (NPU),
+                 Ours full frame (dual T4),
+                 Ours full frame (NPU FP32),
+                 StereoINR teacher (dual T4)},
+    y tick label style={font=\scriptsize, align=right},
+    xtick={1,10,100,1000,10000}, xticklabels={1,10,100,1000,$10^4$},
+    xlabel={Latency (ms, log scale)},
+    ymin=-0.6, ymax=3.9,
+    enlarge y limits=false,
+    nodes near coords,
+    every node near coord/.append style={font=\scriptsize, anchor=west},
+    point meta=explicit symbolic,
+]
+\addplot[fill=blue!45!black!60, draw=blue!50!black]
+    coordinates {(4.20,0) [4.20\,ms] (130.65,1) [130.65\,ms]
+                 (513.89,2) [513.89\,ms] (7500,3) [7{,}500\,ms]};
+\draw[dashed, very thick, red!60!black] (axis cs:11.11,-0.6) -- (axis cs:11.11,3.6);
+\node[font=\scriptsize, anchor=south west, red!60!black] at (axis cs:11.5,3.62)
+    {90\,Hz budget: 11.11\,ms};
+\end{axis}
+\end{tikzpicture}
+\caption{End-to-end latency against the Quest~3S 90\,Hz budget (11.11\,ms, dashed). Only the $256{\times}256$ foveal tile on the Hexagon NPU (4.20\,ms) fits within the budget.}
+\label{fig:latency}
+\end{figure}
 
 \subsection{15-Scene Crop PSNR Benchmark}
 
@@ -249,7 +357,7 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/comparison_middlebury_cloth2.png}
-\caption{Visual comparison on Middlebury \texttt{cloth2} ($\times 4$ super-resolution). Panels show Ground Truth HR, Bicubic (26.49~dB), StereoINR Teacher (29.59~dB), \ours{} (26.81~dB), and pixel residual error maps ($\times 5$ amplified). \ours{} sharpens textile patterns over Bicubic while maintaining coherent stereo parity.}
+\caption{Visual comparison on Middlebury \texttt{cloth2} ($\times 4$ super-resolution). Panels show Ground Truth HR, Bicubic (Crop: 31.45~dB), StereoINR Teacher (Crop: 33.48~dB), \ours{} (Crop: 31.30~dB; Full Frame: 26.97~dB), and pixel residual error maps ($\times 5$ amplified). \ours{} sharpens textile patterns over Bicubic while maintaining coherent stereo parity.}
 \label{fig:visual_mb}
 \end{figure*}
 
@@ -310,7 +418,43 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 \section{Limitations \& Discussion}
 \textbf{1. Monocular PSNR Gap.} Our 4.47M student model lags 2.58~dB behind the 43.8M teacher and outperforms Bicubic by a modest +0.56~dB average. Longer training schedules (200k+ iterations) are required to recover high-frequency textures.
 
-\textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras, foveation is necessarily fixed to the optical center.
+\textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras, foveation is necessarily fixed to the optical center (Fig.~\ref{fig:foveated}). A radial Hann window blends the neural tile into the peripheral bicubic passthrough without seam artifacts (Fig.~\ref{fig:hann}).
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+    >={Stealth[length=2mm]},
+    box/.style={draw, rounded corners=2pt, align=center, font=\small,
+                minimum height=1.1cm, text width=3.3cm, fill=gray!5}]
+\node[box] (a) {Fixed central\\$256{\times}256$ tile\\(optical centre)};
+\node[box, right=1.0cm of a] (b) {EPA-1D inference\\on Hexagon NPU\\(4.20\,ms)};
+\node[box, right=1.0cm of b] (c) {Radial Hann\\$\alpha$-blend};
+\node[box, right=1.0cm of c] (d) {Display\\framebuffer};
+\draw[->, thick] (a) -- (b);
+\draw[->, thick] (b) -- (c);
+\draw[->, thick] (c) -- (d);
+\end{tikzpicture}
+\caption{Foveated passthrough pipeline. Quest~3S has no eye-tracking cameras, so the super-resolved tile is fixed to the optical centre. The Hann blend weight is plotted in Fig.~\ref{fig:hann}.}
+\label{fig:foveated}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth, height=4.4cm,
+    xmin=0, xmax=1, ymin=0, ymax=1.05,
+    xlabel={Normalized radius $t=(r-r_{\mathrm{in}})/(r_{\mathrm{out}}-r_{\mathrm{in}})$},
+    ylabel={$\alpha(t)$},
+    xtick={0,0.5,1}, ytick={0,0.5,1},
+    ymajorgrids, grid style={dashed, gray!30},
+]
+\addplot[blue, thick, domain=0:1, samples=120] {0.5+0.5*cos(180*x)};
+\end{axis}
+\end{tikzpicture}
+\caption{Radial Hann blending weight $\alpha(r)=0.5+0.5\cos\!\big(\pi\,\frac{r-r_{\mathrm{in}}}{r_{\mathrm{out}}-r_{\mathrm{in}}}\big)$ for $r_{\mathrm{in}}\le r\le r_{\mathrm{out}}$: $\alpha=1$ at the fovea and $\alpha=0$ at the outer radius, giving a smooth transition.}
+\label{fig:hann}
+\end{figure}
 
 \textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders.
 
