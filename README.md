@@ -3,7 +3,7 @@
 
 [![Target Hardware](https://img.shields.io/badge/Target%20XR-Meta%20Quest%203S%20%7C%20Snapdragon%20XR2%20Gen%202-8a2be2.svg)](https://www.qualcomm.com/products/mobile/snapdragon/xr-vr-ar/snapdragon-xr2-gen-2-platform)
 [![Qualcomm NPU](https://img.shields.io/badge/Qualcomm%20AI%20Hub-QNN%20DLC%20Compiled%20(Hexagon%20NPU)-0066cc.svg)](https://aihub.qualcomm.com/)
-[![Parameters](https://img.shields.io/badge/Model%20Scale-4.47M%20Params%20(Scale--Liberated)-success.svg)](#3-kiến-trúc--phương-pháp-tiếp-cận-không-tâng-bốc-phân-tích-thực-tế)
+[![Parameters](https://img.shields.io/badge/Model%20Scale-4.47M%20Params%20(Scale--Liberated)-success.svg)](#3-kiến-trúc--phương-pháp-tiếp-cận-phân-tích-thực-tế-khách-quan)
 [![Kaggle Dual T4](https://img.shields.io/badge/Dual%20Tesla%20T4-57.4x%20Speedup-20beff.svg)](#5-kết-quả-đo-đạc-thực-nghiệm-trên-phần-cứng-hardware-benchmarks)
 [![Speedup vs StereoINR](https://img.shields.io/badge/Speedup%20vs%20StereoINR%2043.8M-57.4x%20Faster-red.svg)](#5-kết-quả-đo-đạc-thực-nghiệm-trên-phần-cứng-hardware-benchmarks)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
@@ -17,7 +17,7 @@
 4. [BỘ HÌNH ẢNH TRỰC QUAN HÓA SO SÁNH ĐỐI ĐẦU (VISUAL COMPARISON GALLERY)](#4-bộ-hình-ảnh-trực-quan-hóa-so-sánh-đối-đầu-visual-comparison-gallery)
 5. [KẾT QUẢ ĐO ĐẠC THỰC NGHIỆM TRÊN PHẦN CỨNG (HARDWARE BENCHMARKS)](#5-kết-quả-đo-đạc-thực-nghiệm-trên-phần-cứng-hardware-benchmarks)
 6. [HỆ THỐNG LOG HUẤN LUYỆN THỰC TẾ & BẢNG THAM CHIẾU KIỂM ĐỊNH (EMPIRICAL TRAINING LOG & ARTIFACT AUDIT)](#6-hệ-thống-log-huấn-luyện-thực-tế--bảng-tham-chiếu-kiểm-định-empirical-training-log--artifact-audit)
-7. [ĐÁNH GIÁ CHUYÊN SÂU TỪ GÓC NHÌN CHUYÊN GIA AI & HỆ THỐNG NHÚNG (IS IT GOOD OR BAD?)](#7-đánh-giá-chuyên-sâu-từ-góc-nhìn-chuyên-gia-ai--hệ-thống-nhúng-is-it-good-or-bad)
+7. [ĐÁNH GIÁ THỰC NGHIỆM CHUYÊN SÂU & PHÂN TÍCH GIỚI HẠN KỸ THUẬT (IS IT GOOD OR BAD?)](#7-đánh-giá-thực-nghiệm-chuyên-sâu--phân-tích-giới-hạn-kỹ-thuật-is-it-good-or-bad)
 8. [HƯỚNG DẪN TÁI HIỆN THỰC NGHIỆM & SCRIPT TRỰC QUAN HÓA](#8-hướng-dẫn-tái-hiện-thực-nghiệm--script-trực-quan-hóa)
 9. [GÓI BÀI BÁO KHOA HỌC & TÀI LIỆU NỘP BÁO CÁO (RESEARCH PAPER PACKAGE)](#9-gói-bài-báo-khoa-học--tài-liệu-nộp-báo-cáo-research-paper-package)
 
@@ -46,7 +46,7 @@ Mô hình StereoINR công bố tại ACM Multimedia 2025 là một bước tiế
 
 ### 1.3. Bài Học Từ Mô Hình Quá Nhỏ (Underfitting Trap) Và Giải Pháp Scale-Liberated
 * **Sai lầm của việc ép mô hình quá nhỏ (82K / 104K params):** Ban đầu, việc cố gắng ép mô hình về mức siêu nhỏ (82K-104K) để vừa khít 1MB SRAM của Adreno 740 dẫn đến hiện tượng nghèo nàn biểu diễn (Capacity Bottleneck), khiến mô hình khó lòng tái tạo sắc nét được các nét chữ phức tạp.
-* **Đột phá Scale-Liberated (4.47M params):** Trên phần cứng thực tế của Snapdragon XR2 Gen 2 (8GB LPDDR5, băng thông $68\text{ GB/s}$), chúng ta hoàn toàn có đủ tài nguyên để nâng dung lượng tham số lên **4.47 triệu tham số (Scale-Liberated StereoINR)**. Điểm mấu chốt để đạt tốc độ cao không phải là cắt xén tham số mù quáng, mà là **tái cấu trúc lại luồng truy cập bộ nhớ: chuyển đổi 100% từ 2D Deformable Grid Sample phân mảnh sang 1D Epipolar Parallax Attention (EPA-1D) liên tục theo dòng quét ngang**.
+* **Hướng tiếp cận Scale-Liberated (4.47M params):** Trên phần cứng thực tế của Snapdragon XR2 Gen 2 (8GB LPDDR5, băng thông $68\text{ GB/s}$), chúng ta hoàn toàn có đủ tài nguyên để nâng dung lượng tham số lên **4.47 triệu tham số (Scale-Liberated StereoINR)**. Điểm mấu chốt để đạt tốc độ cao không phải là cắt xén tham số mù quáng, mà là **tái cấu trúc lại luồng truy cập bộ nhớ: chuyển đổi 100% từ 2D Deformable Grid Sample phân mảnh sang 1D Epipolar Parallax Attention (EPA-1D) liên tục theo dòng quét ngang**.
 
 ---
 
@@ -198,7 +198,7 @@ $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{Charbonnier}} + 0.25 \mathcal{
 #### Cảnh 1: Middlebury - cloth2 (Kết Cấu Sợi Dệt Vải Vi Mô Cực Hạn)
 So sánh trực diện: Ground Truth HR vs Bicubic vs StereoINR Official (43.8M) vs StereoINR Scale-Liberated (Ours - 4.47M), kèm vùng Zoom-in và bản đồ sai số Residual Heatmap $|x5|$:
 ![Middlebury cloth2 Visual Comparison](outputs/visual_comparisons/comparison_middlebury_cloth2.png)
-* *Phân tích:* Mô hình của chúng ta đạt **$26.81\text{ dB}$ (vượt trội $+0.32\text{ dB}$ so với Bicubic)**, các sợi vải đan xen được khôi phục rõ nét trong khi bản đồ sai số của chúng ta có màu lạnh (xanh tím - sai số thấp) so với vùng vàng cam của các phương pháp khác.
+* *Phân tích:* Mô hình đạt **$26.81\text{ dB}$ ($+0.32\text{ dB}$ so với Bicubic)**, các sợi vải đan xen được khôi phục rõ nét trong khi bản đồ sai số của chúng ta có màu lạnh (xanh tím - sai số thấp) so với vùng vàng cam của các phương pháp khác.
 
 #### Cảnh 2: Middlebury - motorcycle (Nan Hoa Kim Loại & Phản Xạ Động Cơ Cơ Khí)
 ![Middlebury motorcycle Visual Comparison](outputs/visual_comparisons/comparison_middlebury_motorcycle.png)
@@ -209,7 +209,7 @@ So sánh trực diện: Ground Truth HR vs Bicubic vs StereoINR Official (43.8M)
 
 #### Cảnh 4: KITTI 2012 - 000000 (Biển Báo Giao Thông & Xe Tự Hành Đường Phố)
 ![KITTI 2012 000000 Visual Comparison](outputs/visual_comparisons/comparison_kitti2012_000000.png)
-* *Phân tích:* Cạnh xe ô tô và vạch kẻ đường đạt **$25.95\text{ dB}$ (vượt trội $+0.84\text{ dB}$ so với Bicubic)**.
+* *Phân tích:* Cạnh xe ô tô và vạch kẻ đường đạt **$25.95\text{ dB}$ ($+0.84\text{ dB}$ so với Bicubic)**.
 
 ---
 
@@ -486,166 +486,140 @@ Trích lục kết quả thẩm định tự động từ [`logs/benchmarks/full
 
 ---
 
-## 7. ĐÁNH GIÁ CHUYÊN SÂU TỪ GÓC NHÌN CHUYÊN GIA AI & HỆ THỐNG NHÚNG (IS IT GOOD OR BAD?)
+## 7. ĐÁNH GIÁ THỰC NGHIỆM CHUYÊN SÂU & PHÂN TÍCH GIỚI HẠN KỸ THUẬT (IS IT GOOD OR BAD?)
 
 > [!NOTE]
-> **Tuyên Bố Khách Quan Của Kỹ Sư Hệ Thống AI & Nhà Nghiên Cứu XR:** Là những người trực tiếp thiết kế, huấn luyện và tối ưu mô hình trên phần cứng vật lý, chúng tôi phân tích hệ thống dưới lăng kính khoa học trung thực, không tô hồng thành tựu và không né tránh những điểm hạn chế trần trụi của công nghệ.
+> **Ghi Chú Về Đánh Giá Kỹ Thuật Khách Quan:** Phần đánh giá này được thực hiện dựa trên các dữ liệu đo đạc thực nghiệm độc lập và phân tích lý thuyết, nhằm ghi nhận trung thực các kết quả đạt được cũng như chỉ rõ các hạn chế kỹ thuật hiện hữu của mô hình.
 
 ---
 
-### 7.1. Phán Quyết Kỹ Thuật Thẳng Thắn: Mô Hình Này Là TỐT Hay XẤU?
+### 7.1. Đánh Giá Kỹ Thuật Tổng Hợp: Thành Quả Đạt Được & Hạn Chế Hiện Tại
 
-Câu trả lời ngắn gọn, thẳng thắn và chính xác nhất:
-**Mô hình này là một ĐỘT PHÁ VỀ HỆ THỐNG TRIỂN KHAI VẬT LÝ VÀ CHẤT LƯỢNG LẬP THỂ (SYSTEM & STEREO BREAKTHROUGH), nhưng VẪN CÒN KHOẢNG CÁCH VỀ CHỈ SỐ TÁI TẠO ĐƠN MẮT (MONOCULAR PSNR DEFICIT) DO THÂM HỤT QUY MÔ HUẤN LUYỆN.**
+Khi phân tích hiệu năng của mô hình dưới góc độ hệ thống nhúng và thị giác máy tính, kết quả thực nghiệm thể hiện hai khía cạnh rõ rệt:
+1. **Về khả năng triển khai biên và độ nhất quán lập thể:** Mô hình chứng minh được tính khả thi khi thực thi trên phần cứng di động với độ trễ thấp và giữ được tính ổn định thị sai hai mắt.
+2. **Về độ sắc nét tái tạo đơn mắt:** Mô hình vẫn còn khoảng cách so với mô hình tham chiếu quy mô lớn do dung lượng tham số nhỏ hơn và số bước huấn luyện thực nghiệm còn hạn chế.
 
-```
-+---------------------------------------------------------------------------------------------------------+
-|                                    BẢNG TỔNG KẾT ĐÁNH GIÁ ĐA CHIỀU                                      |
-+---------------------------------------------------------------------------------------------------------+
-| 1. KHẢ NĂNG TRIỂN KHAI PHẦN CỨNG (DEPLOYABILITY):  ★★★★★ [XUẤT SẮC - SOTA THỰC TẾ]                     |
-|    - 1,495 / 1,495 toán tử (100%) chạy trên Qualcomm NPU Hexagon V73, 0% CPU fallback.                 |
-|    - Đạt 4.20 ms / foveated patch (Glass-to-Glass 6.16 ms, 162.3 FPS), vượt chuẩn 90 FPS của kính.      |
-|    - VRAM đỉnh chỉ 77.29 MB (<1% RAM kính 8GB), trong khi StereoINR gốc ngốn 1,840 MB (gây crash).      |
-+---------------------------------------------------------------------------------------------------------+
-| 2. ĐỘ BỀN VỮNG THỊ SAI LẬP THỂ (STEREO COHERENCE): ★★★★★ [VƯỢT TRỘI STEREOINR GỐC]                     |
-|    - Giảm 8.8% - 15.9% sai số thị sai lập thể (Stereo MAE) so với StereoINR gốc trên cả 4 benchmark.   |
-|    - Triệt tiêu hiện tượng Tranh Chấp Võng Mạc (Retinal Rivalry) và say kính (Motion Sickness).         |
-+---------------------------------------------------------------------------------------------------------+
-| 3. TÁI TẠO ĐỘ PHÂN GIẢI THUẦN TÚY (RAW PSNR):     ★★★☆☆ [ĐẠT MỨC CHẤP NHẬN ĐƯỢC - CẦN CẢI TIẾN]         |
-|    - Vượt Bicubic (+0.56 dB trung bình trên 15 cảnh, +1.06 dB trên Test Set Quest 3S).                  |
-|    - Kém StereoINR gốc (Teacher) -2.58 dB Crop PSNR do chênh lệch quy mô (4.47M vs 43.8M) và thời       |
-|      gian huấn luyện ngắn (60 epochs / 1.45 giờ Kaggle so với hàng trăm ngàn iterations chuẩn công nghiệp).|
-+---------------------------------------------------------------------------------------------------------+
-| 4. HIỆU QUẢ NĂNG LƯỢNG & NHIỆT ĐỘ (THERMAL & POWER): ★★★★★ [TỐI ƯU CHO PIN THIẾT BỊ ĐỘC LẬP]            |
-|    - Công suất tiêu thụ chỉ 2.1 W (GPU+NPU), kéo dài thời lượng pin đạt 3.81 giờ vận hành liên tục.     |
-|    - Không gây hiện tượng nghẽn nhiệt độ (Thermal Throttling) làm tụt khung hình kính sau 10 phút.      |
-+---------------------------------------------------------------------------------------------------------+
-```
+| Khía cạnh kỹ thuật | Kết quả thực nghiệm đã ghi nhận | Giới hạn cần tiếp tục cải thiện |
+|---|---|---|
+| **Khả năng thực thi phần cứng** | 1,495 / 1,495 toán tử ($100\%$) thực thi trên Qualcomm Hexagon V73 NPU, $0\%$ CPU fallback; đạt $4.20\text{ ms}$ / foveated patch ($6.16\text{ ms}$ Glass-to-Glass, tương đương $162.3\text{ FPS}$); VRAM đỉnh $77.29\text{ MB}$. | Xử lý full-frame ($1280 \times 1280$) trên NPU mất $358.64\text{ ms}$; do đó mô hình bắt buộc phải kết hợp kỹ thuật Foveated Passthrough để đạt mục tiêu thời gian thực $\le 11.11\text{ ms}$. |
+| **Tính nhất quán thị sai lập thể** | Giảm sai lệch thị sai lập thể (Stereo MAE) từ $-8.7\%$ đến $-15.9\%$ so với StereoINR tham chiếu trên 4 tập benchmark; hạn chế hiện tượng lệch pha scanline giữa hai mắt. | Ràng buộc epipolar 1D nhạy cảm với độ lệch quang học trục dọc ($\Delta y > 1.0\text{ px}$) phát sinh khi rung lắc mạnh. |
+| **Chất lượng tái tạo hình ảnh** | Cao hơn phương pháp nội suy Bicubic ($+0.56\text{ dB}$ trung bình trên 15 cảnh thực nghiệm, $+1.06\text{ dB}$ trên tập test Quest 3S). | Thấp hơn mô hình StereoINR tham chiếu (43.8M) $-2.58\text{ dB}$ Crop PSNR do số lượng tham số nhỏ hơn xấp xỉ $10\times$ (4.47M vs 43.8M) và thời gian huấn luyện ngắn hơn. |
+| **Hiệu quả năng lượng & nhiệt độ** | Công suất tiêu thụ ước tính khoảng $2.1\text{ W}$ (NPU+GPU); không ghi nhận hiện tượng giảm xung do nhiệt độ trong các phiên đo thử nghiệm. | Chỉ số năng lượng được ước tính thông qua phần mềm giả lập profiling của hãng, chưa được đo trực tiếp bằng thiết bị đo dòng vật lý trên bo mạch. |
 
-* **Dưới góc nhìn học thuật thuần túy ("PSNR Chasing" trên ảnh đơn độc lập):** Nếu chỉ nhìn vào con số PSNR mắt trái, mô hình học trò của chúng ta thấp hơn mô hình gốc $2.58\text{ dB}$ ($24.74\text{ dB}$ vs $27.32\text{ dB}$). Một người chỉ đọc bảng số liệu học thuật sẽ vội vàng kết luận: *"Mô hình học trò chất lượng hình ảnh kém hơn mô hình gốc"*.
-* **Dưới góc nhìn Kỹ sư Hệ thống Nhúng XR Thực tế:** Mô hình gốc StereoINR 43.8M là một **"Thất bại vật lý hoàn toàn" (Fatal Physical Failure)** trên kính VR thực tế vì:
-  1. Tốn tới $7,500\text{ ms}$ cho 1 khung hình ($0.13\text{ FPS}$) $\to$ Chậm hơn $675\times$ so với ngân sách $11.11\text{ ms}$ của kính 90 Hz.
-  2. Chiếm $1,840\text{ MB}$ VRAM $\to$ Bùng nổ bộ nhớ kích hoạt, làm tràn GMEM SRAM ($4\text{ MB}$) của GPU Adreno 740, gây tràn RAM và sập hệ điều hành.
-  3. Bị từ chối hoàn toàn khi biên dịch sang NPU Qualcomm Hexagon vì toán tử 2D Deformable Grid Sample không có cấu trúc tuần tự.
-  4. Tạo ra các ảo giác tần số cao độc lập ở hai mắt, làm sai lệch thị sai Stereo MAE tăng vọt $+6.6\%$ đến $+14.4\%$, biến kính VR thành "cỗ máy gây say sóng và chóng mặt dữ dội".
-* **Scale-Liberated StereoINR (Ours)** là kiến trúc duy nhất **biến lý thuyết INR thành hiện thực khả thi trên thiết bị di động độc lập**, mở ra cánh cửa thương mại hóa tính năng siêu phân giải Passthrough cho các thế hệ kính VR tiếp theo.
+**Phân tích sự đánh đổi kỹ thuật giữa hai hướng tiếp cận:**
+* **Hướng tiếp cận tối ưu độ phân giải máy chủ (StereoINR 43.8M):** Mô hình được thiết kế hướng tới chất lượng tái tạo tối đa trên môi trường máy chủ với năng lực phần cứng không bị giới hạn, đạt chỉ số PSNR cao ($27.32\text{ dB}$). Tuy nhiên, khi đánh giá trên kịch bản thiết bị nhúng di động độc lập, mô hình gặp các giới hạn về tài nguyên: thời gian suy luận trên GPU máy trạm đạt $7,500\text{ ms}$ (so với yêu cầu $\le 11.11\text{ ms}$ của kính 90 Hz), bộ nhớ kích hoạt chiếm $1,840\text{ MB}$, và toán tử 2D Deformable Grid Sample không được hỗ trợ bởi tập lệnh vector hóa của NPU Hexagon. Đồng thời, cơ chế lấy mẫu 2D tự do không ràng buộc trục epipolar dẫn đến độ lệch pha sub-pixel giữa hai mắt sau khi bù thị sai, khiến chỉ số Stereo MAE cao hơn $+6.6\%$ đến $+14.4\%$ so với phép nội suy cơ bản.
+* **Hướng tiếp cận tối ưu tài nguyên biên (Scale-Liberated 4.47M):** Bằng cách áp dụng cơ chế 1D Epipolar Parallax Attention (EPA-1D), việc đọc bộ nhớ được tổ chức tuần tự theo dòng quét ngang, cho phép mô hình được biên dịch hoàn toàn trên NPU với độ trễ foveated $4.20\text{ ms}$ và giảm sai số thị sai lập thể. Sự đánh đổi trực tiếp là chỉ số Crop PSNR thấp hơn mô hình tham chiếu $-2.58\text{ dB}$, đòi hỏi cần tiếp tục gia tăng số bước huấn luyện trong tương lai.
 
 ---
 
-### 7.2. Bóc Mẽ 8 Điểm Yếu Cốt Tử & Thách Thức Vật Lý Cần Nhìn Thẳng (Root-Cause Limitations)
+### 7.2. Phân Tích 8 Giới Hạn Kỹ Thuật Cốt Lõi & Thách Thức Vật Lý (Technical Limitations & Engineering Challenges)
 
-Một kỹ sư AI đẳng cấp quốc tế không bao giờ che giấu điểm yếu của hệ thống. Dưới đây là 8 nút thắt kỹ thuật thực tế được mổ xẻ tường minh:
+Để phục vụ công tác hoàn thiện và định hướng nghiên cứu tiếp theo, các giới hạn kỹ thuật được ghi nhận và phân tích chi tiết như sau:
 
-#### 1. Thâm Hụt Thời Gian Huấn Luyện & Tối Ưu Hóa (Optimization Starvation)
-* **Thực trạng thực nghiệm:** Phiên bản Kaggle của chúng ta chỉ được cấp ngân sách huấn luyện khiêm tốn: 60 epochs (~$1.44\text{ giờ}$ trên 2x Tesla T4) cho bản đầy đủ và 12 epochs (~$86.9\text{ giây}$) cho bản tinh chỉnh nhanh.
-* **So sánh công nghiệp:** Các mô hình siêu phân giải hàng đầu (HAT, NAFNet, SwinIR, StereoINR) thường được huấn luyện từ $300,000$ đến $800,000$ iterations trên cụm $8 \times \text{A100}$ (tương đương 4 đến 7 ngày tính toán liên tục).
-* **Hậu quả:** Trọng số của mô hình hiện tại mới chỉ vừa vượt qua giai đoạn khởi động thích nghi ban đầu. Các đặc trưng tần số cao của Fourier Harmonic LTE chưa được tôi luyện đủ bước gradient để tái tạo các nét chữ mảnh dưới 10pt.
+#### 1. Giới Hạn Về Thời Lượng Huấn Luyện & Số Bước Tối Ưu Hóa (Optimization Deficit)
+* **Thực trạng thực nghiệm:** Do hạn chế về hạn ngạch GPU trên môi trường nghiên cứu (Kaggle Dual Tesla T4), mô hình chỉ được huấn luyện trong 60 epochs (~$1.44\text{ giờ}$) cho phiên bản đầy đủ và 12 epochs (~$86.9\text{ giây}$) cho phiên bản tinh chỉnh.
+* **So sánh với tài liệu tham khảo:** Các nghiên cứu siêu phân giải tương đương thường được tối ưu hóa trong $300,000$ đến $800,000$ iterations trên các hệ thống máy chủ GPU hiệu năng cao.
+* **Hệ quả kỹ thuật:** Số bước lặp gradient chưa đủ để mạng nơ-ron học đầy đủ các thành phần tần số cao trong không gian biểu diễn Fourier Harmonic, dẫn đến độ sắc nét của các chi tiết ký tự nhỏ dưới 10pt chưa đạt mức tối ưu.
 
-#### 2. Khiếm Khuyết Công Thức Hàm Mất Mát Thị Sai Ban Đầu & Giải Pháp Warping Có Mặt Nạ Vùng Khuất
-* Trong notebook huấn luyện Kaggle ban đầu, hàm mất mát thị sai được biểu diễn dưới dạng:
+#### 2. Sai Khác Trong Công Thức Hàm Mất Mát Thị Sai Ban Đầu & Giải Pháp Warping Có Mặt Nạ Vùng Khuất
+* Trong notebook huấn luyện ban đầu, hàm mất mát thị sai được biểu diễn dưới dạng:
   $$\mathcal{L}_{\text{disp\_naive}} = \frac{1}{HW}\sum_{x,y} |D_L(x,y) - D_R(x,y)|$$
-* **Lỗi toán học:** Bản đồ thị sai $D_L$ (mắt trái sang phải) và $D_R$ (mắt phải sang trái) **vốn dĩ không đồng nhất tại cùng tọa độ $(x,y)$**, mà chúng thỏa mãn quan hệ biến dạng quang học:
+* **Phân tích hình học:** Bản đồ thị sai $D_L$ (mắt trái sang phải) và $D_R$ (mắt phải sang trái) không đồng nhất tại cùng tọa độ $(x,y)$, mà thỏa mãn quan hệ biến dạng quang học:
   $$D_L(x,y) = D_R(x - D_L(x,y), y)$$
-* Việc ép trực tiếp $D_L(x,y) \approx D_R(x,y)$ đã vô tình phạt chính các điểm ảnh có độ sâu lớn, làm tê liệt khả năng căn chỉnh lập thể tại các vùng tiền cảnh gần (<$0.5\text{ m}$).
-* **Công thức hoàn chỉnh có mặt nạ vùng khuất:**
+* Việc áp dụng trực tiếp $D_L(x,y) \approx D_R(x,y)$ dẫn đến việc phạt các điểm ảnh có độ sâu lớn, làm suy giảm khả năng căn chỉnh lập thể tại các vùng tiền cảnh gần (<$0.5\text{ m}$).
+* **Công thức hiệu chỉnh có mặt nạ vùng khuất:**
   $$\mathcal{L}_{\text{warp}} = \| M_{L \to R} \odot (I_L - \mathcal{W}(I_R, D_{R \to L})) \|_1 + \lambda_{\text{ssim}} \left(1 - \text{SSIM}(M_{L \to R} \odot I_L, M_{L \to R} \odot \mathcal{W}(I_R, D_{R \to L}))\right)$$
-  với $M_{L \to R}$ là mặt nạ kiểm tra tính nhất quán hai chiều $|D_L(p) + D_R(p + D_L(p))| < \epsilon$, ngăn chặn hiện tượng bóng ma tại các vùng chỉ một mắt nhìn thấy.
+  với $M_{L \to R}$ là mặt nạ kiểm tra tính nhất quán hai chiều $|D_L(p) + D_R(p + D_L(p))| < \epsilon$, giúp loại bỏ các vùng bị che khuất đơn mắt.
 
-#### 3. Giới Hạn Của Kỹ Thuật Foveated Passthrough Trên Meta Quest 3S
-* Để đạt độ trễ $4.20\text{ ms}$, chúng ta bắt buộc phải sử dụng cơ chế Foveated Passthrough (chỉ giải mã vùng $256 \times 256$ điểm ảnh ở trung tâm).
-* **Rào cản phần cứng của Quest 3S:** Khác với Meta Quest Pro hay Apple Vision Pro có cụm camera hồng ngoại theo dõi ánh mắt (Eye-Tracking), Meta Quest 3S **hoàn toàn không có phần cứng Eye-Tracking**.
-* **Hệ quả thực tế:** Vùng siêu phân giải $256 \times 256$ bị **gắn chặt vào tâm trục nhìn của thấu kính (Fixed Foveation)**. Khi người dùng nhìn thẳng hoặc đọc tài liệu ở giữa tầm mắt, trải nghiệm cực kỳ sắc nét; nhưng nếu người dùng đảo mắt nhìn sang góc ngoại vi mà không quay đầu, vùng nhìn ngoại vi đó vẫn chỉ đạt độ phân giải thô 20 PPD!
+#### 3. Giới Hạn Của Kỹ Thuật Foveated Passthrough Khi Không Có Cảm Biến Ánh Mắt
+* Để đạt độ trễ $4.20\text{ ms}$, cơ chế Foveated Passthrough được áp dụng cho vùng trung tâm $256 \times 256$ điểm ảnh.
+* **Đặc tính phần cứng của Meta Quest 3S:** Thiết bị không được tích hợp cụm camera hồng ngoại theo dõi ánh mắt (Eye-Tracking).
+* **Ảnh hưởng thực tế:** Vùng siêu phân giải được gắn cố định vào tâm thấu kính (Fixed Foveation). Khi người dùng nhìn thẳng, chi tiết trung tâm được cải thiện; tuy nhiên khi người dùng đảo mắt nhìn sang các góc ngoại vi mà không cử động đầu, vùng ngoại vi vẫn hiển thị ở độ phân giải gốc của cảm biến (khoảng 20 PPD).
 
-#### 4. Rào Cản Sandbox Hệ Điều Hành Meta Horizon OS (SELinux & FastRPC Driver Lockout)
-* Mặc dù file nhị phân QNN DLC (`dyt_edge_inr_qnn_tile64_4x.dlc`) đã chạy thành công 100% trên chip Qualcomm Snapdragon phần cứng thật (Qualcomm AI Hub / Dragonwing RB3 Gen 2 / SM8550), hệ điều hành Meta Horizon OS (nền tảng Android tùy biến của Meta trên Quest 3S) áp dụng chính sách bảo mật SELinux cực kỳ nghiêm ngặt:
-  * Khóa cổng `/dev/fastrpc-adsp` và các socket QNN đối với các ứng dụng APK bên thứ 3 không có chữ ký hệ thống của Meta.
-* **Giải pháp thực tế hiện nay:** Các ứng dụng thương mại bên thứ ba bắt buộc phải chạy qua đường vòng **Unity Sentis Mobile GPU (Vulkan Compute Shader)** với độ trễ $\sim 130\text{ ms}$, hoặc phải sử dụng cơ chế truyền phát dữ liệu không dây (AirLink / Edge Cloud Streaming).
+#### 4. Quyền Truy Cập Driver Trên Hệ Điều Hành Meta Horizon OS
+* Tệp nhị phân QNN DLC (`dyt_edge_inr_qnn_tile64_4x.dlc`) đã thực thi trên phần cứng chip Qualcomm Snapdragon (thông qua Qualcomm AI Hub). Tuy nhiên, trên hệ điều hành Meta Horizon OS của kính thương mại, chính sách SELinux phân quyền không mở trực tiếp các cổng giao tiếp driver `/dev/fastrpc-*` cho ứng dụng bên thứ ba chưa ký chứng chỉ OEM.
+* **Hướng xử lý thực tế:** Đối với các ứng dụng bên thứ ba, mô hình được cấu hình để thực thi qua GPU Adreno thông qua Unity Sentis hoặc Vulkan Compute Shader.
 
 #### 5. Độ Nhạy Trước Hiện Tượng Lệch Trục Thị Sai Đứng (Vertical Epipolar Drift)
-* Kiến trúc 1D EPA giả định đường epipolar hoàn toàn thẳng hàng theo phương ngang ($y = y'$).
-* Trong thực tế vận hành kính VR, khi người dùng lắc đầu với vận tốc góc lớn, hoặc khi kính bị xô lệch trên khuôn mặt, camera có thể xuất hiện độ lệch dọc $\Delta y$ từ $0.5$ đến $1.5$ pixel. Thử nghiệm tại [`logs/benchmarks/epipolar_vertical_tolerance.json`](logs/benchmarks/epipolar_vertical_tolerance.json) cho thấy khi $\Delta y > 1.0\text{ px}$, PSNR bắt đầu suy giảm $0.4\text{ dB}$.
+* Kiến trúc 1D EPA giả định đường epipolar thẳng hàng theo phương ngang ($y_L = y_R$).
+* Trong quá trình sử dụng thực tế, chuyển động đầu với vận tốc góc lớn hoặc độ lệch cơ khí có thể tạo ra sai lệch dọc $\Delta y$ từ $0.5$ đến $1.5$ pixel. Kết quả đo đạc tại [`logs/benchmarks/epipolar_vertical_tolerance.json`](logs/benchmarks/epipolar_vertical_tolerance.json) cho thấy khi $\Delta y > 1.0\text{ px}$, chỉ số PSNR suy giảm khoảng $0.4\text{ dB}$.
 
-#### 6. Giới Hạn Tần Số Nyquist-Shannon & Hiện Tượng Răng Cưa Quang Phổ Khi Lấy Mẫu Tọa Độ Liên Tục (Spectral Aliasing in Continuous INR)
-* Trong mô hình biểu diễn tọa độ tiềm ẩn liên tục (INR), việc truy vấn tọa độ tùy ý $(x, y)$ tại các tỷ lệ phóng đại không nguyên (ví dụ $1.5\times$, $2.3\times$, $3.14\times$) có thể gây ra hiện tượng tràn phổ (spectral leakage) và răng cưa tần số cao.
-* Nếu chỉ truyền trực tiếp vector tọa độ $(x, y)$ vào mạng MLP mà không có thông tin điều kiện hóa kích thước ô lưới điểm ảnh (cell size $c = [2/H, 2/W]$ như trong lý thuyết LIIF), các tần số vượt quá ngưỡng Nyquist $f_{\text{Nyquist}} = 1 / (2 \Delta x)$ sẽ bị phản xạ ngược lại dải tần số thấp, tạo ra các vân sóng giả (moire patterns) trên các bề mặt lưới kẻ sọc.
+#### 6. Hiện Tượng Răng Cưa Quang Phổ Khi Lấy Mẫu Tọa Độ Liên Tục (Spectral Aliasing in Continuous INR)
+* Trong mô hình biểu diễn tọa độ tiềm ẩn liên tục (INR), việc truy vấn tọa độ $(x, y)$ tại các tỷ lệ phóng đại không nguyên có thể làm xuất hiện hiện tượng tràn phổ (spectral leakage) và răng cưa tần số cao.
+* Khi không có thông tin điều kiện hóa kích thước ô lưới điểm ảnh (cell size $c = [2/H, 2/W]$), các tần số vượt quá ngưỡng Nyquist $f_{\text{Nyquist}} = 1 / (2 \Delta x)$ có xu hướng tạo ra các vân sóng giả trên các kết cấu lặp lại.
 
-#### 7. Hiện Tượng Nhấp Nháy Quang Học Theo Thời Gian (Temporal Scintillation & Video Stream Flicker)
-* Khi xử lý từng khung hình độc lập (frame-by-frame super-resolution), các nhiễu ngẫu nhiên siêu nhỏ từ cảm biến camera giữa khung hình $t$ và $t+1$ có thể kích hoạt các phản ứng nơ-ron khác nhau ở các điểm ảnh lân cận, sinh ra hiện tượng nhấp nháy tần số cao (scintillation / sparkle).
-* Mặc dù cơ chế lọc thời gian của chúng tôi tại [`logs/benchmarks/temporal_stability_benchmark.json`](logs/benchmarks/temporal_stability_benchmark.json) đã giảm $34.2\%$ độ nhấp nháy, một giải pháp triệt để đòi hỏi phải bổ sung hàm mất mát tính nhất quán quang lưu thời gian:
-  $$\mathcal{L}_{\text{temp}} = \|I_t - \mathcal{W}_{\text{flow}}(I_{t-1}, F_{t \to t-1})\|_1$$
-  hoặc tích hợp trạng thái ẩn hồi quy (recurrent hidden state) mang thông tin từ khung hình trước.
+#### 7. Tính Nhất Quán Theo Thời Gian Giữa Các Khung Hình (Temporal Consistency Across Video Frames)
+* Khi xử lý từng khung hình độc lập (frame-by-frame super-resolution), biến thiên ngẫu nhiên từ cảm biến camera giữa các khung hình liên tiếp có thể dẫn đến hiện tượng nhấp nháy vi mô (scintillation / sparkle).
+* Bộ lọc thời gian thực nghiệm tại [`logs/benchmarks/temporal_stability_benchmark.json`](logs/benchmarks/temporal_stability_benchmark.json) hỗ trợ giảm $34.2\%$ độ biến động, song việc đảm bảo tính ổn định lâu dài cần được kết hợp với hàm mất mát quang lưu (optical flow consistency loss) hoặc cơ chế trạng thái ẩn hồi quy.
 
-#### 8. Phân Tích Mô Hình Giới Hạn Phần Cứng (Roofline Model) Trên Snapdragon XR2 Gen 2
-* **Trần tính toán NPU Hexagon V73:** Đạt 40 INT8 TOPS (Tera Operations Per Second).
-* **Băng thông bộ nhớ LPDDR5:** Đạt lý thuyết $64\text{ GB/s}$, nhưng phải chia sẻ đồng thời giữa CPU (theo dõi 6-DoF, giải mã âm thanh), GPU Adreno 740 (kết xuất đồ họa không gian), màn hình hiển thị kép 90 Hz, và bộ xử lý tín hiệu hình ảnh (ISP camera passthrough). Băng thông thực tế dành cho NPU chỉ khoảng $8 - 12\text{ GB/s}$.
-* **Bộ nhớ đệm GMEM SRAM:** Chỉ vỏn vẹn $4\text{ MB}$.
-* **Kết luận Roofline:** Việc chia nhỏ ảnh thành các ô $64 \times 64$ ($1.74\text{ ms}$ cho mỗi tile) đưa mô hình rơi chính xác vào **vùng giới hạn băng thông bộ nhớ (Memory-Bandwidth Bound)** chứ không phải vùng giới hạn tính toán (Compute Bound). Điều này giải thích tại sao lượng tử hóa INT8 tĩnh (PTQ) với hằng số Lipschitz $\Gamma_{\max} = 1.0192$ là chìa khóa sống còn: nó giảm lượng dữ liệu trao đổi bộ nhớ tới $4\times$, trực tiếp giải phóng nút thắt nghẽn cổ chai của toàn bộ hệ thống!
+#### 8. Phân Tích Mô Hình Giới Hạn Băng Thông (Roofline Analysis) Trên Snapdragon XR2 Gen 2
+* **Trần tính toán NPU Hexagon V73:** Ước tính 40 INT8 TOPS.
+* **Băng thông bộ nhớ LPDDR5:** Đạt lý thuyết $64\text{ GB/s}$, được chia sẻ đồng thời giữa CPU, GPU Adreno 740, bộ điều khiển hiển thị 90 Hz và ISP camera passthrough. Băng thông khả dụng cho khối NPU ước tính trong khoảng $8 - 12\text{ GB/s}$.
+* **Bộ nhớ đệm GMEM SRAM:** Giới hạn ở mức $4\text{ MB}$.
+* **Nhận định Roofline:** Việc xử lý theo các tile nhỏ đưa mô hình vào vùng giới hạn băng thông bộ nhớ (Memory-Bandwidth Bound). Do đó, việc lượng tử hóa INT8 tĩnh với hằng số Lipschitz $\Gamma_{\max} = 1.0192$ là giải pháp cần thiết nhằm giảm $4\times$ khối lượng truyền tải dữ liệu qua bus bộ nhớ.
 
 ---
 
-### 7.3. Góc Nhìn Đánh Giá Kép: Hội Đồng Học Thuật vs Kỹ Sư Thực Tế
+### 7.3. Đánh Giá Khách Quan Dưới Các Góc Nhìn Chuyên Môn
 
-#### Góc Nhìn Phản Biện Của Hội Đồng Khoa Học (Academic Reviewer Perspective - CVPR / ECCV / SIGGRAPH)
-* **Điểm mạnh (Strengths):**
-  1. *Ý tưởng tiên phong:* Đây là công trình đầu tiên giải quyết trọn vẹn bài toán siêu phân giải lập thể tỷ lệ tùy ý liên tục (Continuous Arbitrary-Scale Stereo SR) có thể biên dịch 100% xuống NPU thiết bị di động mà không cần toán tử GridSample 2D.
-  2. *Độ bền vững lập thể:* Triệt tiêu hiện tượng tranh chấp võng mạc (Retinal Rivalry) với mức cải thiện Stereo MAE từ $8.8\%$ đến $15.9\%$.
-  3. *Tính minh bạch thực nghiệm:* Cung cấp đầy đủ 19 hồ sơ benchmark JSON, tệp log Kaggle thật và nhị phân QNN DLC kiểm chứng được.
-* **Điểm cần hoàn thiện trước khi nộp bài báo Top-Tier (Missing Pieces):**
-  1. *Thu hẹp khoảng cách PSNR:* Cần nâng Crop PSNR mắt trái từ $24.74\text{ dB}$ lên trên $26.5\text{ dB}$ bằng cách tăng thời gian huấn luyện.
-  2. *Nghiên cứu trên người dùng thực tế (User Study):** Cần tiến hành thử nghiệm mù đôi (double-blind user study) trên ít nhất 20 người dùng đeo kính Meta Quest 3S để đo đạc chỉ số chóng mặt (SSQ - Simulator Sickness Questionnaire) và thang điểm hài lòng thị giác (MOS - Mean Opinion Score).
+#### Dưới góc nhìn phản biện học thuật (Academic Review Perspective):
+* **Những đóng góp có thể ghi nhận:**
+  1. Thử nghiệm áp dụng thành công cơ chế Epipolar Parallax Attention 1D (EPA-1D) thay thế cho phép lấy mẫu 2D tự do, cải thiện tính nhất quán thị sai lập thể (Stereo MAE) và hỗ trợ khả năng vector hóa phần cứng.
+  2. Bổ sung hàm kích hoạt Dynamic Tanh (DyT) với giới hạn biên Lipschitz để hỗ trợ lượng tử hóa INT8 đối xứng ổn định.
+  3. Cung cấp quy trình kiểm định minh bạch với 19 báo cáo benchmark JSON, nhật ký huấn luyện và mô hình nhị phân để phục vụ tái lập thực nghiệm.
+* **Những khía cạnh cần tiếp tục hoàn thiện:**
+  1. Cần thu hẹp khoảng cách $-2.58\text{ dB}$ PSNR so với mô hình tham chiếu thông qua các đợt huấn luyện dài hạn với tập dữ liệu quy mô lớn hơn.
+  2. Cần thực hiện các khảo sát định lượng trên người dùng thực tế (User Study với thang điểm SSQ và MOS) để đo lường mức độ giảm mỏi mắt và sự thoải mái thị giác một cách có ý nghĩa thống kê.
 
-#### Góc Nhìn Kỹ Sư Hệ Thống Sản Phẩm Meta Reality Labs (Commercial XR Product Engineer Perspective)
-* **Khả năng ứng dụng thương mại:** Cực kỳ cao. Mức tiêu thụ $77.29\text{ MB}$ VRAM và độ trễ Glass-to-Glass $6.16\text{ ms}$ nằm hoàn hảo trong ngân sách $11.11\text{ ms}$ của kính 90 Hz, không làm giảm thời lượng pin của kính.
-* **Rào cản triển khai thực tế:** Chính sách bảo mật Meta Horizon OS không mở driver NPU cho lập trình viên ngoài Meta.
-* **Lộ trình phân phối sản phẩm:**
-  * *Ngắn hạn (Store Release):* Xuất xưởng qua Unity Sentis HLSL Vulkan Compute Shader chạy trực tiếp trên GPU Adreno 740.
-  * *Dài hạn (OEM Partnership):* Đề xuất tích hợp trực tiếp vào tầng tổng hợp hình ảnh không gian của hệ điều hành (OpenXR Passthrough Compositor Layer) để tận dụng tối đa 100% sức mạnh phần cứng chip NPU Hexagon.
+#### Dưới góc nhìn kỹ thuật triển khai thiết bị nhúng (Embedded Deployment Perspective):
+* **Mức độ tương thích phần cứng:** Mức chiếm dụng $77.29\text{ MB}$ RAM và độ trễ $4.20\text{ ms}$ (foveated patch) đáp ứng yêu cầu vận hành trong khung thời gian $11.11\text{ ms}$ của màn hình 90 Hz.
+* **Thách thức thực tế:** Trên hệ điều hành thương mại đóng như Meta Horizon OS, việc ứng dụng bên thứ ba không có quyền truy cập trực tiếp NPU đòi hỏi mô hình phải được triển khai qua GPU Adreno thông qua Unity Sentis hoặc Vulkan Compute Shader.
 
 ---
 
-### 7.4. Bản Thiết Kế 5 Giải Pháp Cải Tiến Kỹ Thuật Đột Phá Tiếp Theo (Actionable Roadmap)
+### 7.4. Đề Xuất 5 Hướng Cải Tiến Kỹ Thuật Trong Các Giai Đoạn Tiếp Theo (Actionable Engineering Roadmap)
 
-Để đưa Scale-Liberated StereoINR từ mức "Tiềm năng xuất sắc" trở thành "Chuẩn mực thương mại hoàn hảo", chúng tôi đề xuất 5 giải pháp kỹ thuật cụ thể cho các giai đoạn phát triển tiếp theo:
+Để khắc phục các hạn chế kỹ thuật đã nêu và từng bước nâng cao chất lượng mô hình, 5 định hướng nghiên cứu được đề xuất:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│              LỘ TRÌNH 5 BƯỚC NÂNG CẤP KỸ THUẬT ĐỘT PHÁ (ENGINEERING ROADMAP)                    │
+│               LỘ TRÌNH 5 HƯỚNG CẢI TIẾN KỸ THUẬT TIẾP THEO (ENGINEERING ROADMAP)                │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ [1] Khởi Tạo Dirac Identity Warm-Start & Nâng Cấp Lên RepDyT Pro (7.89M)                        │
-│     --> Thu hẹp khoảng cách PSNR thêm +1.5 đến +2.0 dB, giữ độ trễ Foveated < 8 ms              │
-│ [2] Chuẩn Hóa Hàm Mất Mát Differentiable Photometric Epipolar Warping có Mặt Nạ Vùng Khuất     │
-│     --> Dùng phép biến dạng vi phân song tuyến L_warp = ||M_occ * (I_L - W(I_R, D_R->L))||_1    │
+│ [1] Khởi Tạo Dirac Identity Warm-Start & Nâng Cấp Biến Thể Rộng (RepDyT Pro 7.89M)              │
+│     --> Thu hẹp khoảng cách PSNR thêm khoảng +1.5 đến +2.0 dB, giữ độ trễ Foveated < 8 ms       │
+│ [2] Chuẩn Hóa Hàm Mất Mát Differentiable Photometric Epipolar Warping Có Mặt Nạ Vùng Khuất      │
+│     --> Áp dụng phép biến dạng vi phân song tuyến L_warp = ||M_occ * (I_L - W(I_R, D_R->L))||_1 │
 │ [3] Mở Rộng Cơ Chế Banded 3-Line Vertical Epipolar Attention ([-1, 0, +1] px)                   │
-│     --> Miễn nhiễm 100% với hiện tượng lệch trục dọc do rung lắc đầu trên kính VR               │
+│     --> Tăng cường khả năng chịu lỗi trước hiện tượng lệch trục dọc do rung lắc thiết bị        │
 │ [4] Xây Dựng Pipeline Unity Sentis HLSL Vulkan Compute Shader Native                            │
-│     --> Đạt 90 FPS trực tiếp trên GPU Adreno 740 mà không phụ thuộc quyền root NPU              │
+│     --> Đảm bảo khả năng vận hành trực tiếp trên GPU Adreno 740 cho ứng dụng bên thứ ba         │
 │ [5] Huấn Luyện Dài Hạn 200,000 Iterations Lịch Trình Cosine Annealing                           │
-│     --> Đưa Crop PSNR vượt mốc 26.5 dB trên tập dữ liệu lai (Middlebury + KITTI + Quest 3S)    │
+│     --> Hướng tới cải thiện Crop PSNR trên tập dữ liệu tổng hợp đa dạng                         │
 └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 1. Khởi Tạo Dirac Identity Warm-Start & Nâng Cấp Lên RepDyT Pro ($7.89\text{M}$)
-* Thay vì khởi tạo ngẫu nhiên Xavier/Kaiming, áp dụng khởi tạo ma trận Dirac Delta Kernel cho các nhánh tích chập song song:
+#### 1. Khởi Tạo Dirac Identity Warm-Start & Nâng Cấp Biến Thể Rộng ($7.89\text{M}$)
+* Áp dụng khởi tạo ma trận Dirac Delta Kernel cho các nhánh tích chập song song:
   $$W_{\text{Dirac}}(c_{\text{out}}, c_{\text{in}}, i, j) = \begin{cases} 1.0 & \text{nếu } c_{\text{out}} = c_{\text{in}} \text{ và } i=j=1 \\ 0.0 & \text{ngược lại} \end{cases}$$
-* Kỹ thuật này bảo toàn $100\%$ dòng chảy thông tin đặc trưng tần số thấp ngay từ epoch đầu tiên, cho phép mở rộng kênh đặc trưng lên $C=64$ (biến thể Pro $7.89\text{M}$) để nâng PSNR thêm **$+1.5\text{ dB} \to +2.0\text{ dB}$** trong khi độ trễ Foveated chỉ tăng lên xấp xỉ **$\sim 6.8\text{ ms}$** (vẫn an toàn trong ngân sách $11.11\text{ ms}$).
+* Phương pháp này bảo toàn thông tin đặc trưng tần số thấp ngay từ các bước lặp đầu tiên, hỗ trợ mở rộng kênh đặc trưng lên $C=64$ (biến thể $7.89\text{M}$) nhằm cải thiện thêm chỉ số PSNR trong khi vẫn kiểm soát độ trễ foveated trong khoảng an toàn $\sim 6.8\text{ ms} \le 11.11\text{ ms}$.
 
 #### 2. Chuẩn Hóa Hàm Mất Mát Differentiable Photometric Epipolar Warping Có Mặt Nạ Vùng Khuất
-* Thay thế hàm mất mát thị sai cũ bằng hàm sai số tái chiếu biến dạng quang học vi phân:
+* Sử dụng hàm sai số tái chiếu biến dạng quang học vi phân:
   $$\mathcal{L}_{\text{warp}} = \| M_{L \to R} \odot (I_L - \mathcal{W}(I_R, D_{R \to L})) \|_1 + \lambda_{\text{ssim}} \left(1 - \text{SSIM}(M_{L \to R} \odot I_L, M_{L \to R} \odot \mathcal{W}(I_R, D_{R \to L}))\right)$$
-  với $\mathcal{W}(\cdot)$ là toán tử nội suy song tuyến tính vi phân hai chiều và $M_{L \to R}$ loại bỏ vùng khuất đơn mắt, buộc mô hình học cách căn chỉnh điểm ảnh chính xác theo nguyên lý thị sai lập thể tự nhiên.
+  với $\mathcal{W}(\cdot)$ là toán tử nội suy vi phân hai chiều và $M_{L \to R}$ loại bỏ vùng khuất đơn mắt, hỗ trợ mô hình học căn chỉnh lập thể một cách tự nhiên.
 
 #### 3. Mở Rộng Cơ Chế Banded 3-Line Vertical Epipolar Attention
-* Thay vì chỉ quét đúng $1$ dòng ngang ($y = y'$), mở rộng cửa sổ chú ý sang dải hẹp $3$ dòng:
+* Mở rộng cửa sổ chú ý sang dải hẹp $3$ dòng quét lân cận:
   $$\Omega_{\text{search}}(y) = \{y - 1, y, y + 1\}$$
-* Độ phức tạp tính toán chỉ tăng $3\times$ theo phương thẳng đứng (vẫn là $O(3 \times W \times D_{\max}) \ll O((HW)^2)$ của StereoINR), giúp hệ thống miễn nhiễm hoàn toàn trước các sai số cơ khí và biến dạng méo thấu kính khi người dùng chuyển động mạnh.
+* Độ phức tạp tính toán được kiểm soát ở mức $O(3 \times W \times D_{\max})$, giúp hệ thống duy trì độ ổn định khi xuất hiện sai lệch cơ khí hoặc rung lắc nhẹ của thiết bị.
 
 #### 4. Xây Dựng Pipeline Unity Sentis HLSL Vulkan Compute Shader Native
-* Viết lại toàn bộ nhân tính toán Dynamic Tanh và 1D EPA thành tệp HLSL Compute Shader tùy biến, nạp trực tiếp vào engine Unity thông qua package `com.unity.sentis`.
-* Tận dụng bộ nhớ SRAM đệm nhanh (GMEM) của vi xử lý đồ họa Adreno 740 để thực thi song song, giúp ứng dụng chạy được trên **$100\%$ các kính Meta Quest 3S bán lẻ thương mại** mà không bị hệ điều hành chặn driver NPU.
+* Chuyển đổi các nhân tính toán Dynamic Tanh và 1D EPA sang tệp HLSL Compute Shader tùy biến, tích hợp vào engine Unity thông qua package `com.unity.sentis`.
+* Tận dụng bộ nhớ SRAM đệm (GMEM) của GPU Adreno 740 để thực thi song song, giúp ứng dụng có thể vận hành ổn định trên các thiết bị bán lẻ mà không phụ thuộc vào quyền truy cập trực tiếp driver NPU.
 
 #### 5. Huấn Luyện Dài Hạn 200,000 Iterations Lịch Trình Cosine Annealing
-* Tái huấn luyện trên cụm GPU máy trạm với tập dữ liệu hỗn hợp: $1,024$ cặp ảnh Flickr1024, $157$ cặp Middlebury/KITTI và $15,000$ khung hình trích xuất từ 8 pha video Quest 3S.
-* Áp dụng lịch trình giảm tốc độ học Cosine Annealing kết hợp Warmup 5,000 steps và Gradient Accumulation, đưa chất lượng Crop PSNR vượt mốc **$26.5\text{ dB}$**, chính thức san bằng khoảng cách hình ảnh với các mô hình khổng lồ.
+* Lên kế hoạch huấn luyện mở rộng trên cụm GPU với tập dữ liệu hỗn hợp (Flickr1024, Middlebury, KITTI và các khung hình thu thập từ thiết bị thực tế).
+* Áp dụng lịch trình giảm tốc độ học Cosine Annealing kết hợp Warmup và Gradient Accumulation, hướng tới mục tiêu từng bước thu hẹp khoảng cách chất lượng hình ảnh với các mô hình tham chiếu quy mô lớn.
 
 ---
 
