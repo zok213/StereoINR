@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-14T03:17:16Z",
+  "timestamp": "2026-11-14T03:30:58Z",
   "n_total": 37,
   "n_pass": 37,
   "n_fail": 0,
@@ -139,7 +139,7 @@
     },
     "9_onnx_runtime_parity": {
       "pass": true,
-      "detail": "Max diff: 0.01648 | Mean diff: 0.000458 (Threshold: 0.05)"
+      "detail": "Max diff: 0.01871 | Mean diff: 0.000526 (Threshold: 0.05)"
     },
     "10_rep_dyt_block": {
       "pass": true,
@@ -147,7 +147,7 @@
     },
     "11_adaptive_disparity_centering": {
       "pass": true,
-      "detail": "shapes_ok=True | far_vs_near_diff=0.02509 | zero_init_preservation=True"
+      "detail": "shapes_ok=True | far_vs_near_diff=0.02899 | zero_init_preservation=True"
     },
     "12_universal_epipolar_v15": {
       "pass": true,
