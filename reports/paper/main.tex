@@ -42,19 +42,7 @@ StereoINR \cite{stereoinr} achieves arbitrary-scale super-resolution by combinin
 
 In calibrated, rectified binocular camera rigs, epipolar geometry dictates that matching points share identical vertical coordinates ($y_L = y_R$). Exploiting this physical constraint, unconstrained 2D sampling is mathematically redundant. We introduce \ours{}, a mobile-oriented continuous stereo INR framework specifically designed for standalone VR architectures.
 
-\textbf{Contributions.} (i) An edge-optimized architecture featuring 1D Epipolar Parallax Attention (EPA-1D), a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, and a continuous Fourier decoder \cite{lte, ultrasr} (4.47M parameters). (ii) An empirical evaluation on dual Tesla~T4 server GPUs and Qualcomm Snapdragon hardware profiling, demonstrating 100\% native NPU operator compilation and 4.20~ms foveated inference. (iii) A 15-scene benchmark evaluating Crop PSNR, SSIM, and Stereo Disparity MAE against Bicubic and the StereoINR teacher, documenting both superior binocular consistency and the $-2.58$~dB monocular PSNR deficit with rigorous academic humility.
-
-\section{Related Work}
-\textbf{Stereo Super-Resolution.} Stereo super-resolution was initially addressed using parallax priors \cite{stereosr}. PASSRnet \cite{passr} pioneered parallax-attention along epipolar lines, which was subsequently advanced by iPASSR \cite{ipassr} and cross-view feedback networks \cite{ssrdefnet}. NAFSSR \cite{nafssr} demonstrated that simple convolutional channel-attention architectures perform strongly. StereoINR \cite{stereoinr} extended stereo SR to arbitrary continuous scales via implicit neural representations \cite{liif}. Our EPA-1D builds upon the epipolar correspondence principle of \cite{passr}, integrating it into a continuous INR decoder constrained to a causal horizontal disparity window.
-
-\textbf{Implicit Neural Representations.} Continuous image representations model coordinates as continuous fields. LIIF \cite{liif} demonstrated arbitrary upsampling via local implicit functions, while SIREN \cite{siren} introduced periodic sinusoidal activations. LTE \cite{lte} and UltraSR \cite{ultrasr} further captured rich high-frequency textures via Fourier-domain coordinate features.
-
-\textbf{Efficient Edge Backbones.} ConvNeXt \cite{convnext} utilizes $7{\times}7$ depthwise convolutions that map efficiently to vector hardware, while NAFNet \cite{nafnet}, MobileNetV3 \cite{mobilenetv3}, and structural reparameterization \cite{repvgg} demonstrate high throughput on constrained platforms. Normalization-free architectures including NFNet \cite{nfnet} and Dynamic Tanh (DyT) \cite{dyt} remove memory-bandwidth-heavy normalization layers via a parameterized, bounded non-linearity, facilitating post-training quantization \cite{ptq}.
-
-\section{Methodology}
-
-\subsection{Architecture Overview}
-Fig.~\ref{fig:arch} compares the official StereoINR pipeline with \ours{}. Both systems embed the input low-resolution stereo pair $(\mathbf{I}_L, \mathbf{I}_R)$ using a $3{\times}3$ convolution (6$\to$180 channels for StereoINR; 6$\to$48 channels for ours). StereoINR utilizes a 41.23M-parameter HAT backbone followed by 2D deformable cross-attention. In contrast, \ours{} employs four ConvNeXt--DyT blocks \cite{convnext, dyt} (depthwise $7{\times}7$ convolution, pointwise inverted bottleneck, and DyT activation; 4.47M parameters total) followed by EPA-1D and a continuous Fourier decoder \cite{lte, ultrasr}.
+\textbf{Contributions.} (i) An edge-optimized architecture featuring 1D Epipolar Parallax Attention (EPA-1D), a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, and a continuous Fourier decoder \cite{lte, ultrasr} (4.47M parameters) (Fig.~\ref{fig:arch}). (ii) An empirical evaluation on dual Tesla~T4 server GPUs and Qualcomm Snapdragon hardware profiling, demonstrating 100\% native NPU operator compilation and 4.20~ms foveated inference. (iii) A 15-scene benchmark evaluating Crop PSNR, SSIM, and Stereo Disparity MAE against Bicubic and the StereoINR teacher, documenting both superior binocular consistency and the $-2.58$~dB monocular PSNR deficit with rigorous academic humility.
 
 \begin{figure*}[!t]
 \centering
@@ -76,6 +64,18 @@ Fig.~\ref{fig:arch} compares the official StereoINR pipeline with \ours{}. Both 
 \caption{Architectural comparison between official StereoINR and our proposed \ours{}. By enforcing 1D scanline epipolar correspondence ($y_L = y_R$), unconstrained 2D memory-thrashing grid sampling is replaced by 1D continuous burst attention, enabling native compilation on mobile NPUs.}
 \label{fig:arch}
 \end{figure*}
+
+\section{Related Work}
+\textbf{Stereo Super-Resolution.} Stereo super-resolution was initially addressed using parallax priors \cite{stereosr}. PASSRnet \cite{passr} pioneered parallax-attention along epipolar lines, which was subsequently advanced by iPASSR \cite{ipassr} and cross-view feedback networks \cite{ssrdefnet}. NAFSSR \cite{nafssr} demonstrated that simple convolutional channel-attention architectures perform strongly. StereoINR \cite{stereoinr} extended stereo SR to arbitrary continuous scales via implicit neural representations \cite{liif}. Our EPA-1D builds upon the epipolar correspondence principle of \cite{passr}, integrating it into a continuous INR decoder constrained to a causal horizontal disparity window.
+
+\textbf{Implicit Neural Representations.} Continuous image representations model coordinates as continuous fields. LIIF \cite{liif} demonstrated arbitrary upsampling via local implicit functions, while SIREN \cite{siren} introduced periodic sinusoidal activations. LTE \cite{lte} and UltraSR \cite{ultrasr} further captured rich high-frequency textures via Fourier-domain coordinate features.
+
+\textbf{Efficient Edge Backbones.} ConvNeXt \cite{convnext} utilizes $7{\times}7$ depthwise convolutions that map efficiently to vector hardware, while NAFNet \cite{nafnet}, MobileNetV3 \cite{mobilenetv3}, and structural reparameterization \cite{repvgg} demonstrate high throughput on constrained platforms. Normalization-free architectures including NFNet \cite{nfnet} and Dynamic Tanh (DyT) \cite{dyt} remove memory-bandwidth-heavy normalization layers via a parameterized, bounded non-linearity, facilitating post-training quantization \cite{ptq}.
+
+\section{Methodology}
+
+\subsection{Architecture Overview}
+Fig.~\ref{fig:arch} compares the official StereoINR pipeline with \ours{}. Both systems embed the input low-resolution stereo pair $(\mathbf{I}_L, \mathbf{I}_R)$ using a $3{\times}3$ convolution (6$\to$180 channels for StereoINR; 6$\to$48 channels for ours). StereoINR utilizes a 41.23M-parameter HAT backbone followed by 2D deformable cross-attention. In contrast, \ours{} employs four ConvNeXt--DyT blocks \cite{convnext, dyt} (depthwise $7{\times}7$ convolution, pointwise inverted bottleneck, and DyT activation; 4.47M parameters total) followed by EPA-1D and a continuous Fourier decoder \cite{lte, ultrasr}.
 
 \subsection{1D Epipolar Parallax Attention (EPA-1D)}
 In calibrated, rectified binocular cameras, a pixel at coordinate $(i, j)$ in the left feature map corresponds to $(i, k)$ in the right feature map with $k \le j$. Given query $Q_L$ and key $K_R$ projections of dimension $d_k$:
@@ -408,14 +408,14 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/comparison_middlebury_cloth2.png}
+\includegraphics[width=0.78\textwidth]{figures/comparison_middlebury_cloth2.png}
 \caption{Visual comparison on Middlebury \texttt{cloth2} ($\times 4$ super-resolution). Panels show Ground Truth HR, Bicubic (Crop: 31.45~dB), StereoINR Teacher (Crop: 33.48~dB), \ours{} (Crop: 31.30~dB; Full Frame: 26.97~dB), and pixel residual error maps ($\times 5$ amplified). \ours{} sharpens textile patterns over Bicubic while maintaining coherent stereo parity.}
 \label{fig:visual_mb}
 \end{figure*}
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
+\includegraphics[width=0.78\textwidth]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
 \caption{Visual comparison on Meta Quest~3S passthrough Phase 7 (\texttt{indoor\_portal\_awards}, held-out test split). Super-resolving reading text on the awards honor plaque ($\times 4$). \ours{} significantly enhances character legibility (+1.41~dB over Bicubic), proving effective for mixed-reality reading.}
 \label{fig:visual_q3s}
 \end{figure*}
@@ -487,8 +487,6 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 \textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware \cite{qnn_sdk}, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders \cite{sentis}.
 
 \textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} and binocular comfort \cite{retinal_rivalry, binocular_fusion} remain essential future work.
-
-\clearpage
 
 \section{Conclusion}
 We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets \cite{quest3_optics}. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention \cite{passr} and employing a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs \cite{qnn_sdk}, and reduces stereo disparity error by 8.7--15.9\% over the teacher model \cite{stereoinr}, suppressing retinal rivalry \cite{retinal_rivalry, binocular_fusion}. Although real-time operation currently requires foveated tiling \cite{foveated_rendering, patney_foveated}, this work establishes a viable geometric path for mobile stereo implicit neural representations \cite{liif, lte, ultrasr}.
