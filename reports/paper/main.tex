@@ -75,6 +75,7 @@ This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to 
 
 \begin{figure*}[t]
 \centering
+\resizebox{0.92\textwidth}{!}{%
 \begin{tikzpicture}[>={Stealth[length=2mm]}, font=\small]
 % (a) StereoINR: scattered 2D sampling over a 6x6 feature grid
 \begin{scope}
@@ -111,7 +112,8 @@ Memory access pattern & Scattered 2D & Contiguous 1D \\
 Qualcomm Hexagon NPU & Compilation rejected (\texttt{GridSample}) & 100\% native NPU (1,495/1,495 ops, 0\% CPU fallback) \\
 \bottomrule
 \end{tabular}};
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Memory-access and operator-level comparison. Panels (a) and (b) are schematics of the access patterns; the embedded table summarizes measured compilation outcomes on Qualcomm Hexagon NPU.}
 \label{fig:memaccess}
 \end{figure*}
@@ -141,14 +143,38 @@ To benchmark passthrough super-resolution under real-world VR conditions, an exp
 
 \section{Experimental Results}
 
-\subsection{Benchmark Setup}
+\subsection{Benchmark Setup \& Training Convergence}
 The model was trained for 12 epochs (7 steps/epoch, batch size 16) with Distributed Data Parallel (DDP) across two NVIDIA Tesla~T4 GPUs, completing in 86.9~s. Efficiency benchmarks were recorded on the dual T4 workstation and profiled on Qualcomm hardware via AI Hub (SM8550/QCS6490 architecture). Image quality is evaluated across 15 benchmark scenes ($128 \times 128$ crops, $\times 4$ scale), reporting RGB PSNR (dB) and SSIM. Baselines comprise Bicubic interpolation and the official 43.8M StereoINR.
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}
+\begin{axis}[
+    width=8.5cm, height=4.5cm,
+    xlabel={Training epoch}, ylabel={Average multitask loss},
+    xmin=1, xmax=12, ymin=0.45, ymax=0.80,
+    xtick={1,2,3,4,5,6,7,8,9,10,11,12},
+    ymajorgrids, grid style={dashed, gray!30},
+]
+\addplot[blue, mark=*, mark size=1.5pt, thick] coordinates {
+    (1,0.5114) (2,0.7335) (3,0.5964) (4,0.6278) (5,0.6558) (6,0.6679)
+    (7,0.6456) (8,0.6833) (9,0.6208) (10,0.6544) (11,0.6464) (12,0.6611)
+};
+\end{axis}
+\end{tikzpicture}%
+}
+\caption{Total multitask training loss per epoch on dual Tesla T4 DDP (86.9\,s total runtime). Loss stabilizes near 0.64 after initial warm-up.}
+\label{fig:loss}
+\end{figure}
+
+Fig.~\ref{fig:loss} illustrates the training loss trajectory. The loss starts at 0.5114, peaks at 0.7335 in epoch 2 as knowledge distillation and epipolar constraints engage, and oscillates between 0.60 and 0.68. The brief 84-step schedule reflects an under-trained regime, demonstrating that competitive stereo performance is attainable even under strict compute budgets.
 
 \subsection{Hardware Efficiency \& Quantization}
 \begin{table}[t]
 \centering
 \caption{Hardware Efficiency. GPU: Dual Tesla T4; NPU: Qualcomm Hexagon Profile.}\label{tab:hw}
-\small
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrr@{}}
 \toprule
 \textbf{Metric} & \textbf{StereoINR (Official)} & \textbf{\ours{} (Ours)} \\
@@ -166,16 +192,18 @@ NPU Foveated Patch ($256{\times}256$) & --- & \textbf{4.20~ms} \\
 Glass-to-Glass Latency & $>$7{,}500~ms & \textbf{6.16~ms} (162.3~FPS) \\
 Peak NPU Memory & 1{,}840~MB & \textbf{77.29~MB} ($<$1\% RAM) \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ parameter reduction, 57.4$\times$ faster GPU latency, and 4.3$\times$ lower memory footprint. While full-frame inference (513.89~ms FP32, 358.64~ms INT8) exceeds the 11.11~ms budget, our \textbf{Foveated Passthrough Pipeline} (processing a central $256 \times 256$ foveal patch on the Hexagon NPU) executes in \textbf{4.20~ms}, yielding an end-to-end Glass-to-Glass latency of \textbf{6.16~ms} (162.3 FPS), well within the 90~Hz deadline. As visualized in Fig.~\ref{fig:pareto} and Fig.~\ref{fig:latency}, foveated execution is required to satisfy the 11.11~ms budget on standalone hardware. The NPU FP32 latency point uses the measured 513.89~ms runtime from Qualcomm AI Hub and assumes numerical PSNR equivalence to the workstation FP32 baseline prior to quantization.
 
 \begin{figure}[t]
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
-    width=\columnwidth, height=5.5cm,
+    width=8.5cm, height=5.5cm,
     xmode=log, xmin=0.5, xmax=10000, ymin=21, ymax=29.5,
     xtick={1,10,100,1000,10000}, xticklabels={1,10,100,1000,$10^4$},
     xlabel={Inference latency (ms, log scale)},
@@ -194,24 +222,26 @@ Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ pa
 
 \node[font=\scriptsize, anchor=west] at (axis cs:0.95,24.19) {Bicubic $4\times$};
 \node[font=\scriptsize, anchor=south] at (axis cs:130.65,25.05) {Ours, dual T4 (130.65\,ms)};
-\node[font=\scriptsize, anchor=north] at (axis cs:513.89,24.35) {Ours, Hexagon NPU FP32 (513.89\,ms)};
-\node[font=\scriptsize, anchor=east] at (axis cs:6000,27.32) {StereoINR 43.8M (7{,}500\,ms)};
+\node[font=\scriptsize, anchor=north] at (axis cs:513.89,24.35) {Ours, NPU FP32 (513.89\,ms)};
+\node[font=\scriptsize, anchor=east] at (axis cs:6000,27.32) {StereoINR (7{,}500\,ms)};
 \node[font=\scriptsize, anchor=west, red!60!black] at (axis cs:11.5,28.6) {90\,Hz VR budget (11.11\,ms)};
 \node[font=\tiny, anchor=west, align=left, blue!60!black] at (axis cs:0.6,22.0) {Feasible\\real-time\\regime};
 \end{axis}
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Quality--latency trade-off on the 15-scene crop benchmark ($\times 4$, $128\times128$ crops; mean Crop PSNR). StereoINR reaches higher PSNR (27.32\,dB) but takes 7{,}500\,ms ($675\times$ budget). Our full-frame model reduces latency by $57.4\times$ (130.65\,ms on dual T4) and requires foveation to meet the 90\,Hz constraint.}
 \label{fig:pareto}
 \end{figure}
 
 \begin{figure}[t]
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
-    xbar, xmode=log, xmin=1, xmax=30000,
-    width=\columnwidth, height=5.2cm, bar width=6pt,
+    xbar, xmode=log, xmin=1, xmax=60000,
+    width=8.5cm, height=4.8cm, bar width=6pt,
     ytick={0,1,2,3},
-    yticklabels={Foveated tile $256{\times}256$ (NPU),
+    yticklabels={Fovea tile $256^2$ (NPU),
                  Ours full frame (dual T4),
                  Ours full frame (NPU FP32),
                  StereoINR teacher (dual T4)},
@@ -231,8 +261,11 @@ Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ pa
 \node[font=\scriptsize, anchor=south west, red!60!black] at (axis cs:11.5,3.62)
     {90\,Hz budget: 11.11\,ms};
 \end{axis}
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{End-to-end latency against the Quest~3S 90\,Hz budget (11.11\,ms, dashed). Only the $256{\times}256$ foveal tile on the Hexagon NPU (4.20\,ms) fits within the budget.}
+\label{fig:latency}
+\end{figure}
 \label{fig:latency}
 \end{figure}
 
@@ -270,6 +303,7 @@ KITTI 2015 000000 & 26.31 / 0.7892 & 27.96 / 0.8742 & \textbf{26.49 / 0.7930} & 
 
 \begin{figure*}[t]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
     ybar=0pt,
@@ -300,7 +334,8 @@ KITTI 2015 000000 & 26.31 / 0.7892 & 27.96 / 0.8742 & \textbf{26.49 / 0.7930} & 
 };
 \legend{Bicubic Baseline, Ours (4.47M), StereoINR Teacher (43.8M)}
 \end{axis}
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Crop PSNR comparison across 15 benchmark scenes (P1--P8: Meta Quest~3S trajectory phases; Cloth2, Moto, Pipes: Middlebury; F0001, F0015: Flickr1024; K12, K15: KITTI).}
 \label{fig:bars}
 \end{figure*}
@@ -368,34 +403,6 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 \label{fig:visual_q3s}
 \end{figure*}
 
-\subsection{Training Loss Convergence}
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=\columnwidth,
-    height=4.6cm,
-    xlabel={Training Epoch},
-    ylabel={Average Multitask Loss},
-    xmin=1, xmax=12,
-    ymin=0.45, ymax=0.80,
-    xtick={1,2,3,4,5,6,7,8,9,10,11,12},
-    ymajorgrids,
-    grid style={dashed, gray!30}
-]
-\addplot[blue, mark=*, mark size=1.5pt, thick] coordinates {
-    (1, 0.5114) (2, 0.7335) (3, 0.5964) (4, 0.6278) (5, 0.6558) 
-    (6, 0.6679) (7, 0.6456) (8, 0.6833) (9, 0.6208) (10, 0.6544) 
-    (11, 0.6464) (12, 0.6611)
-};
-\end{axis}
-\end{tikzpicture}
-\caption{Average training loss per epoch on Dual Tesla T4 DDP (86.9~s total runtime). Loss stabilizes near the 0.64 floor after initial warm-up.}
-\label{fig:loss}
-\end{figure}
-
-Fig.~\ref{fig:loss} illustrates the training loss trajectory. The loss starts at 0.5114, peaks at 0.7335 in epoch 2 as knowledge distillation and epipolar constraints engage, and oscillates between 0.60 and 0.68. The brief 84-step schedule reflects an under-trained regime, demonstrating that competitive stereo performance is attainable even under strict compute budgets.
-
 \subsection{Architectural Scaling Analysis}
 \begin{table}[t]
 \centering
@@ -418,31 +425,33 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 \section{Limitations \& Discussion}
 \textbf{1. Monocular PSNR Gap.} Our 4.47M student model lags 2.58~dB behind the 43.8M teacher and outperforms Bicubic by a modest +0.56~dB average. Longer training schedules (200k+ iterations) are required to recover high-frequency textures.
 
-\textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras, foveation is necessarily fixed to the optical center (Fig.~\ref{fig:foveated}). A radial Hann window blends the neural tile into the peripheral bicubic passthrough without seam artifacts (Fig.~\ref{fig:hann}).
+\textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras, foveation is necessarily fixed to the optical center. A radial Hann window blends the neural tile into the peripheral bicubic passthrough without seam artifacts (Fig.~\ref{fig:foveated}).
 
 \begin{figure*}[t]
 \centering
+\begin{minipage}[c]{0.58\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
     >={Stealth[length=2mm]},
     box/.style={draw, rounded corners=2pt, align=center, font=\small,
-                minimum height=1.1cm, text width=3.3cm, fill=gray!5}]
+                minimum height=1.1cm, text width=2.8cm, fill=gray!5}]
 \node[box] (a) {Fixed central\\$256{\times}256$ tile\\(optical centre)};
-\node[box, right=1.0cm of a] (b) {EPA-1D inference\\on Hexagon NPU\\(4.20\,ms)};
-\node[box, right=1.0cm of b] (c) {Radial Hann\\$\alpha$-blend};
-\node[box, right=1.0cm of c] (d) {Display\\framebuffer};
+\node[box, right=0.6cm of a] (b) {EPA-1D inference\\on Hexagon NPU\\(4.20\,ms)};
+\node[box, right=0.6cm of b] (c) {Radial Hann\\$\alpha$-blend};
+\node[box, right=0.6cm of c] (d) {Display\\framebuffer};
 \draw[->, thick] (a) -- (b);
 \draw[->, thick] (b) -- (c);
 \draw[->, thick] (c) -- (d);
-\end{tikzpicture}
-\caption{Foveated passthrough pipeline. Quest~3S has no eye-tracking cameras, so the super-resolved tile is fixed to the optical centre. The Hann blend weight is plotted in Fig.~\ref{fig:hann}.}
-\label{fig:foveated}
-\end{figure*}
-
-\begin{figure}[t]
+\end{tikzpicture}%
+}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.40\textwidth}
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
-    width=\columnwidth, height=4.4cm,
+    width=6.5cm, height=3.8cm,
     xmin=0, xmax=1, ymin=0, ymax=1.05,
     xlabel={Normalized radius $t=(r-r_{\mathrm{in}})/(r_{\mathrm{out}}-r_{\mathrm{in}})$},
     ylabel={$\alpha(t)$},
@@ -451,10 +460,12 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 ]
 \addplot[blue, thick, domain=0:1, samples=120] {0.5+0.5*cos(180*x)};
 \end{axis}
-\end{tikzpicture}
-\caption{Radial Hann blending weight $\alpha(r)=0.5+0.5\cos\!\big(\pi\,\frac{r-r_{\mathrm{in}}}{r_{\mathrm{out}}-r_{\mathrm{in}}}\big)$ for $r_{\mathrm{in}}\le r\le r_{\mathrm{out}}$: $\alpha=1$ at the fovea and $\alpha=0$ at the outer radius, giving a smooth transition.}
-\label{fig:hann}
-\end{figure}
+\end{tikzpicture}%
+}
+\end{minipage}
+\caption{Foveated passthrough pipeline and Hann blending weight. Left: Fixed central $256\times256$ foveal tile pipeline (optical centre, 4.20\,ms on Hexagon NPU). Right: Radial Hann blending weight $\alpha(r)=0.5+0.5\cos\!\big(\pi\,\frac{r-r_{\mathrm{in}}}{r_{\mathrm{out}}-r_{\mathrm{in}}}\big)$ ensuring seamless alpha blending into peripheral passthrough without seam artifacts.}
+\label{fig:foveated}
+\end{figure*}
 
 \textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders.
 
