@@ -191,7 +191,7 @@ Fig.~\ref{fig:loss} illustrates the training loss trajectory. The loss starts at
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrr@{}}
 \toprule
-\textbf{Metric} & \textbf{StereoINR (Official)} & \textbf{\ours{} (Ours)} \\
+\textbf{Metric} & \textbf{StereoINR Teacher} & \textbf{Ours (EPA-1D)} \\
 \midrule
 Parameters & 43{,}791{,}595 & \textbf{4{,}468{,}180} ($9.8\times$) \\
 INT8 Model Size & 41.8~MB & \textbf{4.26~MB} \\
@@ -252,15 +252,16 @@ Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ pa
 \resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}
 \begin{axis}[
-    xbar, xmode=log, xmin=1, xmax=60000,
+    xbar, xmode=log, xmin=1, xmax=100000,
     width=8.5cm, height=4.8cm, bar width=6pt,
+    clip=false,
     ytick={0,1,2,3},
     yticklabels={Fovea tile $256^2$ (NPU),
                  Ours full frame (dual T4),
                  Ours full frame (NPU FP32),
                  StereoINR teacher (dual T4)},
     y tick label style={font=\scriptsize, align=right},
-    xtick={1,10,100,1000,10000}, xticklabels={1,10,100,1000,$10^4$},
+    xtick={1,10,100,1000,10000,100000}, xticklabels={1,10,100,$10^3$,$10^4$,$10^5$},
     xlabel={Latency (ms, log scale)},
     ymin=-0.6, ymax=3.9,
     enlarge y limits=false,
@@ -361,33 +362,33 @@ Concurrently, our model remains 2.58~dB below the StereoINR teacher \cite{stereo
 \begin{table}[!t]
 \centering
 \caption{Stereo Disparity MAE ($\downarrow$, lower is better) and Y-PSNR (dB) across International Benchmarks \cite{passr, ipassr}.}\label{tab:mae}
-\scriptsize
-\setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}llrrrr@{}}
 \toprule
-\textbf{Dataset} & \textbf{Model} & \textbf{Y-PSNR} & \textbf{Stereo MAE} & \textbf{vs. Teacher} & \textbf{vs. Bicubic} \\
+\textbf{Dataset} & \textbf{Model} & \textbf{Y-PSNR} & \textbf{Stereo MAE} & \textbf{vs.~Teacher} & \textbf{vs.~Bicubic} \\
 \midrule
 \multirow{3}{*}{Middlebury} 
 & Bicubic & 26.62 & 0.1326 & --- & Baseline \\
-& StereoINR Teacher & 29.59 & 0.1414 & Baseline & +6.6\% (Worse) \\
-& \textbf{\ours{} (Ours)} & 26.87 & \textbf{0.1290} & \textbf{$-$8.8\%} & \textbf{$-$2.7\%} \\
+& StereoINR Teacher & 29.59 & 0.1414 & Baseline & +6.6\% \\
+& \textbf{Ours (EPA-1D)} & 26.87 & \textbf{0.1290} & \textbf{$-$8.8\%} & \textbf{$-$2.7\%} \\
 \midrule
 \multirow{3}{*}{KITTI 2012} 
 & Bicubic & 26.16 & 0.0492 & --- & Baseline \\
-& StereoINR Teacher & 28.73 & 0.0558 & Baseline & +13.4\% (Worse) \\
-& \textbf{\ours{} (Ours)} & 26.47 & \textbf{0.0478} & \textbf{$-$14.3\%} & \textbf{$-$2.8\%} \\
+& StereoINR Teacher & 28.73 & 0.0558 & Baseline & +13.4\% \\
+& \textbf{Ours (EPA-1D)} & 26.47 & \textbf{0.0478} & \textbf{$-$14.3\%} & \textbf{$-$2.8\%} \\
 \midrule
 \multirow{3}{*}{KITTI 2015} 
 & Bicubic & 24.96 & 0.0522 & --- & Baseline \\
-& StereoINR Teacher & 27.44 & 0.0597 & Baseline & +14.4\% (Worse) \\
-& \textbf{\ours{} (Ours)} & 25.15 & \textbf{0.0502} & \textbf{$-$15.9\%} & \textbf{$-$3.8\%} \\
+& StereoINR Teacher & 27.44 & 0.0597 & Baseline & +14.4\% \\
+& \textbf{Ours (EPA-1D)} & 25.15 & \textbf{0.0502} & \textbf{$-$15.9\%} & \textbf{$-$3.8\%} \\
 \midrule
 \multirow{3}{*}{Flickr1024} 
 & Bicubic & 23.66 & 0.1360 & --- & Baseline \\
-& StereoINR Teacher & 25.41 & 0.1476 & Baseline & +8.5\% (Worse) \\
-& \textbf{\ours{} (Ours)} & 23.79 & \textbf{0.1348} & \textbf{$-$8.7\%} & \textbf{$-$0.9\%} \\
+& StereoINR Teacher & 25.41 & 0.1476 & Baseline & +8.5\% \\
+& \textbf{Ours (EPA-1D)} & 23.79 & \textbf{0.1348} & \textbf{$-$8.7\%} & \textbf{$-$0.9\%} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 Stereo disparity consistency was measured using the horizontal parallax difference after disparity compensation:
@@ -419,8 +420,7 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 \begin{table}[!b]
 \centering
 \caption{Architectural Scaling Hierarchy on Mobile Hardware.}\label{tab:scale}
-\scriptsize
-\setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
 \textbf{Configuration} & \textbf{Parameters} & \textbf{FP16 Size} & \textbf{Latency (ms)} & \textbf{FPS} & \textbf{VRAM (MB)} \\
@@ -430,7 +430,8 @@ Pro & 7.89M & 15.05~MB & 3{,}343.17 & 0.30 & 1{,}051.0 \\
 SOTA Parity & 16.22M & 30.93~MB & 5{,}309.59 & 0.19 & 1{,}341.1 \\
 Ultra & 30.82M & 58.78~MB & 11{,}340.16 & 0.09 & 1{,}665.4 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase in parameter scale increases peak memory by only 1.63$\times$ (1{,}021 to 1{,}665~MB), whereas execution latency scales 7$\times$, reinforcing the necessity of compact backbones \cite{convnext, mobilenetv3, nafnet, repvgg} and bounded normalization-free activations \cite{dyt, nfnet} for real-time mobile operation.
 
