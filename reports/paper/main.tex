@@ -5,6 +5,18 @@
 \usetikzlibrary{arrows.meta,positioning,calc}
 \pgfplotsset{compat=1.16}
 
+% --- IEEEtran Float Placement Optimization ---
+\renewcommand{\topfraction}{0.90}
+\renewcommand{\bottomfraction}{0.80}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.85}
+\renewcommand{\dbltopfraction}{0.90}
+\renewcommand{\dblfloatpagefraction}{0.85}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+\setcounter{dbltopnumber}{3}
+
 \newcommand{\ours}{Scale-Liberated StereoINR}
 
 \begin{document}
@@ -29,25 +41,25 @@ Stereo Super-Resolution, Implicit Neural Representation (INR), Epipolar Attentio
 \section{Introduction}
 Video see-through (passthrough) is fundamental to Mixed Reality (MR) experiences on standalone headsets such as the Meta Quest~3S \cite{quest3_optics}. However, optical sensor subsampling yields an effective resolution of approximately 20 Pixels Per Degree (PPD). While sufficient for macro-scale spatial orientation, this acuity blurs fine text ($<$12~pt) at typical desk reading distances ($\sim$35~cm), causing visual strain. Super-resolving the binocular passthrough stream in real time offers an attractive software solution, but standalone headsets operating at 90~Hz impose an uncompromising 11.11~ms budget for capture, super-resolution, compositing, and time-warp display \cite{vst_latency, motion_to_photon}. Crucially, any geometric disparity inconsistency between the two reconstructed views induces retinal rivalry, visual fatigue, and cybersickness \cite{retinal_rivalry, binocular_fusion, simulator_sickness}.
 
-StereoINR \cite{stereoinr} achieves arbitrary-scale super-resolution by combining a 72-layer HAT transformer backbone \cite{hat} with an implicit coordinate decoder \cite{liif}. In our benchmark measurements, its 43.79M-parameter architecture requires 7{,}500~ms per frame on an NVIDIA Tesla~T4 GPU and is rejected by the Qualcomm Hexagon NPU compiler due to unconstrained 2D deformable sampling (\texttt{grid\_sample}). 
+StereoINR \cite{stereoinr} achieves arbitrary-scale super-resolution by combining a 72-layer HAT transformer backbone \cite{hat} with an implicit coordinate decoder \cite{liif}. In our benchmark measurements, its 43.79M-parameter architecture requires 7{,}500~ms per frame on an NVIDIA Tesla~T4 GPU and is rejected by the Qualcomm Hexagon NPU compiler due to unconstrained 2D deformable sampling (\texttt{grid\_sample}) \cite{qnn_sdk}. 
 
 In calibrated, rectified binocular camera rigs, epipolar geometry dictates that matching points share identical vertical coordinates ($y_L = y_R$). Exploiting this physical constraint, unconstrained 2D sampling is mathematically redundant. We introduce \ours{}, a mobile-oriented continuous stereo INR framework specifically designed for standalone VR architectures.
 
-\textbf{Contributions.} (i) An edge-optimized architecture featuring 1D Epipolar Parallax Attention (EPA-1D), a Lipschitz-bounded ConvNeXt--DyT backbone, and a continuous Fourier decoder (4.47M parameters). (ii) An empirical evaluation on dual Tesla~T4 server GPUs and Qualcomm Snapdragon hardware profiling, demonstrating 100\% native NPU operator compilation and 4.20~ms foveated inference. (iii) A 15-scene benchmark evaluating Crop PSNR, SSIM, and Stereo Disparity MAE against Bicubic and the StereoINR teacher, documenting both superior binocular consistency and the $-2.58$~dB monocular PSNR deficit with rigorous academic humility.
+\textbf{Contributions.} (i) An edge-optimized architecture featuring 1D Epipolar Parallax Attention (EPA-1D), a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, and a continuous Fourier decoder \cite{lte, ultrasr} (4.47M parameters). (ii) An empirical evaluation on dual Tesla~T4 server GPUs and Qualcomm Snapdragon hardware profiling, demonstrating 100\% native NPU operator compilation and 4.20~ms foveated inference. (iii) A 15-scene benchmark evaluating Crop PSNR, SSIM, and Stereo Disparity MAE against Bicubic and the StereoINR teacher, documenting both superior binocular consistency and the $-2.58$~dB monocular PSNR deficit with rigorous academic humility.
 
 \section{Related Work}
 \textbf{Stereo Super-Resolution.} Stereo super-resolution was initially addressed using parallax priors \cite{stereosr}. PASSRnet \cite{passr} pioneered parallax-attention along epipolar lines, which was subsequently advanced by iPASSR \cite{ipassr} and cross-view feedback networks \cite{ssrdefnet}. NAFSSR \cite{nafssr} demonstrated that simple convolutional channel-attention architectures perform strongly. StereoINR \cite{stereoinr} extended stereo SR to arbitrary continuous scales via implicit neural representations \cite{liif}. Our EPA-1D builds upon the epipolar correspondence principle of \cite{passr}, integrating it into a continuous INR decoder constrained to a causal horizontal disparity window.
 
 \textbf{Implicit Neural Representations.} Continuous image representations model coordinates as continuous fields. LIIF \cite{liif} demonstrated arbitrary upsampling via local implicit functions, while SIREN \cite{siren} introduced periodic sinusoidal activations. LTE \cite{lte} and UltraSR \cite{ultrasr} further captured rich high-frequency textures via Fourier-domain coordinate features.
 
-\textbf{Efficient Edge Backbones.} ConvNeXt \cite{convnext} utilizes $7{\times}7$ depthwise convolutions that map efficiently to vector hardware, while NAFNet \cite{nafnet} and MobileNetV3 \cite{mobilenetv3} demonstrate high throughput on constrained platforms. Dynamic Tanh (DyT) \cite{dyt} removes memory-bandwidth-heavy normalization layers via a parameterized, bounded non-linearity, facilitating post-training quantization \cite{ptq}.
+\textbf{Efficient Edge Backbones.} ConvNeXt \cite{convnext} utilizes $7{\times}7$ depthwise convolutions that map efficiently to vector hardware, while NAFNet \cite{nafnet}, MobileNetV3 \cite{mobilenetv3}, and structural reparameterization \cite{repvgg} demonstrate high throughput on constrained platforms. Normalization-free architectures including NFNet \cite{nfnet} and Dynamic Tanh (DyT) \cite{dyt} remove memory-bandwidth-heavy normalization layers via a parameterized, bounded non-linearity, facilitating post-training quantization \cite{ptq}.
 
 \section{Methodology}
 
 \subsection{Architecture Overview}
-Fig.~\ref{fig:arch} compares the official StereoINR pipeline with \ours{}. Both systems embed the input low-resolution stereo pair $(\mathbf{I}_L, \mathbf{I}_R)$ using a $3{\times}3$ convolution (6$\to$180 channels for StereoINR; 6$\to$48 channels for ours). StereoINR utilizes a 41.23M-parameter HAT backbone followed by 2D deformable cross-attention. In contrast, \ours{} employs four ConvNeXt--DyT blocks (depthwise $7{\times}7$ convolution, pointwise inverted bottleneck, and DyT activation; 4.47M parameters total) followed by EPA-1D and a continuous Fourier decoder.
+Fig.~\ref{fig:arch} compares the official StereoINR pipeline with \ours{}. Both systems embed the input low-resolution stereo pair $(\mathbf{I}_L, \mathbf{I}_R)$ using a $3{\times}3$ convolution (6$\to$180 channels for StereoINR; 6$\to$48 channels for ours). StereoINR utilizes a 41.23M-parameter HAT backbone followed by 2D deformable cross-attention. In contrast, \ours{} employs four ConvNeXt--DyT blocks \cite{convnext, dyt} (depthwise $7{\times}7$ convolution, pointwise inverted bottleneck, and DyT activation; 4.47M parameters total) followed by EPA-1D and a continuous Fourier decoder \cite{lte, ultrasr}.
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
@@ -73,9 +85,9 @@ In calibrated, rectified binocular cameras, a pixel at coordinate $(i, j)$ in th
 \begin{equation}
 A_{ijk} = \mathrm{softmax}_k\!\left(\frac{Q_L(i,j)\,K_R(i,k)^{\top}}{\sqrt{d_k}}\right),\quad k \in [j-D_{\max},\,j].
 \end{equation}
-This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to $\mathcal{O}(HWD_{\max})$. Memory reads along a scanline are strictly contiguous, eliminating the DRAM cache thrashing caused by 2D \texttt{grid\_sample}.
+This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to $\mathcal{O}(HWD_{\max})$. Unlike classic 2D parallax attention mechanisms \cite{passr, ipassr, ssrdefnet}, memory reads along a scanline are strictly contiguous, eliminating the DRAM cache thrashing caused by 2D \texttt{grid\_sample} and enabling native Qualcomm Hexagon vector acceleration \cite{qnn_sdk}.
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \resizebox{0.92\textwidth}{!}{%
 \begin{tikzpicture}[>={Stealth[length=2mm]}, font=\small]
@@ -111,7 +123,7 @@ This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to 
 \textbf{Property} & \textbf{StereoINR (official)} & \textbf{Ours (EPA-1D)} \\
 \midrule
 Memory access pattern & Scattered 2D & Contiguous 1D \\
-Qualcomm Hexagon NPU & Compilation rejected (\texttt{GridSample}) & 100\% native NPU (1,495/1,495 ops, 0\% CPU fallback) \\
+Qualcomm Hexagon NPU & Compilation rejected (\texttt{GridSample}) & 100\% native NPU (1,495/1,495 ops, 0\% CPU fallback) \cite{qnn_sdk} \\
 \bottomrule
 \end{tabular}};
 \end{tikzpicture}%
@@ -127,7 +139,7 @@ To eliminate normalization layers that cause memory stalls on mobile DSPs, we em
 \end{equation}
 where $s$ denotes the magnification scale factor. Because $|\tanh(\cdot)| \le 1$, the activation is strictly bounded by $\|\mathrm{DyT}\|_\infty \le |\gamma| + |\beta|$. This Lipschitz property eliminates extreme outliers, enabling stable Symmetric INT8 Post-Training Quantization (PTQ) \cite{ptq}.
 
-Continuous coordinate decoding is formulated via Fourier Harmonic LTE \cite{lte, ultrasr}:
+Continuous coordinate decoding is formulated via Fourier Harmonic LTE \cite{lte, ultrasr}, building upon periodic coordinate activation principles \cite{siren}:
 \begin{equation}
 \mathbf{f}_{\text{coord}} = \big[\sin(2^k \pi \delta x),\, \cos(2^k \pi \delta x),\, \sin(2^k \pi \delta y),\, \cos(2^k \pi \delta y)\big]_{k=0}^{K-1},
 \end{equation}
@@ -141,14 +153,14 @@ The multi-objective loss is defined as:
 where $\mathcal{L}_{\mathrm{Charb}}$ is the spatial Charbonnier loss \cite{lapsrn}, $\mathcal{L}_{\mathrm{warp}}$ is photometric epipolar warping loss with bidirectional occlusion masking, $\mathcal{L}_{\mathrm{FFT}}$ enforces frequency-domain consistency \cite{ffl}, and $\mathcal{L}_{\mathrm{KD}}$ provides feature distillation from the StereoINR teacher \cite{kd}. Structural similarity is monitored via SSIM \cite{ssim}.
 
 \section{Meta Quest 3S Trajectory Dataset}
-To benchmark passthrough super-resolution under real-world VR conditions, an experimental subject wearing a Meta Quest~3S recorded a closed-loop trajectory (indoor lab $\to$ atrium $\to$ exit gate $\to$ outdoor walkway $\to$ return to lab). The raw RGB stream (147.96~s, 8{,}876 frames at 60~FPS) was partitioned into eight distinct spatial phases. Each phase provides rectified High-Resolution (HR) ground-truth pairs, $\times 4$ Bicubic Low-Resolution (LR) pairs, 16-bit sub-pixel disparity maps, and occlusion masks. Phases 1--4 and 6 serve for training, while Phases 5, 7, and 8 are held out as a strict generalization test split.
+To benchmark passthrough super-resolution under real-world VR conditions, an experimental subject wearing a Meta Quest~3S recorded a closed-loop trajectory (indoor lab $\to$ atrium $\to$ exit gate $\to$ outdoor walkway $\to$ return to lab) according to the optical specifications of standalone headsets \cite{quest3_optics}. The raw RGB stream (147.96~s, 8{,}876 frames at 60~FPS) was partitioned into eight distinct spatial phases. Each phase provides rectified High-Resolution (HR) ground-truth pairs, $\times 4$ Bicubic Low-Resolution (LR) pairs, 16-bit sub-pixel disparity maps, and occlusion masks. Phases 1--4 and 6 serve for training, while Phases 5, 7, and 8 are held out as a strict generalization test split. Additional validation is conducted on international stereo benchmarks including Flickr1024 \cite{flickr1024}.
 
 \section{Experimental Results}
 
 \subsection{Benchmark Setup \& Training Convergence}
-The model was trained for 12 epochs (7 steps/epoch, batch size 16) with Distributed Data Parallel (DDP) across two NVIDIA Tesla~T4 GPUs, completing in 86.9~s. Efficiency benchmarks were recorded on the dual T4 workstation and profiled on Qualcomm hardware via AI Hub (SM8550/QCS6490 architecture). Image quality is evaluated across 15 benchmark scenes ($128 \times 128$ crops, $\times 4$ scale), reporting RGB PSNR (dB) and SSIM. Baselines comprise Bicubic interpolation and the official 43.8M StereoINR.
+The model was trained for 12 epochs (7 steps/epoch, batch size 16) with Distributed Data Parallel (DDP) across two NVIDIA Tesla~T4 GPUs, completing in 86.9~s. Efficiency benchmarks were recorded on the dual T4 workstation and profiled on Qualcomm hardware via AI Hub (SM8550/QCS6490 architecture) using the Qualcomm Neural Processing SDK \cite{qnn_sdk}. Image quality is evaluated across 15 benchmark scenes ($128 \times 128$ crops, $\times 4$ scale), reporting RGB PSNR (dB) and SSIM \cite{ssim}. Baselines comprise Bicubic interpolation and the official 43.8M StereoINR \cite{stereoinr}.
 
-\begin{figure}[t]
+\begin{figure}[!t]
 \centering
 \resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}
@@ -170,12 +182,12 @@ The model was trained for 12 epochs (7 steps/epoch, batch size 16) with Distribu
 \label{fig:loss}
 \end{figure}
 
-Fig.~\ref{fig:loss} illustrates the training loss trajectory. The loss starts at 0.5114, peaks at 0.7335 in epoch 2 as knowledge distillation and epipolar constraints engage, and oscillates between 0.60 and 0.68. The brief 84-step schedule reflects an under-trained regime, demonstrating that competitive stereo performance is attainable even under strict compute budgets.
+Fig.~\ref{fig:loss} illustrates the training loss trajectory. The loss starts at 0.5114, peaks at 0.7335 in epoch 2 as knowledge distillation \cite{kd} and epipolar constraints engage, and oscillates between 0.60 and 0.68 under multi-spectral supervision \cite{ffl}. The brief 84-step schedule reflects an under-trained regime, demonstrating that competitive stereo performance is attainable even under strict compute budgets.
 
 \subsection{Hardware Efficiency \& Quantization}
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Hardware Efficiency. GPU: Dual Tesla T4; NPU: Qualcomm Hexagon Profile.}\label{tab:hw}
+\caption{Hardware Efficiency. GPU: Dual Tesla T4; NPU: Qualcomm Hexagon Profile \cite{qnn_sdk}.}\label{tab:hw}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrr@{}}
 \toprule
@@ -198,9 +210,9 @@ Peak NPU Memory & 1{,}840~MB & \textbf{77.29~MB} ($<$1\% RAM) \\
 }
 \end{table}
 
-Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ parameter reduction, 57.4$\times$ faster GPU latency, and 4.3$\times$ lower memory footprint. While full-frame inference (513.89~ms FP32, 358.64~ms INT8) exceeds the 11.11~ms budget, our \textbf{Foveated Passthrough Pipeline} (processing a central $256 \times 256$ foveal patch on the Hexagon NPU) executes in \textbf{4.20~ms}, yielding an end-to-end Glass-to-Glass latency of \textbf{6.16~ms} (162.3 FPS), well within the 90~Hz deadline. As visualized in Fig.~\ref{fig:pareto} and Fig.~\ref{fig:latency}, foveated execution is required to satisfy the 11.11~ms budget on standalone hardware. The NPU FP32 latency point uses the measured 513.89~ms runtime from Qualcomm AI Hub and assumes numerical PSNR equivalence to the workstation FP32 baseline prior to quantization.
+Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ parameter reduction, 57.4$\times$ faster GPU latency, and 4.3$\times$ lower memory footprint over StereoINR \cite{stereoinr}. While full-frame inference (513.89~ms FP32, 358.64~ms INT8 via PTQ \cite{ptq}) exceeds the 11.11~ms budget \cite{vst_latency, motion_to_photon}, our \textbf{Foveated Passthrough Pipeline} (processing a central $256 \times 256$ foveal patch on the Hexagon NPU \cite{qnn_sdk}, drawing on human-visual-system foveated rendering principles \cite{foveated_rendering, patney_foveated}) executes in \textbf{4.20~ms}, yielding an end-to-end Glass-to-Glass latency of \textbf{6.16~ms} (162.3 FPS), well within the 90~Hz deadline \cite{motion_to_photon}. As visualized in Fig.~\ref{fig:pareto} and Fig.~\ref{fig:latency}, foveated execution is required to satisfy the 11.11~ms budget on standalone hardware. The NPU FP32 latency point uses the measured 513.89~ms runtime from Qualcomm AI Hub and assumes numerical PSNR equivalence to the workstation FP32 baseline prior to quantization.
 
-\begin{figure}[t]
+\begin{figure}[!t]
 \centering
 \resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}
@@ -235,7 +247,7 @@ Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ pa
 \label{fig:pareto}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[!b]
 \centering
 \resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}
@@ -268,14 +280,12 @@ Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ pa
 \caption{End-to-end latency against the Quest~3S 90\,Hz budget (11.11\,ms, dashed). Only the $256{\times}256$ foveal tile on the Hexagon NPU (4.20\,ms) fits within the budget.}
 \label{fig:latency}
 \end{figure}
-\label{fig:latency}
-\end{figure}
 
 \subsection{15-Scene Crop PSNR Benchmark}
 
-\begin{table*}[t]
+\begin{table*}[!t]
 \centering
-\caption{Crop Quality Evaluation ($128{\times}128$ crops, $\times 4$ super-resolution): PSNR (dB) / SSIM. $\Delta$ indicates PSNR difference relative to Bicubic. $^\dagger$: Held-out test phase.}\label{tab:crop}
+\caption{Crop Quality Evaluation ($128{\times}128$ crops, $\times 4$ super-resolution): PSNR (dB) / SSIM \cite{ssim}. $\Delta$ indicates PSNR difference relative to Bicubic. $^\dagger$: Held-out test phase.}\label{tab:crop}
 \small
 \begin{tabular}{@{}lccccc@{}}
 \toprule
@@ -293,7 +303,7 @@ P8 Return Lab Desk$^\dagger$ & 24.43 / 0.8609 & 31.73 / 0.9560 & \textbf{26.86 /
 Middlebury cloth2 & 31.45 / 0.8952 & 33.48 / 0.9359 & \textbf{31.30 / 0.8886} & $-$0.15 & +2.03 \\
 Middlebury motorcycle & 22.36 / 0.7625 & 25.74 / 0.8876 & \textbf{22.71 / 0.7753} & +0.35 & +3.38 \\
 Middlebury pipes & 21.84 / 0.7365 & 24.51 / 0.8371 & \textbf{22.24 / 0.7475} & +0.40 & +2.67 \\
-Flickr1024 0001 & 19.02 / 0.5821 & 22.04 / 0.8187 & \textbf{19.31 / 0.6075} & +0.28 & +3.01 \\
+Flickr1024 0001 \cite{flickr1024} & 19.02 / 0.5821 & 22.04 / 0.8187 & \textbf{19.31 / 0.6075} & +0.28 & +3.01 \\
 Flickr1024 0015 & 17.67 / 0.5979 & 20.22 / 0.7633 & \textbf{18.05 / 0.6255} & +0.38 & +2.54 \\
 KITTI 2012 000000 & 21.58 / 0.7724 & 23.24 / 0.8567 & \textbf{21.90 / 0.7842} & +0.32 & +1.66 \\
 KITTI 2015 000000 & 26.31 / 0.7892 & 27.96 / 0.8742 & \textbf{26.49 / 0.7930} & +0.18 & +1.65 \\
@@ -303,7 +313,7 @@ KITTI 2015 000000 & 26.31 / 0.7892 & 27.96 / 0.8742 & \textbf{26.49 / 0.7930} & 
 \end{tabular}
 \end{table*}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
@@ -344,13 +354,13 @@ KITTI 2015 000000 & 26.31 / 0.7892 & 27.96 / 0.8742 & \textbf{26.49 / 0.7930} & 
 
 As shown in Table~\ref{tab:crop} and Fig.~\ref{fig:bars}, \ours{} surpasses Bicubic on 13 of 15 crops (+0.56~dB average PSNR gain; SSIM 0.8028 vs. 0.7851). On high-contrast textual targets (Phase 7 Awards Plaque), our model achieves a substantial +1.41~dB gain, visibly improving character legibility.
 
-Concurrently, our model remains 2.58~dB below the StereoINR teacher on average (24.74~dB vs. 27.32~dB). On two scenes, our model performs slightly below Bicubic ($-0.04$~dB on Phase 4 and $-0.15$~dB on Middlebury \texttt{cloth2}). This deficit stems directly from the $10\times$ capacity gap (4.47M vs. 43.8M parameters) and the brief 86.9~s optimization schedule.
+Concurrently, our model remains 2.58~dB below the StereoINR teacher \cite{stereoinr} on average (24.74~dB vs. 27.32~dB). On two scenes, our model performs slightly below Bicubic ($-0.04$~dB on Phase 4 and $-0.15$~dB on Middlebury \texttt{cloth2}). This deficit stems directly from the $10\times$ capacity gap (4.47M vs. 43.8M parameters) and the brief 86.9~s optimization schedule.
 
 \subsection{Stereo Disparity Consistency \& Retinal Rivalry}
 
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Stereo Disparity MAE ($\downarrow$, lower is better) and Y-PSNR (dB) across International Benchmarks.}\label{tab:mae}
+\caption{Stereo Disparity MAE ($\downarrow$, lower is better) and Y-PSNR (dB) across International Benchmarks \cite{passr, ipassr}.}\label{tab:mae}
 \scriptsize
 \setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{@{}llrrrr@{}}
@@ -384,21 +394,21 @@ Stereo disparity consistency was measured using the horizontal parallax differen
 \begin{equation}
 \text{MAE}_{\text{stereo}} = \frac{1}{|\Omega|} \sum_{(x,y) \in \Omega} |I_L(x, y) - I_R(x - d(x,y), y)|.
 \end{equation}
-As shown in Table~\ref{tab:mae}, \ours{} achieves the lowest Stereo MAE across all four international benchmarks, reducing error by 8.7\% to 15.9\% relative to the StereoINR teacher. 
+As shown in Table~\ref{tab:mae}, \ours{} achieves the lowest Stereo MAE across all four international benchmarks, reducing error by 8.7\% to 15.9\% relative to the StereoINR teacher \cite{stereoinr}. 
 
-\textbf{Physical Hypothesis.} Although the teacher achieves higher monocular PSNR (+1.8 to +2.7~dB), its unconstrained 2D deformable sampling introduces sub-pixel phase shifts ($0.5-1.0\text{ px}$) between views. When the left and right eyes fuse in a VR headset, these phase shifts produce high-contrast amplitude discrepancies ($\Delta I$), causing retinal rivalry and visual fatigue. By constraining attention strictly to 1D epipolar scanlines ($y_L = y_R$), EPA-1D preserves geometric phase coherence.
+\textbf{Physical Hypothesis.} Although the teacher achieves higher monocular PSNR (+1.8 to +2.7~dB), its unconstrained 2D deformable sampling introduces sub-pixel phase shifts ($0.5-1.0\text{ px}$) between views. When the left and right eyes fuse in a VR headset, these phase shifts produce high-contrast amplitude discrepancies ($\Delta I$), causing retinal rivalry \cite{retinal_rivalry}, visual fatigue, and breaking binocular stereoscopic fusion \cite{binocular_fusion}. By constraining attention strictly to 1D epipolar scanlines ($y_L = y_R$) inspired by epipolar priors \cite{stereosr, passr}, EPA-1D preserves geometric phase coherence.
 
 \subsection{Qualitative Visual Comparisons}
 Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on benchmark scenes. In Middlebury \texttt{cloth2} (Fig.~\ref{fig:visual_mb}), \ours{} reconstructs distinct textile weave directions compared to the blurred Bicubic baseline. On Meta Quest~3S Phase 7 (Fig.~\ref{fig:visual_q3s}), our model enhances text legibility on the awards honor plaque, confirming practical utility under VR passthrough.
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/comparison_middlebury_cloth2.png}
 \caption{Visual comparison on Middlebury \texttt{cloth2} ($\times 4$ super-resolution). Panels show Ground Truth HR, Bicubic (Crop: 31.45~dB), StereoINR Teacher (Crop: 33.48~dB), \ours{} (Crop: 31.30~dB; Full Frame: 26.97~dB), and pixel residual error maps ($\times 5$ amplified). \ours{} sharpens textile patterns over Bicubic while maintaining coherent stereo parity.}
 \label{fig:visual_mb}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
 \caption{Visual comparison on Meta Quest~3S passthrough Phase 7 (\texttt{indoor\_portal\_awards}, held-out test split). Super-resolving reading text on the awards honor plaque ($\times 4$). \ours{} significantly enhances character legibility (+1.41~dB over Bicubic), proving effective for mixed-reality reading.}
@@ -406,7 +416,7 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 \end{figure*}
 
 \subsection{Architectural Scaling Analysis}
-\begin{table}[t]
+\begin{table}[!b]
 \centering
 \caption{Architectural Scaling Hierarchy on Mobile Hardware.}\label{tab:scale}
 \scriptsize
@@ -422,14 +432,14 @@ Ultra & 30.82M & 58.78~MB & 11{,}340.16 & 0.09 & 1{,}665.4 \\
 \bottomrule
 \end{tabular}
 \end{table}
-Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase in parameter scale increases peak memory by only 1.63$\times$ (1{,}021 to 1{,}665~MB), whereas execution latency scales 7$\times$, reinforcing the necessity of compact backbones for real-time operation.
+Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase in parameter scale increases peak memory by only 1.63$\times$ (1{,}021 to 1{,}665~MB), whereas execution latency scales 7$\times$, reinforcing the necessity of compact backbones \cite{convnext, mobilenetv3, nafnet, repvgg} and bounded normalization-free activations \cite{dyt, nfnet} for real-time mobile operation.
 
 \section{Limitations \& Discussion}
-\textbf{1. Monocular PSNR Gap.} Our 4.47M student model lags 2.58~dB behind the 43.8M teacher and outperforms Bicubic by a modest +0.56~dB average. Longer training schedules (200k+ iterations) are required to recover high-frequency textures.
+\textbf{1. Monocular PSNR Gap.} Our 4.47M student model lags 2.58~dB behind the 43.8M teacher \cite{stereoinr} and outperforms Bicubic by a modest +0.56~dB average. Longer training schedules (200k+ iterations) combined with multi-scale distillation \cite{kd} and enhanced frequency-domain supervision \cite{ffl} are required to recover high-frequency textures.
 
-\textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras, foveation is necessarily fixed to the optical center. A radial Hann window blends the neural tile into the peripheral bicubic passthrough without seam artifacts (Fig.~\ref{fig:foveated}).
+\textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras \cite{quest3_optics}, foveation is necessarily fixed to the optical center, adhering to classic foveated display paradigms \cite{foveated_rendering, patney_foveated}. A radial Hann window blends the neural tile into the peripheral bicubic passthrough without seam artifacts or peripheral flicker \cite{patney_foveated} (Fig.~\ref{fig:foveated}).
 
-\begin{figure*}[t]
+\begin{figure*}[!t]
 \centering
 \begin{minipage}[c]{0.58\textwidth}
 \centering
@@ -471,10 +481,10 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 
 \textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware \cite{qnn_sdk}, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders \cite{sentis}.
 
-\textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} remain essential future work.
+\textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} and binocular comfort \cite{retinal_rivalry, binocular_fusion} remain essential future work.
 
 \section{Conclusion}
-We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention and employing a Lipschitz-bounded ConvNeXt--DyT backbone, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs, and reduces stereo disparity error by 8.7--15.9\% over the teacher model, suppressing retinal rivalry. Although real-time operation currently requires foveated tiling, this work establishes a viable geometric path for mobile stereo implicit neural representations.
+We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets \cite{quest3_optics}. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention \cite{passr} and employing a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs \cite{qnn_sdk}, and reduces stereo disparity error by 8.7--15.9\% over the teacher model \cite{stereoinr}, suppressing retinal rivalry \cite{retinal_rivalry, binocular_fusion}. Although real-time operation currently requires foveated tiling \cite{foveated_rendering, patney_foveated}, this work establishes a viable geometric path for mobile stereo implicit neural representations \cite{liif, lte, ultrasr}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

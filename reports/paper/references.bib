@@ -1,53 +1,12 @@
-@inproceedings{stereoinr,
-  author    = {Zhang, Hao and Wang, Yibo and Dong, Chao and Sheng, Xin},
-  title     = {{StereoINR}: Continuous Stereo Image Super-Resolution via Implicit Neural Representations},
-  booktitle = {Proceedings of the ACM International Conference on Multimedia (ACM MM)},
-  pages     = {1--10},
-  year      = {2025}
-}
+% =============================================================================
+% Scale-Liberated StereoINR: Authoritative Bibliography
+% Verified & Formatted for IEEEtran LaTeX Compilation
+% Domains: INR, Stereo SR, Backbones, DyT, Losses, VR Optics/Latency, Edge NPU
+% =============================================================================
 
-@inproceedings{passr,
-  author    = {Wang, Longguang and Wang, Yingqian and Wang, Zhengfa and Liang, Zheng and An, Wei},
-  title     = {Learning Parallax Attention for Stereo Image Super-Resolution},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  pages     = {12250--12259},
-  year      = {2019}
-}
-
-@article{ipassr,
-  author    = {Wang, Yingqian and Wang, Longguang and Yang, Jungang and An, Wei and Guo, Yulan},
-  title     = {Flickr1024: A Large-Scale Dataset for Stereo Image Super-Resolution and Parallax Attention Evaluation},
-  journal   = {IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)},
-  volume    = {44},
-  number    = {12},
-  pages     = {8993--9008},
-  year      = {2021}
-}
-
-@inproceedings{nafssr,
-  author    = {Chu, Xiaojie and Chen, Liangyu and Yu, Wenqing},
-  title     = {{NAFSSR}: Stereo Image Super-Resolution Using {NAFNet}},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
-  pages     = {1239--1248},
-  year      = {2022}
-}
-
-@article{ssrdefnet,
-  author    = {Dai, Qian and Cheng, Jun and Wang, Ying and Zhang, Lei},
-  title     = {Feedback Network for Cross-View Stereo Super-Resolution},
-  journal   = {IEEE Transactions on Multimedia (TMM)},
-  volume    = {23},
-  pages     = {3421--3433},
-  year      = {2021}
-}
-
-@inproceedings{stereosr,
-  author    = {Jeon, Daniel S. and Baek, Seung-Hwan and Choi, Incheol and Kim, Min H.},
-  title     = {Enhancing the Spatial Resolution of Stereo Images Using a Parallax Prior},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  pages     = {1721--1730},
-  year      = {2018}
-}
+% -----------------------------------------------------------------------------
+% Domain 1: Continuous Implicit Neural Representations (INRs)
+% -----------------------------------------------------------------------------
 
 @inproceedings{liif,
   author    = {Chen, Yinbo and Liu, Sifei and Wang, Xiaolong},
@@ -65,12 +24,11 @@
   year      = {2022}
 }
 
-@inproceedings{ultrasr,
-  author    = {Xu, Xingqian and Gu, Jiayi and Zhai, Mengxiao and Shen, Xiaohui and Huang, Thomas S.},
-  title     = {{UltraSR}: Spatial Encoding for High-Resolution Continuous Image Synthesis},
-  booktitle = {Proceedings of the European Conference on Computer Vision (ECCV)},
-  pages     = {415--431},
-  year      = {2022}
+@article{ultrasr,
+  author    = {Xu, Xingqian and Wang, Zhangyang and Shi, Humphrey},
+  title     = {{UltraSR}: Spatial Encoding is a Missing Key for Implicit Image Function-Based Arbitrary-Scale Super-Resolution},
+  journal   = {arXiv preprint arXiv:2103.12716},
+  year      = {2021}
 }
 
 @inproceedings{siren,
@@ -82,28 +40,76 @@
   year      = {2020}
 }
 
+% -----------------------------------------------------------------------------
+% Domain 2: Stereo Super-Resolution & Epipolar Parallax Attention
+% -----------------------------------------------------------------------------
+
+@inproceedings{stereosr,
+  author    = {Jeon, Daniel S. and Baek, Seung-Hwan and Choi, Inchang and Kim, Min H.},
+  title     = {Enhancing the Spatial Resolution of Stereo Images Using a Parallax Prior},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {1721--1730},
+  year      = {2018}
+}
+
+@inproceedings{passr,
+  author    = {Wang, Longguang and Wang, Yingqian and Liang, Zhengfa and Lin, Zaiping and Yang, Jungang and An, Wei and Guo, Yulan},
+  title     = {Learning Parallax Attention for Stereo Image Super-Resolution},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {12250--12259},
+  year      = {2019}
+}
+
+@inproceedings{flickr1024,
+  author    = {Wang, Yingqian and Wang, Longguang and Yang, Jungang and An, Wei and Guo, Yulan},
+  title     = {{Flickr1024}: A Large-Scale Dataset for Stereo Image Super-Resolution},
+  booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision Workshops (ICCVW)},
+  pages     = {3852--3857},
+  year      = {2019}
+}
+
+@inproceedings{ipassr,
+  author    = {Wang, Yingqian and Ying, Xinyi and Wang, Longguang and Yang, Jungang and An, Wei and Guo, Yulan},
+  title     = {Symmetric Parallax Attention for Stereo Image Super-Resolution},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  pages     = {766--775},
+  year      = {2021}
+}
+
+@inproceedings{ssrdefnet,
+  author    = {Dai, Qinyan and Li, Juncheng and Yi, Qiaosi and Fang, Faming and Zhang, Guixu},
+  title     = {Feedback Network for Mutually Boosted Stereo Image Super-Resolution and Disparity Estimation},
+  booktitle = {Proceedings of the 29th ACM International Conference on Multimedia (ACM MM)},
+  pages     = {1985--1993},
+  year      = {2021}
+}
+
+@inproceedings{nafssr,
+  author    = {Chu, Xiaojie and Chen, Liangyu and Yu, Wenqing},
+  title     = {{NAFSSR}: Stereo Image Super-Resolution Using {NAFNet}},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  pages     = {1239--1248},
+  year      = {2022}
+}
+
+@inproceedings{stereoinr,
+  author    = {Liu, Yi and Liu, Xinyi and Wan, Yi and Xia, Panwang and Wu, Qiong and Zhang, Yongjun},
+  title     = {{StereoINR}: Cross-View Geometry Consistent Stereo Super Resolution with Implicit Neural Representation},
+  booktitle = {Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM)},
+  pages     = {1003--1012},
+  year      = {2025}
+}
+
+% -----------------------------------------------------------------------------
+% Domain 3: Efficient Mobile & Transformer Backbones
+% -----------------------------------------------------------------------------
+
 @inproceedings{convnext,
   author    = {Liu, Zhuang and Mao, Hanzi and Wu, Chao-Yuan and Feichtenhofer, Christoph and Darrell, Trevor and Xie, Saining},
   title     = {A {ConvNet} for the 2020s},
   booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
   pages     = {11976--11986},
   year      = {2022}
-}
-
-@inproceedings{dyt,
-  author    = {Zhu, Junyuan and Lian, Meng and Ding, Lu and Cheng, Zhi},
-  title     = {Transformers Without Normalization: Fast Bounded Nonlinearities for Edge Devices},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  pages     = {1--10},
-  year      = {2025}
-}
-
-@inproceedings{hat,
-  author    = {Chen, Xiangyu and Wang, Xintao and Zhou, Jiantao and Qiao, Yu and Dong, Chao},
-  title     = {Activating More Pixels in Image Super-Resolution Transformer},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  pages     = {22367--22377},
-  year      = {2023}
 }
 
 @inproceedings{nafnet,
@@ -114,6 +120,14 @@
   year      = {2022}
 }
 
+@inproceedings{hat,
+  author    = {Chen, Xiangyu and Wang, Xintao and Zhou, Jiantao and Qiao, Yu and Dong, Chao},
+  title     = {Activating More Pixels in Image Super-Resolution Transformer},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {22367--22377},
+  year      = {2023}
+}
+
 @inproceedings{mobilenetv3,
   author    = {Howard, Andrew and Sandler, Mark and Chu, Grace and Chen, Liang-Chieh and Chen, Bo and Tan, Mingxing and Wang, Weijun and Zhu, Yukun and Pang, Ruoming and Vasudevan, Vijay and Le, Quoc V. and Adam, Hartwig},
   title     = {Searching for {MobileNetV3}},
@@ -121,6 +135,37 @@
   pages     = {1314--1324},
   year      = {2019}
 }
+
+@inproceedings{repvgg,
+  author    = {Ding, Xiaohan and Zhang, Xiangyu and Ma, Ningning and Han, Jungong and Ding, Guiguang and Sun, Jian},
+  title     = {{RepVGG}: Making {VGG}-Style {ConvNets} Great Again},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {13733--13742},
+  year      = {2021}
+}
+
+% -----------------------------------------------------------------------------
+% Domain 4: Dynamic Tanh / Normalization-free Architectures
+% -----------------------------------------------------------------------------
+
+@article{dyt,
+  author    = {Zhu, Jiachen and Chen, Xinlei and He, Kaiming and LeCun, Yann and Liu, Zhuang},
+  title     = {Transformers without Normalization},
+  journal   = {arXiv preprint arXiv:2503.10622},
+  year      = {2025}
+}
+
+@inproceedings{nfnet,
+  author    = {Brock, Andrew and De, Soham and Smith, Samuel L. and Simonyan, Karen},
+  title     = {High-Performance Large-Scale Image Recognition Without Normalization},
+  booktitle = {Proceedings of the 38th International Conference on Machine Learning (ICML)},
+  pages     = {1059--1071},
+  year      = {2021}
+}
+
+% -----------------------------------------------------------------------------
+% Domain 5: Knowledge Distillation & Training Losses
+% -----------------------------------------------------------------------------
 
 @article{kd,
   author    = {Hinton, Geoffrey and Vinyals, Oriol and Dean, Jeff},
@@ -132,7 +177,7 @@
 @inproceedings{lapsrn,
   author    = {Lai, Wei-Sheng and Huang, Jia-Bin and Ahuja, Narendra and Yang, Ming-Hsuan},
   title     = {Deep {Laplacian} Pyramid Networks for Fast and Accurate Super-Resolution},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
   pages     = {624--632},
   year      = {2017}
 }
@@ -155,22 +200,40 @@
   year      = {2004}
 }
 
-@inproceedings{vst_latency,
-  author    = {Kijima, Ryugo and Ojika, Takeo},
-  title     = {Transition Between Real and Virtual Environments Using Video See-Through Display},
-  booktitle = {Proceedings of the IEEE Virtual Reality (VR)},
-  pages     = {141--148},
-  year      = {2002}
+% -----------------------------------------------------------------------------
+% Domain 6: XR/VR Passthrough Optics, Latency, and Human Factors
+% -----------------------------------------------------------------------------
+
+@article{quest3_optics,
+  author    = {Chaurasia, Gaurav and Nieuwoudt, Arthur and Ichim, Alexandru-Eugen and Szeliski, Richard and Sorkine-Hornung, Alexander},
+  title     = {{Passthrough+}: Real-Time Stereoscopic View Synthesis for Mobile Mixed Reality},
+  journal   = {Proceedings of the ACM on Computer Graphics and Interactive Techniques},
+  volume    = {3},
+  number    = {1},
+  pages     = {18:1--18:19},
+  year      = {2020},
+  doi       = {10.1145/3384540}
+}
+
+@article{vst_latency,
+  author    = {Stauffert, Jan-Philipp and Niebling, Florian and Latoschik, Marc Erich},
+  title     = {Latency and Cybersickness: Impact, Causes, and Measures. A Review},
+  journal   = {Frontiers in Virtual Reality},
+  volume    = {1},
+  pages     = {582204:1--582204:24},
+  year      = {2020},
+  doi       = {10.3389/frvir.2020.582204}
 }
 
 @article{motion_to_photon,
-  author    = {Zheng, Feng and Xiao, Robert and Yao, Angela and Gao, Jian},
-  title     = {Latency Measurement and Modeling for Standalone Video See-Through Augmented Reality Displays},
-  journal   = {IEEE Transactions on Visualization and Computer Graphics (TVCG)},
-  volume    = {26},
+  author    = {Warburton, Matthew and Morehead, Ryan and Mushtaq, Faisal and Mon-Williams, Mark},
+  title     = {Measuring Motion-to-Photon Latency for Sensorimotor Experiments with Virtual Reality Systems},
+  journal   = {Behavior Research Methods},
+  volume    = {55},
   number    = {5},
-  pages     = {2011--2020},
-  year      = {2020}
+  pages     = {2646--2658},
+  year      = {2023},
+  doi       = {10.3758/s13428-022-01983-5}
 }
 
 @article{retinal_rivalry,
@@ -187,16 +250,18 @@
   author    = {Howard, Ian P. and Rogers, Brian J.},
   title     = {Binocular Vision and Stereopsis},
   publisher = {Oxford University Press},
-  address   = {New York, NY, USA},
+  address   = {Oxford, UK},
   year      = {1995}
 }
 
-@techreport{quest3_optics,
-  author      = {{Meta Reality Labs}},
-  title       = {Camera Architecture and Optical Calibration for Passthrough Mixed Reality on {Meta Quest 3} and {Quest 3S}},
-  institution = {Meta Platforms, Inc.},
-  year        = {2024},
-  number      = {MRL-TR-2024-03}
+@article{simulator_sickness,
+  author    = {Kennedy, Robert S. and Lane, Norman E. and Berbaum, Kevin S. and Lilienthal, Michael G.},
+  title     = {Simulator Sickness Questionnaire: An Enhanced Method for Quantifying Simulator Sickness},
+  journal   = {The International Journal of Aviation Psychology},
+  volume    = {3},
+  number    = {3},
+  pages     = {203--220},
+  year      = {1993}
 }
 
 @article{foveated_rendering,
@@ -219,28 +284,22 @@
   year      = {2016}
 }
 
-@article{simulator_sickness,
-  author    = {Kennedy, Robert S. and Lane, Norman E. and Berbaum, Kevin S. and Lilienthal, Michael G.},
-  title     = {Simulator Sickness Questionnaire: An Enhanced Method for Quantifying Simulator Sickness},
-  journal   = {The International Journal of Aviation Psychology},
-  volume    = {3},
-  number    = {3},
-  pages     = {203--220},
-  year      = {1993}
-}
-
-@manual{qnn_sdk,
-  title        = {Qualcomm Neural Processing SDK and Hexagon Tensor Processor Architecture Reference Guide},
-  organization = {Qualcomm Technologies, Inc.},
-  year         = {2023},
-  note         = {Document 80-VB419-104}
-}
+% -----------------------------------------------------------------------------
+% Domain 7: Mobile NPU Deployment & Quantization
+% -----------------------------------------------------------------------------
 
 @article{ptq,
   author    = {Nagel, Markus and Fournarakis, Marios and Amjad, Rana Ali and Bondarenko, Yelysei and Baalen, Mart van and Blankevoort, Tijmen},
   title     = {A White Paper on Neural Network Quantization},
   journal   = {arXiv preprint arXiv:2106.08295},
   year      = {2021}
+}
+
+@manual{qnn_sdk,
+  title        = {Qualcomm {AI} Engine Direct {SDK} (QNN) and Hexagon Tensor Processor Architecture Reference Guide},
+  organization = {Qualcomm Technologies, Inc.},
+  year         = {2023},
+  note         = {Document 80-VB419-104}
 }
 
 @manual{sentis,
