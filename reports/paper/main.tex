@@ -16,6 +16,9 @@
 \setcounter{bottomnumber}{2}
 \setcounter{totalnumber}{5}
 \setcounter{dbltopnumber}{3}
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
 
 \newcommand{\ours}{Scale-Liberated StereoINR}
 
@@ -408,14 +411,14 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.78\textwidth]{figures/comparison_middlebury_cloth2.png}
+\includegraphics[width=0.68\textwidth, height=6.8cm, keepaspectratio]{figures/comparison_middlebury_cloth2.png}
 \caption{Visual comparison on Middlebury \texttt{cloth2} ($\times 4$ super-resolution). Panels show Ground Truth HR, Bicubic (Crop: 31.45~dB), StereoINR Teacher (Crop: 33.48~dB), \ours{} (Crop: 31.30~dB; Full Frame: 26.97~dB), and pixel residual error maps ($\times 5$ amplified). \ours{} sharpens textile patterns over Bicubic while maintaining coherent stereo parity.}
 \label{fig:visual_mb}
 \end{figure*}
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.78\textwidth]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
+\includegraphics[width=0.68\textwidth, height=6.8cm, keepaspectratio]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
 \caption{Visual comparison on Meta Quest~3S passthrough Phase 7 (\texttt{indoor\_portal\_awards}, held-out test split). Super-resolving reading text on the awards honor plaque ($\times 4$). \ours{} significantly enhances character legibility (+1.41~dB over Bicubic), proving effective for mixed-reality reading.}
 \label{fig:visual_q3s}
 \end{figure*}
@@ -440,7 +443,7 @@ Ultra & 30.82M & 58.78~MB & 11{,}340.16 & 0.09 & 1{,}665.4 \\
 Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase in parameter scale increases peak memory by only 1.63$\times$ (1{,}021 to 1{,}665~MB), whereas execution latency scales 7$\times$, reinforcing the necessity of compact backbones \cite{convnext, mobilenetv3, nafnet, repvgg} and bounded normalization-free activations \cite{dyt, nfnet} for real-time mobile operation.
 
 \section{Limitations \& Discussion}
-\textbf{1. Monocular PSNR Gap.} Our 4.47M student model lags 2.58~dB behind the 43.8M teacher \cite{stereoinr} and outperforms Bicubic by a modest +0.56~dB average. Longer training schedules (200k+ iterations) combined with multi-scale distillation \cite{kd} and enhanced frequency-domain supervision \cite{ffl} are required to recover high-frequency textures.
+\textbf{1. Monocular PSNR Gap.} Our 4.47M student model lags 2.58~dB behind the 43.8M teacher \cite{stereoinr} and outperforms Bicubic by +0.56~dB average. Extended training schedules (200k+ iterations), multi-scale distillation \cite{kd}, and frequency-domain supervision \cite{ffl} are needed to recover high-frequency textures.
 
 \textbf{2. Full-Frame vs. Foveated Latency.} While our foveated tile achieves 4.20~ms on the NPU (6.16~ms Glass-to-Glass), full-frame execution takes 358.64~ms (INT8). Because the Meta Quest~3S lacks eye-tracking cameras \cite{quest3_optics}, foveation is necessarily fixed to the optical center, adhering to classic foveated display paradigms \cite{foveated_rendering, patney_foveated}. A radial Hann window blends the neural tile into the peripheral bicubic passthrough without seam artifacts or peripheral flicker \cite{patney_foveated} (Fig.~\ref{fig:foveated}).
 
@@ -484,12 +487,12 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 \label{fig:foveated}
 \end{figure*}
 
-\textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware \cite{qnn_sdk}, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders \cite{sentis}.
+\textbf{3. Platform Sandbox Policies.} Although our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware \cite{qnn_sdk}, Meta Horizon OS SELinux sandboxing blocks third-party APKs from \texttt{/dev/fastrpc-*}. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders \cite{sentis}.
 
-\textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} and binocular comfort \cite{retinal_rivalry, binocular_fusion} remain essential future work.
+\textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} and binocular comfort \cite{retinal_rivalry, binocular_fusion} remain essential future work.
 
 \section{Conclusion}
-We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets \cite{quest3_optics}. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention \cite{passr} and employing a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs \cite{qnn_sdk}, and reduces stereo disparity error by 8.7--15.9\% over the teacher model \cite{stereoinr}, suppressing retinal rivalry \cite{retinal_rivalry, binocular_fusion}. Although real-time operation currently requires foveated tiling \cite{foveated_rendering, patney_foveated}, this work establishes a viable geometric path for mobile stereo implicit neural representations \cite{liif, lte, ultrasr}.
+We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets \cite{quest3_optics}. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention \cite{passr} and employing a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs \cite{qnn_sdk}, and reduces stereo disparity error by 8.7--15.9\% over the teacher model \cite{stereoinr}, suppressing retinal rivalry \cite{retinal_rivalry, binocular_fusion}. Real-time mobile operation currently relies on foveated tiling \cite{foveated_rendering, patney_foveated}, establishing a viable geometric path for mobile stereo implicit representations \cite{liif, lte, ultrasr}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

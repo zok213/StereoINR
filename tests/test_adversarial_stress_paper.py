@@ -453,5 +453,61 @@ def test_paper_bundle_zip_forensic_integrity():
                 assert os.path.isfile(os.path.join(tmpdir, fig.replace("\\", "/")))
 
 
+# -----------------------------------------------------------------------------
+# 11. Math Mode Dollar Sign Parity & Balance
+# -----------------------------------------------------------------------------
+def test_math_mode_dollar_sign_balance():
+    """Verify that all inline math dollar signs ($) in main.tex are strictly paired and balanced."""
+    with open(MAIN_TEX, "r", encoding="utf-8") as f:
+        tex = f.read()
+
+    # Strip line comments
+    clean_lines = [re.sub(r"(?<!\\)%.*$", "", l) for l in tex.splitlines()]
+    clean_text = "\n".join(clean_lines)
+
+    # An unescaped dollar sign is a $ preceded by an even number of backslashes
+    unescaped_dollars = []
+    for i, ch in enumerate(clean_text):
+        if ch == "$":
+            b_count = 0
+            k = i - 1
+            while k >= 0 and clean_text[k] == "\\":
+                b_count += 1
+                k -= 1
+            if b_count % 2 == 0:
+                unescaped_dollars.append(i)
+
+    assert len(unescaped_dollars) % 2 == 0, (
+        f"Unbalanced math mode dollar signs: found {len(unescaped_dollars)} unescaped '$' characters!"
+    )
+
+
+# -----------------------------------------------------------------------------
+# 12. Cross-Section Citation Distribution
+# -----------------------------------------------------------------------------
+def test_section_citation_distribution():
+    """Verify that citations are actively distributed across all major sections."""
+    with open(MAIN_TEX, "r", encoding="utf-8") as f:
+        tex = f.read()
+
+    sections = [
+        "Introduction",
+        "Related Work",
+        "Method",
+        "Dataset",
+        "Results",
+        "Discussion",
+        "Conclusion",
+    ]
+
+    for sec in sections:
+        pattern = r"\\section\*?\{[^}]*" + re.escape(sec) + r"[^}]*\}(.*?)(?=\\section|\Z)"
+        match = re.search(pattern, tex, re.IGNORECASE | re.DOTALL)
+        assert match is not None, f"Section matching '{sec}' not found"
+        sec_text = match.group(1)
+        sec_cites = re.findall(r"\\cite\{([^}]+)\}", sec_text)
+        assert len(sec_cites) > 0, f"Section '{sec}' has 0 citation calls!"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
