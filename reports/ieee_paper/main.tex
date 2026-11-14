@@ -54,7 +54,7 @@ To resolve this limitation, Single-Image Super-Resolution (SISR) and Stereo Imag
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{../../outputs/presentation_slides/architecture_schematic_dual_pipeline.png}
+\includegraphics[width=\columnwidth]{figures/architecture_schematic_dual_pipeline.png}
 \caption{Architectural comparison: Official StereoINR (ACM MM 2025, 43.79M parameters) with unconstrained 2D deformable grid sampling versus our proposed Scale-Liberated StereoINR (4.47M parameters) featuring 1D Epipolar Parallax Attention (EPA-1D) and Lipschitz-bounded Dynamic Tanh (DyT).}
 \label{fig:arch_dual}
 \end{figure}
@@ -71,7 +71,7 @@ To overcome these structural roadblocks, we propose \textbf{Scale-Liberated Ster
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{../../outputs/presentation_slides/memory_access_epipolar_comparison.png}
+\includegraphics[width=\columnwidth]{figures/memory_access_epipolar_comparison.png}
 \caption{Memory access pattern analysis: Unconstrained 2D Grid Sampling in StereoINR causes scattered DRAM hops and cache line trashing. In contrast, our 1D Epipolar Parallax Attention executes strictly contiguous 128-byte cache-line burst reads along horizontal scanlines.}
 \label{fig:memory_access}
 \end{figure}
@@ -110,7 +110,7 @@ where $d(x_L, y_L) \ge 0$ represents the horizontal stereo disparity. Consequent
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{../../outputs/presentation_slides/foveated_passthrough_reconstruction_demo.png}
+\includegraphics[width=0.95\textwidth]{figures/foveated_passthrough_reconstruction_demo.png}
 \caption{Full architectural and foveated pipeline overview: (a) Input $854 \times 480$ Passthrough stereo feed; (b) Foveated gaze-aligned tile extraction ($256 \times 256$); (c) Continuous DyT-INR inference on Hexagon NPU; (d) High-acuity foveal reconstruction with seamless alpha-blended periphery.}
 \label{fig:pipeline_full}
 \end{figure*}
@@ -198,7 +198,7 @@ where $\mathcal{P}(\cdot)$ is a $1\times 1$ dimensionality reduction projection 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{../../outputs/presentation_slides/training_loss_curves.png}
+\includegraphics[width=\columnwidth]{figures/training_loss_curves.png}
 \caption{Multi-objective training loss convergence across 12 epochs on dual Tesla T4 GPUs (DDP). Total training completed in 86.9 seconds (~1.45 minutes).}
 \label{fig:loss_curves}
 \end{figure}
@@ -229,7 +229,7 @@ All training is conducted in PyTorch 2.11 with CUDA 13.0 on a dual NVIDIA Tesla 
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{../../outputs/presentation_slides/benchmark_psnr_15_scenes.png}
+\includegraphics[width=0.95\textwidth]{figures/benchmark_psnr_15_scenes.png}
 \caption{Comprehensive Crop PSNR benchmark across all 15 evaluated scenes: Bicubic Baseline (avg 24.19~dB) vs. Scale-Liberated StereoINR (Ours, avg 24.74~dB, +0.56~dB gain) vs. Official StereoINR Teacher (avg 27.32~dB, +2.58~dB over Ours).}
 \label{fig:psnr_15_scenes}
 \end{figure*}
@@ -310,7 +310,7 @@ This phenomenon is grounded in signal processing:
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{../../outputs/presentation_slides/correlation_pareto_matrix.png}
+\includegraphics[width=\columnwidth]{figures/correlation_pareto_matrix.png}
 \caption{Metric correlation matrix (left) and Pareto frontier of Crop PSNR vs. Inference Latency (right), highlighting the 11.11~ms XR 90~FPS budget.}
 \label{fig:pareto_matrix}
 \end{figure}
@@ -344,7 +344,7 @@ Peak Working Set RAM & 1,840.0~MB & \textbf{77.29~MB} & $<1\%$ of 8GB Headset RA
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{../../outputs/presentation_slides/qualcomm_npu_profiling_breakdown.png}
+\includegraphics[width=\columnwidth]{figures/qualcomm_npu_profiling_breakdown.png}
 \caption{Qualcomm Hexagon NPU profiling breakdown: Official StereoINR crashes internally with graph error, while our QNN DLC binary compiles successfully and executes 100\% natively on the Hexagon NPU.}
 \label{fig:qualcomm_profiling}
 \end{figure}
@@ -388,7 +388,7 @@ Memory Access & 2D Scattered Grid & \textbf{1D Contiguous Burst} & Cache-optimal
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{../../outputs/presentation_slides/hardware_latency_budget_breakdown.png}
+\includegraphics[width=\columnwidth]{figures/hardware_latency_budget_breakdown.png}
 \caption{Hardware latency benchmark vs. the 11.11~ms XR 90~FPS budget. Full-frame NPU INT8 executes in 358.64~ms, while Foveated Passthrough (256x256 tile) achieves $\sim$4.2~ms, strictly fitting within the 11.11~ms budget.}
 \label{fig:latency_breakdown}
 \end{figure}
