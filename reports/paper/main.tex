@@ -23,10 +23,7 @@
 
 \title{Scale-Liberated StereoINR: Continuous Stereo Super-Resolution with 1D Epipolar Parallax Attention for Meta Quest~3S Passthrough}
 
-\author{
-    \IEEEauthorblockN{Anonymous Authors}
-    \IEEEauthorblockA{\textit{XR Vision \& Embedded Machine Learning Laboratory}}
-}
+\author{}
 
 \maketitle
 
@@ -85,7 +82,7 @@ In calibrated, rectified binocular cameras, a pixel at coordinate $(i, j)$ in th
 \begin{equation}
 A_{ijk} = \mathrm{softmax}_k\!\left(\frac{Q_L(i,j)\,K_R(i,k)^{\top}}{\sqrt{d_k}}\right),\quad k \in [j-D_{\max},\,j].
 \end{equation}
-This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to $\mathcal{O}(HWD_{\max})$. Unlike classic 2D parallax attention mechanisms \cite{passr, ipassr, ssrdefnet}, memory reads along a scanline are strictly contiguous, eliminating the DRAM cache thrashing caused by 2D \texttt{grid\_sample} and enabling native Qualcomm Hexagon vector acceleration \cite{qnn_sdk}.
+This formulation reduces computational complexity from $\mathcal{O}((HW)^2)$ to $\mathcal{O}(HWD_{\max})$. Unlike classic 2D parallax attention mechanisms \cite{passr, ipassr, ssrdefnet}, memory reads along a scanline are strictly contiguous (Fig.~\ref{fig:memaccess}), eliminating the DRAM cache thrashing caused by 2D \texttt{grid\_sample} and enabling native Qualcomm Hexagon vector acceleration \cite{qnn_sdk}.
 
 \begin{figure*}[!t]
 \centering
@@ -266,15 +263,22 @@ Table~\ref{tab:hw} details hardware metrics. Our model achieves a 9.8$\times$ pa
     ymin=-0.6, ymax=3.9,
     enlarge y limits=false,
     nodes near coords,
-    every node near coord/.append style={font=\scriptsize, anchor=west},
+    every node near coord/.append style={
+        font=\scriptsize, anchor=west,
+        fill=white, fill opacity=0.9, text opacity=1,
+        inner sep=1.2pt, rounded corners=1pt
+    },
     point meta=explicit symbolic,
 ]
+% 1. Budget dashed line in background
+\draw[dashed, very thick, red!70!black] (axis cs:11.11,-0.6) -- (axis cs:11.11,3.8);
+\node[font=\scriptsize\bfseries, text=red!70!black, anchor=north west] at (axis cs:12.5, 3.75)
+    {90\,Hz budget (11.11\,ms)};
+
+% 2. Bars and labels on top
 \addplot[fill=blue!45!black!60, draw=blue!50!black]
     coordinates {(4.20,0) [4.20\,ms] (130.65,1) [130.65\,ms]
                  (513.89,2) [513.89\,ms] (7500,3) [7{,}500\,ms]};
-\draw[dashed, very thick, red!60!black] (axis cs:11.11,-0.6) -- (axis cs:11.11,3.6);
-\node[font=\scriptsize, anchor=south west, red!60!black] at (axis cs:11.5,3.62)
-    {90\,Hz budget: 11.11\,ms};
 \end{axis}
 \end{tikzpicture}%
 }
@@ -404,14 +408,14 @@ Figs.~\ref{fig:visual_mb} and \ref{fig:visual_q3s} present visual comparisons on
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{figures/comparison_middlebury_cloth2.png}
+\includegraphics[width=0.92\textwidth]{figures/comparison_middlebury_cloth2.png}
 \caption{Visual comparison on Middlebury \texttt{cloth2} ($\times 4$ super-resolution). Panels show Ground Truth HR, Bicubic (Crop: 31.45~dB), StereoINR Teacher (Crop: 33.48~dB), \ours{} (Crop: 31.30~dB; Full Frame: 26.97~dB), and pixel residual error maps ($\times 5$ amplified). \ours{} sharpens textile patterns over Bicubic while maintaining coherent stereo parity.}
 \label{fig:visual_mb}
 \end{figure*}
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
+\includegraphics[width=0.92\textwidth]{figures/comparison_quest3s_harvested_phase7_indoor_portal_awards.png}
 \caption{Visual comparison on Meta Quest~3S passthrough Phase 7 (\texttt{indoor\_portal\_awards}, held-out test split). Super-resolving reading text on the awards honor plaque ($\times 4$). \ours{} significantly enhances character legibility (+1.41~dB over Bicubic), proving effective for mixed-reality reading.}
 \label{fig:visual_q3s}
 \end{figure*}
@@ -483,6 +487,8 @@ Table~\ref{tab:scale} characterizes the model hierarchy. An 8.2$\times$ increase
 \textbf{3. Platform Sandbox Policies.} While our Qualcomm QNN DLC model compiles and executes 100\% natively on Snapdragon hardware \cite{qnn_sdk}, Meta Horizon OS enforces SELinux sandboxing that blocks third-party APKs from `/dev/fastrpc-*`. Retail commercial apps must deploy via GPU Vulkan/Unity Sentis compute shaders \cite{sentis}.
 
 \textbf{4. Evaluation Granularity.} Our benchmark evaluated single representative crops per scene. Comprehensive full-frame user studies assessing Simulator Sickness Questionnaires (SSQ) \cite{simulator_sickness} and binocular comfort \cite{retinal_rivalry, binocular_fusion} remain essential future work.
+
+\clearpage
 
 \section{Conclusion}
 We presented \ours{}, a continuous stereo super-resolution model tailored for standalone VR headsets \cite{quest3_optics}. By replacing unconstrained 2D deformable sampling with 1D Epipolar Parallax Attention \cite{passr} and employing a Lipschitz-bounded ConvNeXt--DyT backbone \cite{convnext, dyt}, our model achieves 57.4$\times$ faster GPU latency, compiles natively to mobile NPUs \cite{qnn_sdk}, and reduces stereo disparity error by 8.7--15.9\% over the teacher model \cite{stereoinr}, suppressing retinal rivalry \cite{retinal_rivalry, binocular_fusion}. Although real-time operation currently requires foveated tiling \cite{foveated_rendering, patney_foveated}, this work establishes a viable geometric path for mobile stereo implicit neural representations \cite{liif, lte, ultrasr}.
