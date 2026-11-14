@@ -1,0 +1,33 @@
+{
+    "model_name": "student_stereoinr",
+    "target_soc": "Snapdragon XR2 Gen 2 (SM8550-based)",
+    "target_backend": "Hexagon HTP (V73 / V75)",
+    "input_tensors": {
+        "img_left": [
+            1,
+            3,
+            128,
+            128
+        ],
+        "img_right": [
+            1,
+            3,
+            128,
+            128
+        ]
+    },
+    "output_tensors": {
+        "sr_fovea": [
+            1,
+            3,
+            256,
+            256
+        ]
+    },
+    "quantization": {
+        "weight_type": "INT8",
+        "activation_type": "INT8",
+        "per_channel": true
+    },
+    "power_profile": "BURST_OR_HIGH_PERFORMANCE"
+}
