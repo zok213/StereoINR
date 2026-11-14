@@ -19,6 +19,7 @@
 6. [HỆ THỐNG LOG HUẤN LUYỆN THỰC TẾ & BẢNG THAM CHIẾU KIỂM ĐỊNH (EMPIRICAL TRAINING LOG & ARTIFACT AUDIT)](#6-hệ-thống-log-huấn-luyện-thực-tế--bảng-tham-chiếu-kiểm-định-empirical-training-log--artifact-audit)
 7. [ĐÁNH GIÁ CHUYÊN SÂU TỪ GÓC NHÌN CHUYÊN GIA AI & HỆ THỐNG NHÚNG (IS IT GOOD OR BAD?)](#7-đánh-giá-chuyên-sâu-từ-góc-nhìn-chuyên-gia-ai--hệ-thống-nhúng-is-it-good-or-bad)
 8. [HƯỚNG DẪN TÁI HIỆN THỰC NGHIỆM & SCRIPT TRỰC QUAN HÓA](#8-hướng-dẫn-tái-hiện-thực-nghiệm--script-trực-quan-hóa)
+9. [GÓI BÀI BÁO KHOA HỌC & TÀI LIỆU NỘP BÁO CÁO (RESEARCH PAPER PACKAGE)](#9-gói-bài-báo-khoa-học--tài-liệu-nộp-báo-cáo-research-paper-package)
 
 ---
 
@@ -670,6 +671,18 @@ python scripts/benchmarks/evaluate_stereoinr_paper_metrics.py
 
 ### 8.4. Xem Bảng Điều Khiển Web Tương Tác
 Mở file [`outputs/visual_comparisons/index.html`](outputs/visual_comparisons/index.html) bằng trình duyệt (Chrome, Edge, Firefox) để trải nghiệm giao diện duyệt ảnh so sánh trực quan hiện đại với đầy đủ số liệu đo đạc.
+
+---
+
+## 9. GÓI BÀI BÁO KHOA HỌC & TÀI LIỆU NỘP BÁO CÁO (RESEARCH PAPER PACKAGE)
+
+Nhóm nghiên cứu đóng gói bài báo khoa học hoàn chỉnh và độc lập tại thư mục [`reports/paper/`](reports/paper/) phục vụ công tác nộp báo cáo, thẩm định và xuất bản:
+
+* **Mã nguồn bài báo:** [`reports/paper/main.tex`](reports/paper/main.tex) (431 dòng mã nguồn LaTeX với đầy đủ cấu trúc 8 mục, 4 bảng số liệu và 8 hình vẽ đối chuẩn).
+* **Danh mục tài liệu trích dẫn:** [`reports/paper/references.bib`](reports/paper/references.bib) (25 tài liệu tham khảo chuẩn quốc tế từ CVPR, ICCV, ECCV, ACM MM).
+* **Thư mục hình ảnh độ phân giải cao:** [`reports/paper/figures/`](reports/paper/figures/) (chứa toàn bộ 12 sơ đồ kiến trúc, phân tích phần cứng, đường cong hội tụ và các mẫu so sánh thị sai).
+* **Gói nén tải lên Overleaf 1-click:** [`reports/paper_bundle.zip`](reports/paper_bundle.zip) ($13.7\text{ MB}$, sẵn sàng kéo thả lên Overleaf qua `Upload Project` để biên dịch trực tiếp).
+* **Hướng dẫn chi tiết cho người thẩm định:** [`reports/paper/README.md`](reports/paper/README.md).
 
 ---
 *Active Stereo RL Research Group 2026 | Meta Quest 3S & Qualcomm Snapdragon XR2 Gen 2 Platform*

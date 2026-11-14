@@ -1,16 +1,16 @@
-# IEEE Conference Paper Package: Scale-Liberated StereoINR
+# Research Paper Package: Scale-Liberated StereoINR
 ## Hướng Dẫn Biên Dịch & Nộp Báo Cáo Khoa Học (Submission Guide)
 
-Tài liệu này đóng gói bài báo khoa học định dạng hội nghị quốc tế IEEE Conference (`IEEEtran.cls`), kèm toàn bộ dữ liệu hình ảnh, bảng biểu thực nghiệm và thư viện trích dẫn tài liệu tham khảo cho đề tài:
+Tài liệu này đóng gói bài báo khoa học hoàn chỉnh (`main.tex`), kèm toàn bộ dữ liệu hình ảnh, bảng biểu thực nghiệm và thư viện trích dẫn tài liệu tham khảo cho đề tài:
 **"Scale-Liberated StereoINR: Continuous DyT-EdgeINR with 1D Epipolar Parallax Attention for Meta Quest 3S Passthrough"**
 
 ---
 
-## 1. Cấu Trúc Thư Mục Gói Báo Cáo (`reports/ieee_paper/`)
+## 1. Cấu Trúc Thư Mục Gói Báo Cáo (`reports/paper/`)
 
 ```text
-reports/ieee_paper/
-├── main.tex                     # Tệp mã nguồn LaTeX chính (431 dòng, định dạng IEEEtran)
+reports/paper/
+├── main.tex                     # Tệp mã nguồn LaTeX chính (431 dòng)
 ├── references.bib               # Cơ sở dữ liệu tài liệu tham khảo BibTeX (25 tài liệu chuẩn)
 ├── README.md                    # Hướng dẫn biên dịch và tổng quan nội dung cho giảng viên
 └── figures/                     # Toàn bộ hình ảnh và sơ đồ độ phân giải cao phục vụ bài báo
@@ -28,20 +28,20 @@ reports/ieee_paper/
     └── comparison_quest3s_harvested_phase7_indoor_portal_awards.png # Mẫu đọc bảng chữ thực tế Quest 3S
 ```
 
-Gói nén độc lập sẵn sàng tải lên Overleaf: [`reports/ieee_paper_bundle.zip`](../ieee_paper_bundle.zip) ($13.7\text{ MB}$).
+Gói nén độc lập sẵn sàng tải lên Overleaf: [`reports/paper_bundle.zip`](../paper_bundle.zip) ($13.7\text{ MB}$).
 
 ---
 
 ## 2. Hướng Dẫn Biên Dịch PDF
 
 ### Cách 1: Nộp hoặc Biên dịch trên Overleaf (Khuyên Dùng - Đơn Giản Nhất)
-1. Tải tệp [`reports/ieee_paper_bundle.zip`](../ieee_paper_bundle.zip) lên Overleaf (`New Project` $\to$ `Upload Project`).
+1. Tải tệp [`reports/paper_bundle.zip`](../paper_bundle.zip) lên Overleaf (`New Project` $\to$ `Upload Project`).
 2. Chọn trình biên dịch là `pdfLaTeX` hoặc `XeLaTeX`.
 3. Nhấn `Recompile`. Toàn bộ văn bản, công thức toán KaTeX/LaTeX, bảng biểu và 8 hình ảnh sẽ được kết xuất sạch sẽ không có lỗi đường dẫn.
 
 ### Cách 2: Biên dịch qua dòng lệnh máy trạm (Command Line)
 ```bash
-cd reports/ieee_paper
+cd reports/paper
 pdflatex main.tex
 bibtex main
 pdflatex main.tex

@@ -21,7 +21,7 @@ This technical critique provides an exhaustive, mathematically rigorous, and emp
 2. **Mathematical & Empirical Root Causes of the Crop PSNR Gap:** Proving that the +2.58 dB gap is primarily an artifact of severe optimization starvation (84 gradient steps in 86.9s vs. 200,000 steps for the teacher) and a defective disparity loss function ($\mathcal{L}_{\text{disp}} = 0.01 \cdot d^2$) that drove disparity to zero and paralyzed cross-view feature alignment;
 3. **The Retinal Rivalry Paradox:** Demonstrating why the teacher's single-image monocular PSNR gain degrades binocular fusion and why the student's 1D epipolar constraint solves retinal rivalry;
 4. **Hardware & INT8 NPU Runtime Feasibility:** Validating Lipschitz boundedness ($\Gamma_{\max} \le 2.0$) for Symmetric INT8 Post-Training Quantization (PTQ, SNR > 56.6 dB) and demonstrating how a Central Foveated Patch ($256 \times 256$) pipeline executes in $\sim 4.2\text{ ms}$ on the Hexagon NPU ($6.16\text{--}9.80\text{ ms}$ end-to-end), strictly conforming to the 11.11 ms frame budget for 90 FPS VR;
-5. **Critical Review of Publication Artifacts:** Auditing empirical consistency across tables in the draft IEEE paper (`reports/ieee_paper/main.tex`) and presentation slides;
+5. **Critical Review of Publication Artifacts:** Auditing empirical consistency across tables in the draft research paper (`reports/paper/main.tex`) and presentation slides;
 6. **Actionable Roadmap:** Formulating exact mathematical loss functions, structural reparameterization schemes (RepDyT), and training schedules for Milestones M2, M3, and M4.
 
 ---
@@ -401,16 +401,16 @@ We evaluated the end-to-end glass-to-glass (G2G) pipeline using `scripts/benchma
 *Conclusion:* The central foveated patch pipeline operates in **6.16 ms** end-to-end, providing a **4.95 ms safety margin (44.5% headroom)** below the 11.11 ms budget. This guarantees sustained **$\ge 102$ FPS** operation without thermal throttling or frame dropping.
 
 #### The Meta Horizon OS SELinux Sandbox Lockout:
-An essential engineering finding documented in `reports/ieee_paper/main.tex` (Section VIII-B) and `PROJECT_MEMORY.md` must be emphasized:
+An essential engineering finding documented in `reports/paper/main.tex` (Section VIII-B) and `PROJECT_MEMORY.md` must be emphasized:
 While physical on-device profiling on Hexagon V73 (Snapdragon 8 Gen 2 / SM8550) succeeds natively via Qualcomm AI Hub, **Meta Horizon OS enforces strict SELinux sandbox policies that block third-party user APKs from opening `/dev/fastrpc-*` device nodes**. Direct Hexagon NPU execution is restricted to Meta OS system daemons (SLAM tracking and system passthrough compositor). 
 
 For third-party developers deploying on Meta Quest 3S, the identical Continuous DyT-EdgeINR model must be deployed to the **Qualcomm Adreno 740 GPU via Unity Sentis or Vulkan Compute Shaders**. On the Adreno 740 GPU, inferring the $256 \times 256$ foveated patch consumes **$0.84\text{ ms}$**, yielding an even faster end-to-end pipeline latency of **$2.80\text{ ms}$**.
 
 ---
 
-## 5. Critical Review of Draft IEEE Paper (`main.tex`) & Presentation Slides
+## 5. Critical Review of Draft Paper (`main.tex`) & Presentation Slides
 
-We conducted a forensic line-by-line review of `reports/ieee_paper/main.tex` (346 lines, 8 figures, 3 tables) and the slide generation scripts (`scripts/visualization/generate_presentation_slides.py` and `generate_training_and_result_charts.py`).
+We conducted a forensic line-by-line review of `reports/paper/main.tex` (431 lines, 8 figures, 3 tables) and the slide generation scripts (`scripts/visualization/generate_presentation_slides.py` and `generate_training_and_result_charts.py`).
 
 ### 5.1. Data Consistency Across Tables
 
@@ -433,7 +433,7 @@ We conducted a forensic line-by-line review of `reports/ieee_paper/main.tex` (34
 
 Across repository scripts, the terms "tile" and "patch" have been used interchangeably with ambiguous dimensions:
 - In `scripts/visualization/generate_foveated_demo.py`, Panel 4 labels the foveal inset as $128 \times 128$.
-- In `reports/ieee_paper/main.tex` (lines 42, 85, 370) and `README.md`, the foveal patch is defined as $256 \times 256$.
+- In `reports/paper/main.tex` (lines 42, 85, 370) and `README.md`, the foveal patch is defined as $256 \times 256$.
 - In QNN compilation (`weights/qnn_npu/dyt_edge_inr_qnn_tile64_4x.dlc`), the input low-resolution tile is $64 \times 64$.
 
 **Standardization Rule for Publication:**
@@ -517,7 +517,7 @@ To increase training-time representational capacity without increasing inference
    - Execute `scripts/benchmarks/evaluate_stereoinr_paper_metrics.py` across Middlebury, KITTI 2012, KITTI 2015, and Flickr1024.
    - Verify that Stereo MAE is preserved or improved relative to the current student results (maintaining $\ge 8.7\%$ error reduction vs. teacher).
 3. **Publication Artifact Finalization (`main.tex` & Slides):**
-   - Synchronize all verified metrics into Table I and Table II of `reports/ieee_paper/main.tex`.
+   - Synchronize all verified metrics into Table I and Table II of `reports/paper/main.tex`.
    - Update slide figures in `outputs/presentation_slides/` using `generate_training_and_result_charts.py` and `generate_presentation_slides.py`.
    - Incorporate the nomenclature standardizations ($64 \times 64$ LR tile $\to 256 \times 256$ HR patch) and metric clarifications established in this critique.
 
