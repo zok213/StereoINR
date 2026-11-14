@@ -470,15 +470,17 @@ class ScaleLiberatedStereoINR(nn.Module):
                 attr = 'weight' if 'weight' in k else 'bias'
                 getattr(mod, attr).data.copy_(sd[k])
 
-        for k in ['mlp.0.weight', 'mlp.0.bias', 'mlp.2.weight', 'mlp.2.bias']:
+        for k in ['mlp.0.weight', 'mlp.0.bias', 'mlp.2.weight', 'mlp.2.bias', 'mlp.4.weight', 'mlp.4.bias']:
             if k in sd:
                 idx = int(k.split('.')[1])
                 attr = 'weight' if 'weight' in k else 'bias'
                 getattr(self.mlp[idx], attr).data.copy_(sd[k])
 
-        # Zero-initialize final layer so warm-started model smoothly refines over anchor
-        nn.init.zeros_(self.mlp[4].weight)
-        nn.init.zeros_(self.mlp[4].bias)
+        # Fallback to zero-initialize final layer only if not present in sd
+        if 'mlp.4.weight' not in sd:
+            nn.init.zeros_(self.mlp[4].weight)
+        if 'mlp.4.bias' not in sd:
+            nn.init.zeros_(self.mlp[4].bias)
 
 
 # ==============================================================================
